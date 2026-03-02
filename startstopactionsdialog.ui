@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>startStopActionsDialog</class>
+ <widget class="QDialog" name="startStopActionsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>474</width>
+    <height>374</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Действия при старте/остановке</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Отправить к старту в следующие устройства:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="listWidgetStart"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Отправить при остановке в следующие устройства:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="listWidgetStop"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QComboBox" name="comboBoxDevices"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEditConfName">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonExlorer">
+       <property name="styleSheet">
+        <string notr="true">image: url(:/resources/open_explorer.png);</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>Старт</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QPushButton" name="pushButtonAddStart">
+          <property name="text">
+           <string>Добавить</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDeleteStart">
+          <property name="text">
+           <string>Удалить</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="title">
+        <string>Стоп</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="QPushButton" name="pushButtonAddStop">
+          <property name="text">
+           <string>Добавить</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDeleteStop">
+          <property name="text">
+           <string>Удалить</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkBoxDate">
+     <property name="text">
+      <string>Записать текущую дату в описание эксперимента после старта</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QPushButton" name="pushButtonAccept">
+       <property name="text">
+        <string>Готово</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonCancel">
+       <property name="text">
+        <string>Отмена</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonExlorer</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>exploreConfig()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>437</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>349</x>
+     <y>201</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonAddStart</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>addToStart()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>115</x>
+     <y>284</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>100</x>
+     <y>233</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonAddStop</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>addToStop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>326</x>
+     <y>285</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>275</x>
+     <y>234</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDeleteStart</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>removeStart()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>169</x>
+     <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>166</x>
+     <y>237</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonAccept</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>103</x>
+     <y>349</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>106</x>
+     <y>295</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDeleteStop</sender>
+   <signal>clicked()</signal>
+   <receiver>startStopActionsDialog</receiver>
+   <slot>removeStop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>384</x>
+     <y>279</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>397</x>
+     <y>236</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>exploreConfig()</slot>
+  <slot>slot1()</slot>
+  <slot>addToStart()</slot>
+  <slot>addToStop()</slot>
+  <slot>removeStart()</slot>
+  <slot>removeStop()</slot>
+ </slots>
+</ui>

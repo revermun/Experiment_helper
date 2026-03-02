@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1500</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Вспомогательная программа для проведения экспериментов</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_3" columnstretch="1,1,0">
+    <item row="0" column="0">
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>Подключенные устройства</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidgetConnections">
+         <attribute name="horizontalHeaderVisible">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>112</number>
+         </attribute>
+         <attribute name="horizontalHeaderHighlightSections">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>ID</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Тип</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>TCP порт Подключ.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Вкл./Выкл.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Data</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Лог событий</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="1" column="0">
+        <widget class="QTableWidget" name="tableWidgetLog">
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Время (лок.)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Время (ГНСС)</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Событие</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="pushButtonAdd">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/add.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonEdit">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/settings.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDelete">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/delete.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonConnect">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/connect.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDisconnect">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/disconnect.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonPlots">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Данные и графики</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonNotes">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Заметки</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="2">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Используемый пресет:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelPreset">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Default</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonStart">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>300</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">image: url(:/resources/start.png);
+background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));
+border-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));
+border-radius: 150px;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="1">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Добавить событие:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QPushButton" name="pushButtonSendEvent">
+          <property name="text">
+           <string>Отправить</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEditAddEvent"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QPushButton" name="pushButtonEventSettings">
+          <property name="text">
+           <string>Настройка событий</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="2">
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QPushButton" name="pushButtonStartActions">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>7</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Действия при запуске/остановке</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_5">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Длительность сбора данных:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelElapsedTime">
+        <property name="text">
+         <string>0 сек</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1500</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Экперимент...</string>
+    </property>
+    <addaction name="actionLoadExperiment"/>
+    <addaction name="actionSaveExperiment"/>
+   </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>Пресет...</string>
+    </property>
+    <addaction name="actionLoadPreset"/>
+    <addaction name="actionSavePreset"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>Настройки...</string>
+    </property>
+    <addaction name="actionExperimentConfig"/>
+    <addaction name="actionDeviceConfig"/>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="menu_2"/>
+   <addaction name="menu_3"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionLoadExperiment">
+   <property name="text">
+    <string>Загрузить</string>
+   </property>
+  </action>
+  <action name="actionSaveExperiment">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="actionLoadPreset">
+   <property name="text">
+    <string>Загрузить</string>
+   </property>
+  </action>
+  <action name="actionSavePreset">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="actionExperimentConfig">
+   <property name="text">
+    <string>Конфигурация эксперимента</string>
+   </property>
+  </action>
+  <action name="actionDeviceConfig">
+   <property name="text">
+    <string>Конфигурация устройств</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openConnectionSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>29</x>
+     <y>491</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>49</x>
+     <y>493</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>menubar</sender>
+   <signal>triggered(QAction*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>performAction(QAction*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>46</x>
+     <y>12</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>50</x>
+     <y>28</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDelete</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>deleteConnection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>127</x>
+     <y>481</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>193</x>
+     <y>501</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonEdit</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>editConnection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>89</x>
+     <y>483</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>102</x>
+     <y>513</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonNotes</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openNotes()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>265</x>
+     <y>557</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>182</x>
+     <y>554</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonEventSettings</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openEventSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>556</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>747</x>
+     <y>562</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonStartActions</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openStartStopActions()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1302</x>
+     <y>490</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1183</x>
+     <y>492</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonPlots</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openDataAndGraphs()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>314</x>
+     <y>526</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>422</x>
+     <y>528</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonConnect</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>connectDevice()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>515</x>
+     <y>495</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>472</x>
+     <y>492</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDisconnect</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>disconnectDevice()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>565</x>
+     <y>494</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>488</x>
+     <y>482</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>openConnectionSettings()</slot>
+  <slot>performAction(QAction*)</slot>
+  <slot>deleteConnection()</slot>
+  <slot>editConnection()</slot>
+  <slot>openNotes()</slot>
+  <slot>openEventSettings()</slot>
+  <slot>openStartStopActions()</slot>
+  <slot>openDataAndGraphs()</slot>
+  <slot>connectDevice()</slot>
+  <slot>disconnectDevice()</slot>
+ </slots>
+</ui>

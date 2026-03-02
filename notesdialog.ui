@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>notesDialog</class>
+ <widget class="QDialog" name="notesDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>607</width>
+    <height>349</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Заметки</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="groupBoxNotes">
+     <property name="title">
+      <string>Заметки</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QListWidget" name="listWidgetNotes"/>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="pushButtonAdd">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/add.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonEdit">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/edit.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonDelete">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/delete.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Фильтр тегов:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBoxFilter">
+          <item>
+           <property name="text">
+            <string>All</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Initial</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Error</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Change</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Info</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QGroupBox" name="groupBoxRedactor">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Редактор</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Тэг:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="comboBoxTag">
+          <item>
+           <property name="text">
+            <string>Initial</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Error</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Change</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Info</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Заголовок:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEditTitle"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="textEditNote">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="labelWarning">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 0, 0);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDialogButtonBox" name="buttonBoxRedactor">
+          <property name="standardButtons">
+           <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>notesDialog</receiver>
+   <slot>addNote()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>52</x>
+     <y>327</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>65</x>
+     <y>265</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonEdit</sender>
+   <signal>clicked()</signal>
+   <receiver>notesDialog</receiver>
+   <slot>editNote()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>127</x>
+     <y>265</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDelete</sender>
+   <signal>clicked()</signal>
+   <receiver>notesDialog</receiver>
+   <slot>deleteNote()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>161</x>
+     <y>316</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>195</x>
+     <y>264</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxFilter</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>notesDialog</receiver>
+   <slot>filterNotes(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>270</x>
+     <y>316</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>284</x>
+     <y>262</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBoxRedactor</sender>
+   <signal>rejected()</signal>
+   <receiver>notesDialog</receiver>
+   <slot>closeRedactor()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>522</x>
+     <y>312</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>523</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBoxRedactor</sender>
+   <signal>accepted()</signal>
+   <receiver>notesDialog</receiver>
+   <slot>redactorAccept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>452</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>445</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>addNote()</slot>
+  <slot>editNote()</slot>
+  <slot>deleteNote()</slot>
+  <slot>filterNotes(QString)</slot>
+  <slot>closeRedactor()</slot>
+  <slot>openRedactor()</slot>
+  <slot>redactorAccept()</slot>
+ </slots>
+</ui>

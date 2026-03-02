@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConnectionSettings</class>
+ <widget class="QDialog" name="ConnectionSettings">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>472</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Настройка подключения</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
+   <item>
+    <layout class="QGridLayout" name="gridLayoutComboBoxes">
+     <item row="1" column="1">
+      <widget class="QComboBox" name="comboBoxDevice">
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <property name="frame">
+        <bool>false</bool>
+       </property>
+       <property name="modelColumn">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Приемник</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>IMU</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Другое</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Название (ID) ус-ва</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Тип ус-ва</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Протокол приема/передачи</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QComboBox" name="comboBoxProtocol">
+       <item>
+        <property name="text">
+         <string>Ublox</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Unicore</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLineEdit" name="lineEditName">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="label_4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Тип подключения</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="comboBoxConnectionType">
+       <property name="currentIndex">
+        <number>-1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Serial</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CAN</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>TCP</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBoxSettings">
+     <property name="title">
+      <string>Настройки</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0">
+      <item>
+       <layout class="QGridLayout" name="gridLayoutSettings" columnstretch="0"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+     <property name="centerButtons">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ConnectionSettings</receiver>
+   <slot>checkFields()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>463</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ConnectionSettings</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>295</x>
+     <y>463</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxDevice</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>ConnectionSettings</receiver>
+   <slot>changeProtocolComboBox(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>212</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>142</x>
+     <y>93</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxConnectionType</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>ConnectionSettings</receiver>
+   <slot>changeSettings(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>530</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>101</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>changeProtocolComboBox(QString)</slot>
+  <slot>changeSettings(QString)</slot>
+  <slot>saveSettings()</slot>
+  <slot>checkFields()</slot>
+ </slots>
+</ui>
