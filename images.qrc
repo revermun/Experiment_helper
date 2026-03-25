@@ -12,5 +12,7 @@
         <file>resources/graph.png</file>
         <file>resources/sort.png</file>
         <file>resources/save.png</file>
+        <file>resources/restart.png</file>
+        <file>resources/send.png</file>
     </qresource>
 </RCC>

@@ -7,12 +7,7 @@
 #include <QListWidget>
 #include <QMessageBox>
 
-enum deviceInfoIndexes{
-    INDEX_DEVICE_MODEL,
-    INDEX_DEVICE_TYPE,
-    INDEX_DEVICE_OUTPUTS,
-    INDEX_DEVICE_INFO
-};
+#include "enums.h"
 
 namespace Ui {
 class experimentConfigurationDialog;

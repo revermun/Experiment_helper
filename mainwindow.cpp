@@ -5,6 +5,7 @@
 #include "startstopactionsdialog.h"
 #include "dataandgraphsdialog.h"
 #include "experimentconfigurationdialog.h"
+#include "deviceconfigurationsdialog.h"
 
 /// TODO: Работа с папкой эксперимента.
 /// Необходимо при запуске программы сообщить пользователю о том, что нужно выбрать папку эксперимента
@@ -25,6 +26,19 @@
 /// Скорее всего после нажатия на "готово" в папку "Lap_presets" сохраняются пары Устройство - конфиг
 /// и при запуске захода подобранные таким образом устройства настраиваются по этим конфигам
 ///
+void MainWindow::setupTableSize(QTableWidget* table) {
+    // Автоматическая подгонка столбцов
+    table->resizeColumnsToContents();
+    table->resizeRowsToContents();
+
+    // Отключаем скроллбары (если таблица небольшая)
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // Вычисляем и устанавливаем размер
+    table->setFixedHeight(table->verticalHeader()->length() + table->horizontalHeader()->height() + table->frameWidth() * 2);
+    table->setMinimumWidth(table->horizontalHeader()->length() + table->verticalHeader()->width() + table->frameWidth() * 2);
+}
 
 template<typename K, typename V>
 void dumpSimpleMap(const QMap<K, V> &m, int indent = 0)
@@ -172,6 +186,8 @@ void MainWindow::addItemToConnectionsTable(QString protocol, QList<QString> para
     QTableWidgetItem *dataItem = new QTableWidgetItem;
     dataItem->setBackground(QBrush(QColor(0,100,0)));
     ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_DATA, dataItem);
+
+    setupTableSize(ui->tableWidgetConnections);
 }
 
 void MainWindow::fillConnectionsTable()
@@ -268,6 +284,8 @@ void MainWindow::performAction(QAction *action)
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
+
+        setupTableSize(ui->tableWidgetConnections);
     }
     else if (action->text() == "Сохранить" && action->property("root") == "Эксперимент"){
         if (experimentDirectory.isEmpty()){
@@ -355,6 +373,11 @@ void MainWindow::performAction(QAction *action)
         experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(this);
         experimentDialog.exec();
     }
+    else if (action->text() == "Конфигурация устройств"){
+        deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap,connectionsMap,this);
+        experimentDialog.exec();
+    }
+
 
 }
 
@@ -668,6 +691,7 @@ void MainWindow::connectDevice()
         QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
         return;
     }
+    connection->close();
     onnOffItem->setBackground(QBrush(QColor(0,255,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     connectionsMap.insert(deviceName, connection);

@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QSerialPort>
 #include <QTimer>
+#include <QMessageBox>
 
 /// TODO: когда будет реализовано подлючение организовать вывод в строки данных, терминал и реализацию графиков
 /// TODO: терминал https://github.com/lxqt/qtermwidget/releases
@@ -45,6 +46,7 @@ private:
     QMap<QString, QSerialPort*> connectionsMap;
     QVector<QPair<QGroupBox*, QPair<int, int>>> groupBoxVector;
     Ui::dataAndGraphsDialog *ui;
+
     // QWidgetList groupBoxVector;
     bool streamIsOpen = false;
     int nextRow = 0;

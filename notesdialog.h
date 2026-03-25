@@ -5,13 +5,10 @@
 #include <QDebug>
 #include <QPropertyAnimation>
 #include <QDir>
+
+#include "enums.h"
 /// TODO: Когда будет настроено подключение начать реализовывать передачу данных
-enum notesIdexes{
-    INDEX_NOTE_TAG,
-    INDEX_NOTE_TITLE,
-    INDEX_NOTE_BODY,
-    INDEX_NOTE_ISLAP
-};
+
 
 namespace Ui {
 class notesDialog;

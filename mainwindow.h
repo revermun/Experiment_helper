@@ -8,18 +8,15 @@
 #include <QFileDialog>
 #include <QCheckBox>
 #include <QSerialPort>
+#include <QTableWidget>
+
+#include "enums.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-enum tableConnectionsIndexes{
-    INDEX_CONN_TABLE_ID,
-    INDEX_CONN_TABLE_TYPE,
-    INDEX_CONN_TABLE_TCP_PORT,
-    INDEX_CONN_TABLE_ON_OFF,
-    INDEX_CONN_TABLE_DATA
-};
+
 
 struct tableConnectionsFields{
     QString ID;
@@ -55,6 +52,7 @@ private:
     void fillConnectionsTable();
     void addItemToConnectionsTable(QString protocol, QList<QString> parameters);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
+    void setupTableSize(QTableWidget* table);
     // QSerialPort connection;
     Ui::MainWindow *ui;
 

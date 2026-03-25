@@ -1,6 +1,6 @@
 #include "dataandgraphsdialog.h"
 #include "ui_dataandgraphsdialog.h"
-#include "connectionSettings.h"
+#include "enums.h"
 
 dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QSerialPort*> connectionsMap, QWidget *parent)
     : QDialog(parent)
@@ -175,7 +175,6 @@ void dataAndGraphsDialog::openGraphs()
     QHBoxLayout *layout = new QHBoxLayout(&dialog);
     QVBoxLayout *layoutLeft = new QVBoxLayout();
     QVBoxLayout *layoutRight = new QVBoxLayout();
-
     QLabel *labelType = new QLabel("Наименование группы");
     QComboBox *comboType = new QComboBox();
     comboType->addItem("Измерения");

@@ -12,23 +12,32 @@ CONFIG += c++17
 SOURCES += \
     connectionSettings.cpp \
     dataandgraphsdialog.cpp \
+    deviceconfigurationsdialog.cpp \
     experimentconfigurationdialog.cpp \
     main.cpp \
     mainwindow.cpp \
     notesdialog.cpp \
-    startstopactionsdialog.cpp
+    startstopactionsdialog.cpp \
+    ubloxparser.cpp
 
 HEADERS += \
     connectionSettings.h \
     dataandgraphsdialog.h \
+    deviceconfigurationsdialog.h \
+    enums.h \
     experimentconfigurationdialog.h \
     mainwindow.h \
     notesdialog.h \
-    startstopactionsdialog.h
+    qchecklist.h \
+    qvaluefield.h \
+    startstopactionsdialog.h \
+    ublox.h \
+    ubloxparser.h
 
 FORMS += \
     connectionSettings.ui \
     dataandgraphsdialog.ui \
+    deviceconfigurationsdialog.ui \
     experimentconfigurationdialog.ui \
     mainwindow.ui \
     notesdialog.ui \

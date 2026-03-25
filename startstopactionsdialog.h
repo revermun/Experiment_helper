@@ -4,11 +4,9 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QDebug>
+#include <QMessageBox>
 
-enum startStopActionsIndexes{
-    INDEX_START_STOP_ID,
-    INDEX_START_STOP_CONFIG
-};
+#include "enums.h"
 
 namespace Ui {
 class startStopActionsDialog;
