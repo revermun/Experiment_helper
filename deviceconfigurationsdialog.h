@@ -8,8 +8,6 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QTreeWidgetItem>
 #include <QTableWidget>
-#include <QDoubleValidator>
-#include <limits.h>
 
 namespace Ui {
 class deviceConfigurationsDialog;
@@ -44,6 +42,8 @@ public slots:
     void enableVelFrame(bool state);
     void enableRawFrame(bool state);
     void enableEphFrame(bool state);
+    void MASKcheckClickEvent(bool state);
+    void comboCONFIGRTKchangeEvent(QString text);
 
 private:
     void setupTableSize(QTableWidget* table);
@@ -52,17 +52,19 @@ private:
     void sendMSGPoll(uint8_t classID, uint8_t messageID);
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
     QMap<QString, QSerialPort*> connectionsMap;
-    Ui::deviceConfigurationsDialog *ui;
     QMap<QByteArray,QString> messagesNamesMap;
-    QMap<QString, QPair<uint8_t,uint8_t>> messagesIDMap;
+    QMap<QString, QPair<uint8_t,uint8_t>> messagesIDMapUBX;
     QMap<QString, QFrame*> framesMap;
     QMap<QString, QString> messagesDescriptionsMap;
     QSerialPort* currentConnection = nullptr;
     QString currentItemText;
     QByteArray streamBuffer;
+    QString protocol;
     int count = 0;
     bool velCheck;
     bool posCheck = false;
+
+    Ui::deviceConfigurationsDialog *ui;
 };
 
 #endif // DEVICECONFIGURATIONSDIALOG_H

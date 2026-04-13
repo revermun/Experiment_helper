@@ -1,6 +1,7 @@
 QT       += core gui
 QT       += xml
 QT       += serialport
+QT       += network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -18,7 +19,8 @@ SOURCES += \
     mainwindow.cpp \
     notesdialog.cpp \
     startstopactionsdialog.cpp \
-    ubloxparser.cpp
+    ubloxparser.cpp \
+    unicoreparser.cpp
 
 HEADERS += \
     connectionSettings.h \
@@ -29,10 +31,11 @@ HEADERS += \
     mainwindow.h \
     notesdialog.h \
     qchecklist.h \
-    qvaluefield.h \
     startstopactionsdialog.h \
     ublox.h \
-    ubloxparser.h
+    ubloxparser.h \
+    unicore.h \
+    unicoreparser.h
 
 FORMS += \
     connectionSettings.ui \

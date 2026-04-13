@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QComboBox>
 
 #include "enums.h"
 
@@ -34,12 +35,13 @@ public slots:
     void deleteDevice();
     void addConnection();
     void editConnection();
-    void sortConnections();
     void deleteConnection();
     void changeGroupBoxInfo(QGroupBox *groupInfo);
     void changeGroupBoxSettings(QGroupBox* groupSettings);
     void addOutput(QListWidget *listOutputs);
     void deleteOutput(QListWidget *listOutputs);
+    void checkConnectionSettingsFields(QComboBox* comboDevice1, QComboBox* comboDevice2, QDialog* dialog);
+    void changeDeviceOutputs(QComboBox* comboDeviceOutput);
 
 
 private:

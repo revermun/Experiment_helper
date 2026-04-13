@@ -254,7 +254,7 @@
                <second>0</second>
                <year>2026</year>
                <month>2</month>
-               <day>9</day>
+               <day>8</day>
               </datetime>
              </property>
              <property name="currentSection">
@@ -294,6 +294,9 @@
              <widget class="QTableWidget" name="tableWidgetConnections">
               <property name="editTriggers">
                <set>QAbstractItemView::NoEditTriggers</set>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
               </property>
               <attribute name="horizontalHeaderCascadingSectionResizes">
                <bool>true</bool>
@@ -367,43 +370,17 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>Сортировать по:</string>
+            <spacer name="horizontalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="comboBoxSortDevices">
-             <property name="currentIndex">
-              <number>-1</number>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
              </property>
-             <item>
-              <property name="text">
-               <string>Название ус-ва 1</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Название ус-ва 2</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Тип подключения</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonSortConnections">
-             <property name="styleSheet">
-              <string notr="true">image: url(:/resources/sort.png);</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
+            </spacer>
            </item>
           </layout>
          </item>
@@ -719,22 +696,6 @@
     <hint type="destinationlabel">
      <x>355</x>
      <y>435</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButtonSortConnections</sender>
-   <signal>clicked()</signal>
-   <receiver>experimentConfigurationDialog</receiver>
-   <slot>sortConnections()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>373</x>
-     <y>394</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>452</x>
-     <y>438</y>
     </hint>
    </hints>
   </connection>

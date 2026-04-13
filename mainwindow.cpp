@@ -6,16 +6,19 @@
 #include "dataandgraphsdialog.h"
 #include "experimentconfigurationdialog.h"
 #include "deviceconfigurationsdialog.h"
+#include "ubloxparser.h"
 
-/// TODO: Работа с папкой эксперимента.
-/// Необходимо при запуске программы сообщить пользователю о том, что нужно выбрать папку эксперимента
-/// кнопки либо блокируются либо при нажатии выскакивает сообщение о том что нужно выбрать эксперимент
+/// Мысли по поводу принципа работы приложения
+/// Чтение с портов:
+/// Чтение с портов происходит только в одном месте*, а в остальные окна отправляется уже обработанная информация
+/// Читаем порт, запускаем парсеры, парсим сообщения получаем наследников структуры Message, закидываем их в массив
+/// При запуске какого либо из окон передаем ему также ссылку на этот массив, с ним же и работаем
 ///
+/// *В конфигурацию устройств пользователь не должен заходить посередине захода, следовательно там можно читать с порта
+/// *Во вкладке териминала нужно предупеждать о завершении захода
+
+
 /// При изменении/удалении чего либо имеющего свой файл нужно "на ходу" изменить этот файл !!!! надо уточнить !!!!
-/// TODO: Кнопка редактирования подключения
-/// добавить проверки при редактировании и удалении из списка устройства того, что оно подключенно и если это так, то выводить ошибку
-/// TODO: Кнопка удаления подключения
-/// добавить проверки при редактировании и удалении из списка устройства того, что оно подключенно и если это так, то выводить ошибку
 /// TODO: Загрузка эксперимента
 ///
 /// TODO: Сохранение эксперимента
@@ -110,7 +113,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tableWidgetConnections->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
     QWidgetList allWidgets = QApplication::allWidgets();
     foreach (QWidget* widget, allWidgets) {
         QPushButton* button = qobject_cast<QPushButton*>(widget);
@@ -125,6 +127,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectionsRootElement = connectionsDoc.createElement("Connections");
     connectionsDoc.appendChild(connectionsRootElement);
+
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
+    timer->start(1);
 }
 
 MainWindow::~MainWindow()
@@ -200,7 +206,8 @@ void MainWindow::fillConnectionsTable()
         addItemToConnectionsTable(protocolName,settings.second);
     }
 }
-
+/// TODO:: Можно выбрать пустую папку, если в ней нет нужных файлов, то они создаются пустыми, а походу работы с приложением
+/// заполняются
 void MainWindow::performAction(QAction *action)
 {
     if (action->text() == "Загрузить" && action->property("root") == "Эксперимент" ){
@@ -212,16 +219,13 @@ void MainWindow::performAction(QAction *action)
         this->experimentDirectory = dir;
         this->devicesMap.clear();
         ///Чтение конфига устройств и заполнение таблицы
+
         QString connectionsConfigDir = dir + '/' + "Configurations" + '/' + "connections.xml";
         QFile file(connectionsConfigDir);
-        if (!file.open(QIODevice::ReadOnly))
-            return;
+        file.open(QIODevice::ReadWrite) /*return*/;
         QDomDocument doc("document");
-        if (!doc.setContent(&file)) {
-            file.close();
-            return;
-        }
         file.close();
+        if (!doc.setContent(&file)) /*return*/;
 
         QDomElement docElem = doc.documentElement();
         QDomNode deviceXml = docElem.firstChild();
@@ -374,6 +378,10 @@ void MainWindow::performAction(QAction *action)
         experimentDialog.exec();
     }
     else if (action->text() == "Конфигурация устройств"){
+        if(isLap){
+            QMessageBox::warning(this, "Ошибка", "Нельзя конфигурировать устройства во время захода!\nЗавершите заход!");
+            return;
+        }
         deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap,connectionsMap,this);
         experimentDialog.exec();
     }
@@ -594,46 +602,49 @@ void MainWindow::openEventSettings()
 {
     QDialog dialog(this);
     dialog.setWindowTitle("Настройка событий");
-    dialog.setFixedSize(600, 250);
+    // dialog.setFixedSize(600, 250);
 
     QGridLayout *layout = new QGridLayout(&dialog);
 
     QLabel *labelTopLeft = new QLabel("Условия, являющиеся событиями:");
     QLabel *labelTopRight = new QLabel("Вкл/Выкл");
-    QLabel *labelSolutionFound = new QLabel("Fixed решение RTK найдено");
-    QLabel *labelSolutionLost = new QLabel("Решение потеряно");
-    QLabel *labelETC = new QLabel("И т.д.");
-    QCheckBox *chebBoxSolutionFound = new QCheckBox();
-    QCheckBox *chebBoxSolutionLost = new QCheckBox();
-    QCheckBox *chebBoxETC = new QCheckBox();
+    QLabel *labelSolFound = new QLabel("Fixed решение RTK найдено");
+    QLabel *labelSolLost = new QLabel("Решение потеряно");
+    QLabel *labelRelSolFound = new QLabel("Относительное решение найдено");
+    QLabel *labelRelSolLost = new QLabel("Относительное решение потеряно");
+    QCheckBox *chebBoxSolFound = new QCheckBox();
+    QCheckBox *chebBoxSolLost = new QCheckBox();
+    QCheckBox *chebBoxRelSolFound = new QCheckBox();
+    QCheckBox *chebBoxRelSolLost = new QCheckBox();
     QPushButton *okButton = new QPushButton("Готово");
     QPushButton *cancelButton = new QPushButton("Отмена");
 
-    chebBoxSolutionFound->setChecked(eventSettingsSolutionFound);
-    chebBoxSolutionLost->setChecked(eventSettingsSolutionLost);
-    chebBoxETC->setChecked(eventSettingsETC);
+    chebBoxSolFound->setChecked(eventSettingsSolFound);
+    chebBoxSolLost->setChecked(eventSettingsSolLost);
+    chebBoxRelSolFound->setChecked(eventSettingsRelSolFound);
+    chebBoxRelSolLost->setChecked(eventSettingsRelSolLost);
 
     layout->addWidget(labelTopLeft, 0, 0);
     layout->addWidget(labelTopRight, 0, 1);
-    layout->addWidget(labelSolutionFound, 1, 0);
-    layout->addWidget(labelSolutionLost, 2, 0);
-    layout->addWidget(labelETC, 3, 0);
-    layout->addWidget(chebBoxSolutionFound, 1, 1);
-    layout->addWidget(chebBoxSolutionLost, 2, 1);
-    layout->addWidget(chebBoxETC, 3, 1);
-    layout->addWidget(okButton, 4, 0);
-    layout->addWidget(cancelButton, 4, 1);
+    layout->addWidget(labelSolFound, 1, 0);
+    layout->addWidget(labelSolLost, 2, 0);
+    layout->addWidget(labelRelSolFound, 3, 0);
+    layout->addWidget(labelRelSolLost, 4, 0);
+    layout->addWidget(chebBoxSolFound, 1, 1);
+    layout->addWidget(chebBoxSolLost, 2, 1);
+    layout->addWidget(chebBoxRelSolFound, 3, 1);
+    layout->addWidget(chebBoxRelSolLost, 4, 1);
+    layout->addWidget(okButton, 5, 0);
+    layout->addWidget(cancelButton, 5, 1);
 
-    // Подключить сигнал кнопки к закрытию диалога
     QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
     QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
-
-    // Модальное выполнение
+    qDebug() << dialog.height() << dialog.width();
     if (dialog.exec() == QDialog::Accepted) {
-        eventSettingsSolutionFound = chebBoxSolutionFound->isChecked();
-        eventSettingsSolutionLost = chebBoxSolutionLost->isChecked();
-        eventSettingsETC = chebBoxETC->isChecked();
-        qDebug() << eventSettingsSolutionFound << eventSettingsSolutionLost << eventSettingsETC;
+        eventSettingsSolFound = chebBoxSolFound->isChecked();
+        eventSettingsSolLost = chebBoxSolLost->isChecked();
+        eventSettingsRelSolFound = chebBoxRelSolFound->isChecked();
+        eventSettingsRelSolLost = chebBoxRelSolLost->isChecked();
     }
 }
 /// TODO: надо что-то делать
@@ -673,11 +684,52 @@ void MainWindow::connectDevice()
 
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     if (protocolName == "Serial"){
-        // bool parity = devicesMap[deviceName].second.at(INDEX_SERIAL_PARITY).toInt();
-        // int dataBits = devicesMap[deviceName].second.at(INDEX_SERIAL_DATA_BITS).toInt();
-        // int stopBits = devicesMap[deviceName].second.at(INDEX_SERIAL_STOP_BITS).toInt();
-        // connection->setDataBits(QSerialPort::Data7);
-        // connection->setStopBits(stopBits);
+        QSerialPort::Parity parity = QSerialPort::NoParity;
+        QString parityStr = devicesMap[deviceName].second.at(INDEX_SERIAL_PARITY);
+        if (parityStr == "Нет"){
+            parity = QSerialPort::NoParity;
+        }
+        if (parityStr == "Четное"){
+            parity = QSerialPort::EvenParity;
+        }
+        if (parityStr == "Нечетное"){
+            parity = QSerialPort::OddParity;
+        }
+        int dataBits = devicesMap[deviceName].second.at(INDEX_SERIAL_DATA_BITS).toInt();
+        QSerialPort::DataBits databitsEnum;
+        switch (dataBits) {
+        case 5:
+            databitsEnum = QSerialPort::Data5;
+            break;
+        case 6:
+            databitsEnum = QSerialPort::Data6;
+            break;
+        case 7:
+            databitsEnum = QSerialPort::Data7;
+            break;
+        case 8:
+            databitsEnum = QSerialPort::Data8;
+            break;
+        default:
+            databitsEnum = QSerialPort::Data8;
+            break;
+        }
+        int stopBits = devicesMap[deviceName].second.at(INDEX_SERIAL_STOP_BITS).toInt();
+        QSerialPort::StopBits stopBitsEnum;
+        switch (stopBits) {
+        case 1:
+            stopBitsEnum = QSerialPort::OneStop;
+            break;
+        case 2:
+            stopBitsEnum = QSerialPort::TwoStop;
+            break;
+        default:
+            stopBitsEnum = QSerialPort::OneStop;
+            break;
+        }
+        connection->setDataBits(databitsEnum);
+        connection->setStopBits(stopBitsEnum);
+        connection->setParity(parity);
         port = ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_TCP_PORT)->text();
         baudrate = devicesMap[deviceName].second.at(INDEX_SERIAL_BAUDRATE).toInt();
     }
@@ -691,9 +743,17 @@ void MainWindow::connectDevice()
         QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
         return;
     }
-    connection->close();
+    // connection->close();
     onnOffItem->setBackground(QBrush(QColor(0,255,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+    QByteArray buffer;
+    bufferMap.insert(deviceName, buffer);
+    QMap<QString,int> flags;
+    flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
+    flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
+    flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
+    flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
+    flagsMap.insert(deviceName,flags);
     connectionsMap.insert(deviceName, connection);
 }
 
@@ -718,5 +778,199 @@ void MainWindow::disconnectDevice()
     connection->close();
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+    flagsMap.remove(deviceName);
+    bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
 }
+
+void MainWindow::sendUserEvent()
+{
+    if(!isLap) return;
+    QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+    QString event = ui->lineEditAddEvent->text();
+    addItemToLogTable(localTime, "", event);
+}
+
+/// TODO:: логика старта эксперимента
+/// При старте в лог пишется событие "эксперимент начат"
+/// При остановке в лог пишется событие "эксперимент завершен"
+/// В зависимости от заданных флагов в окне настроек лога должны выводиться соответствующие события
+/// Нужен таймер, и парсинг сообщений наподобие того, что в deviceConfigurations, только ограниченный парой сообщений
+/// fix решение найдено:
+/// Для ublox это NAV-SOL поле gps-fix меняется с нуля на не ноль
+///
+/// решение потеряно:
+/// Для ublox это NAV-SOL поле gps-fix меняется с не нуля на ноль
+/// Для таких сообщений должна быть примерно такая форма <ID устройства>: <тело сообщения>
+
+void MainWindow::addItemToLogTable(QString localTime, QString GNSSTime, QString event)
+{
+    int row = ui->tableWidgetLog->rowCount()+1;
+    ui->tableWidgetLog->setRowCount(row);
+    QTableWidgetItem* localTimeItem = new QTableWidgetItem(localTime);
+    QTableWidgetItem* GNSSTimeItem = new QTableWidgetItem(GNSSTime);
+    QTableWidgetItem* eventItem = new QTableWidgetItem(event);
+    ui->tableWidgetLog->setItem(row-1,0,localTimeItem);
+    ui->tableWidgetLog->setItem(row-1,1,GNSSTimeItem);
+    ui->tableWidgetLog->setItem(row-1,2,eventItem);
+}
+
+void MainWindow::startExperiment()
+{
+    isLap = !isLap;
+    if (isLap){
+        lapTime = QTime::currentTime();
+        ui->pushButtonStart->setStyleSheet("image: url(:/resources/stop.png);\n"
+                                           " background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));\n"
+                                           " border-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));\n"
+                                           " border-radius: 150px;");
+        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+        QString event = "Эксперимент начат";
+        addItemToLogTable(localTime, "", event);
+        if (eventSettingsSolFound || eventSettingsSolLost){
+            foreach (QString key, connectionsMap.keys()) {
+                QSerialPort* connection = connectionsMap[key];
+                QByteArray buff = bufferMap[key];
+                QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
+                QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+                if (connection == nullptr) continue;
+                if (!connection->isOpen()) continue;
+
+                if(connection->waitForReadyRead(1)){
+                    buff.append(connection->readAll());
+                }
+                if (buff.isEmpty()) continue;
+                if (protocol == "Ublox"){
+                    UbloxParser parser(connection);
+                    QByteArray msg;
+                    QByteArray hdr;
+                    QByteArray checkSum;
+                    hdr.resize(2);
+                    hdr[0] = 0xb5;
+                    hdr[1] = 0x62;
+                    QByteArray en;
+                    en.resize(4);
+                    en[0] = CFG::MSG::classID;
+                    en[1] = CFG::MSG::messageID;
+                    en[2] = 0x08;
+                    en[3] = 0x00;
+                    QByteArray payload;
+                    payload.resize(8);
+                    payload[2] = 0x00;
+                    payload[3] = 0x00;
+                    payload[4] = 0x00;
+                    payload[5] = 0x01;
+                    payload[6] = 0x00;
+                    payload[7] = 0x00;
+
+                    payload[0] = NAV::SOL::classID;
+                    payload[1] = NAV::SOL::messageID;
+                    msg = hdr + en + payload;
+                    checkSum = UbloxParser::calcCheckSum(en + payload);
+                    msg.append(checkSum);
+                    parser.sendMessage(msg);
+                    payload[0] = NAV::RELPOSNED::classID;
+                    payload[1] = NAV::RELPOSNED::messageID;
+                    msg = hdr + en + payload;
+                    checkSum = UbloxParser::calcCheckSum(en + payload);
+                    msg.append(checkSum);
+                    parser.sendMessage(msg);
+                }
+            }
+        }
+
+    }
+    else{
+        ui->pushButtonStart->setStyleSheet("image: url(:/resources/start.png);\n"
+                                           " background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));\n"
+                                           " border-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));\n"
+                                           " border-radius: 150px;");
+        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+        QString event = "Эксперимент завершен";
+        addItemToLogTable(localTime, "", event);
+        dumpNestedMap(flagsMap);
+        foreach (QString key, flagsMap.keys()) {
+            foreach (QString flag, flagsMap[key].keys()) {
+                flagsMap[key][flag] = INDEX_FLAGS_UNKNOWN;
+            }
+        }
+    }
+}
+
+void MainWindow::parseMessage()
+{
+    if (!isLap) return;
+    QTime currTime = QTime::currentTime();
+    int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
+    int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
+    int diffSeconds = currSeconds - startSeconds;
+    ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
+    foreach (QString key, connectionsMap.keys()) {
+        QSerialPort* connection = connectionsMap[key];
+        QByteArray buff = bufferMap[key];
+        QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
+        QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+        if (connection == nullptr) continue;
+        if (!connection->isOpen()) continue;
+
+        if(connection->waitForReadyRead(1)){
+            buff.append(connection->readAll());
+        }
+        if (buff.isEmpty()) continue;
+        if (protocol == "Ublox"){
+            UbloxParser parser(connection);
+            QMap<QString,QByteArray> mess = parser.parseMessage(&buff);
+            if (mess.isEmpty()) continue;
+            Message* decodedMessage = parser.decode(mess);
+            if (dynamic_cast<NAV::SOL*>(decodedMessage)){
+                NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
+                U4 iTOW = info->iTOW;
+                U1 gpsFix = info->gpsFix;
+                if (gpsFix == 0){
+                    if (eventSettingsSolLost && (flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_UNKNOWN)){
+                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+                        QString event = key + ": Решение потеряно";
+                        addItemToLogTable(localTime, QString::number(iTOW), event);
+                    }
+                    flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_TRUE;
+                    flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_FALSE;
+                }
+                else {
+                    if (eventSettingsSolFound && (flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_UNKNOWN)){
+                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+                        QString event = key + ": Решение найдено";
+                        addItemToLogTable(localTime, QString::number(iTOW), event);
+                    }
+                    flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_TRUE;
+                    flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_FALSE;
+                }
+            }
+            else if (dynamic_cast<NAV::RELPOSNED*>(decodedMessage)){
+                NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
+                U4 iTOW = info->iTOW;
+                X4 flags = info->flags;
+                U1 relSol = getBits(flags,3,4);
+                if (relSol == 0){
+                    if (eventSettingsRelSolLost && (flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_UNKNOWN)){
+                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+                        QString event = key + ": Относительное решение потеряно";
+                        addItemToLogTable(localTime, QString::number(iTOW), event);
+                    }
+                    flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_TRUE;
+                    flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_FALSE;
+                }
+                else {
+                    if (eventSettingsRelSolFound && (flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_UNKNOWN)){
+                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+                        QString event = key + ": Относительное решение найдено";
+                        addItemToLogTable(localTime, QString::number(iTOW), event);
+                    }
+                    flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_TRUE;
+                    flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_FALSE;
+                }
+            }
+        }
+    }
+}
+
+

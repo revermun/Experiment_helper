@@ -124,8 +124,6 @@ public:
             break;
         case 1:
             state = Qt::Checked;
-        default:
-            break;
         }
         item->setCheckState(state);
     }

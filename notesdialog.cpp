@@ -11,14 +11,6 @@
 /// Если во время захода, то ставится <Lap_N>, иначе <General>.
 
 
-///TODO:
-/// -Сохранение заметок в файлы и память приложения
-///
-/// -Загрузка заметок из папки заметок
-///
-/// -
-
-
 notesDialog::notesDialog(QString experimentDirectory, bool isLap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::notesDialog)

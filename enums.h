@@ -63,4 +63,10 @@ enum startStopActionsIndexes{
     INDEX_START_STOP_CONFIG
 };
 
+enum flags{
+    INDEX_FLAGS_FALSE,
+    INDEX_FLAGS_TRUE,
+    INDEX_FLAGS_UNKNOWN
+};
+
 #endif // ENUMS_H

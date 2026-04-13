@@ -14,5 +14,6 @@
         <file>resources/save.png</file>
         <file>resources/restart.png</file>
         <file>resources/send.png</file>
+        <file>resources/stop.png</file>
     </qresource>
 </RCC>

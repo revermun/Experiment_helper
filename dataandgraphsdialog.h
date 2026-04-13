@@ -11,8 +11,7 @@
 #include <QTimer>
 #include <QMessageBox>
 
-/// TODO: когда будет реализовано подлючение организовать вывод в строки данных, терминал и реализацию графиков
-/// TODO: терминал https://github.com/lxqt/qtermwidget/releases
+/// TODO: когда будет реализовано подлючение организовать реализацию графиков
 namespace Ui {
 class dataAndGraphsDialog;
 }

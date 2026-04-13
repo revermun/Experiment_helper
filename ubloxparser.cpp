@@ -41,52 +41,6 @@ QByteArray UbloxParser::createPollMessage(uint8_t byteClass, uint8_t byteID){
     return msg;
 }
 
-QMap<QString,QByteArray> UbloxParser::parseMessage(){
-    QMap<QString,QByteArray> map;
-    bool parsing = true;
-    while(parsing){
-        // if(!connection->waitForReadyRead(1)) continue;
-        char byte;
-        connection->read(&byte,1);
-        uint8_t byte1 = (uint8_t)byte;
-        // qDebug() << (uint8_t)byte1 << 0xb5;
-        if (byte1 != 0xb5) continue;
-        connection->read(&byte,1);
-        uint8_t byte2 = (uint8_t)byte;
-        if (byte2 != 0x62) continue;
-        QByteArray byteEn = connection->read(4);
-        uint8_t byteClass = byteEn.at(0);
-        uint8_t byteID = byteEn.at(1);
-        uint16_t payloadLen = (uint8_t)byteEn.at(2) + 16*(uint8_t)byteEn.at(3);
-        // qDebug() << byteEn.toHex(' ') << byteClass << byteID << (uint8_t)byteEn.at(2) << (uint8_t)byteEn.at(3) << payloadLen;
-        QByteArray payload = connection->read(payloadLen);
-        QByteArray checkSum = connection->read(2);
-        QByteArray msg;
-        if (payload.isEmpty()){
-            msg = byteEn;
-        }
-        else{
-            msg = byteEn + payload;
-        }
-        // qDebug() << "message " << msg.toHex(' ');
-        QByteArray checkSumCalc = calcCheckSum(msg);
-        // qDebug() << "calcCheckSum " << checkSumCalc.toHex(' ');
-        // qDebug() << "CheckSum " << checkSum.toHex(' ');
-        // qDebug() << "payload " << payload.toHex(' ');
-        // qDebug() << "checkSumm " << checkSum.toHex(' ');
-        if (checkSumCalc == checkSum){
-            QByteArray classArr; classArr.resize(1); classArr[0] = byteClass;
-            QByteArray IDArr; IDArr.resize(1); IDArr[0] = byteID;
-            map.insert("byteClass", classArr);
-            map.insert("byteID", IDArr);
-            map.insert("payload", payload);
-            // qDebug() << map;
-        }
-        parsing = false;
-    }
-    return map;
-}
-
 QMap<QString,QByteArray> UbloxParser::parseMessage(QByteArray *buff)
 {
     QMap<QString,QByteArray> map;
@@ -157,7 +111,7 @@ QMap<QString,QByteArray> UbloxParser::parseMessage(QByteArray *buff)
 
 bool UbloxParser::sendMessage(QByteArray msg)
 {
-    qDebug() << msg.toHex(' ');
+    // qDebug() << msg.toHex(' ');
     // connection->clear();
     connection->write(msg);
     bool res = !connection->flush();

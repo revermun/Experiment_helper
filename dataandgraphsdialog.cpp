@@ -183,7 +183,6 @@ void dataAndGraphsDialog::openGraphs()
     QGroupBox *dataGroupBox = new QGroupBox();
     dataGroupBox->setAlignment(Qt::AlignHCenter);
     QGridLayout* dataGroupBoxLayout = new QGridLayout();
-    /// TODO: достать из родительского групбокса строки (также как и доставался лэйаут из слота открытия настроек) и добавить в этот групбокс
 
     QLabel *labelUnits = new QLabel("Единицы измерения");
     QLabel *labelData = new QLabel("Данные");
@@ -529,35 +528,7 @@ QByteArray stringToNumFormat(const QString &input)
     return result;
 }
 
-QByteArray stringToAsciiFormat(const QString &input)
-{
-    QByteArray result;
 
-    for (const QChar &ch : input) {
-        // Проверяем, не является ли это hex-значением вида "0xA"
-        if (ch == '0' && &ch != &input.back()) {
-            // Смотрим следующие символы
-            int index = &ch - input.constData();
-            if (index + 2 < input.length() &&
-                (input[index + 1] == 'x' || input[index + 1] == 'X')) {
-
-                // Это hex-запись, добавляем все три символа как ASCII
-                result.append(static_cast<char>(ch.toLatin1()));           // '0'
-                result.append(static_cast<char>(input[index + 1].toLatin1())); // 'x'
-                result.append(static_cast<char>(input[index + 2].toLatin1())); // hex-цифра
-
-                // Пропускаем обработанные символы
-                // (но так как мы в цикле, просто инкрементируем индекс вне цикла)
-                continue;
-            }
-        }
-
-        // Обычный символ - добавляем его ASCII код
-        result.append(static_cast<char>(ch.toLatin1()));
-    }
-
-    return result;
-}
 /// В ASCII что написал, то и отсылается
 /// В Num написанное преобразовывается в hex числа
 void dataAndGraphsDialog::sendNum()

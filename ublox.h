@@ -137,7 +137,6 @@ struct CFG::DAT::SET : public Message
     inline static U1 classID = 0x06;
     inline static U1 messageID = 0x06;
 };
-///TODO: V
 struct CFG::DAT::GET : public Message
 {
     U2 datumNum;

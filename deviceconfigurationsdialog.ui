@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>969</width>
-    <height>806</height>
+    <width>987</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -177,7 +177,7 @@
                <item>
                 <widget class="QLabel" name="label_188">
                  <property name="text">
-                  <string>deg</string>
+                  <string>dBHz</string>
                  </property>
                 </widget>
                </item>
@@ -921,7 +921,7 @@
                <item>
                 <widget class="QLabel" name="label_189">
                  <property name="text">
-                  <string>dBHz</string>
+                  <string>deg</string>
                  </property>
                 </widget>
                </item>
@@ -982,7 +982,7 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="1,3">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
@@ -1073,12 +1073,12 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>-3134</y>
-                <width>560</width>
-                <height>5232</height>
+                <y>-2332</y>
+                <width>686</width>
+                <height>7622</height>
                </rect>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0">
+              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0">
                <item>
                 <widget class="QFrame" name="frameMSG">
                  <property name="frameShape">
@@ -2049,13 +2049,58 @@
                  <layout class="QVBoxLayout" name="verticalLayout_15">
                   <item>
                    <layout class="QGridLayout" name="gridLayout_10">
-                    <item row="1" column="1">
-                     <widget class="QLabel" name="labelRELPOSNEDID">
-                      <property name="text">
-                       <string>0</string>
+                    <item row="7" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDIsMoving">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
                       </property>
-                      <property name="alignment">
-                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDDifSol">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_59">
+                      <property name="text">
+                       <string>Time of week: </string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDFIXok">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="autoFillBackground">
+                       <bool>false</bool>
+                      </property>
+                      <property name="inputMethodHints">
+                       <set>Qt::ImhNone</set>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                      <property name="tristate">
+                       <bool>false</bool>
                       </property>
                      </widget>
                     </item>
@@ -2069,20 +2114,39 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="1">
-                     <widget class="QLabel" name="labelRELPOSNEDITOW">
+                    <item row="6" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDPosVal">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="8" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDNorm">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QLabel" name="labelRELPOSNEDID">
                       <property name="text">
                        <string>0</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_59">
-                      <property name="text">
-                       <string>Time of week: </string>
                       </property>
                      </widget>
                     </item>
@@ -2100,79 +2164,72 @@
                       </property>
                      </widget>
                     </item>
+                    <item row="0" column="1">
+                     <widget class="QLabel" name="labelRELPOSNEDITOW">
+                      <property name="text">
+                       <string>0</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <widget class="QCheckBox" name="checkRELPOSNEDHeading">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="checkable">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_259">
+                      <property name="text">
+                       <string>Relative position heading valid</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_291">
+                      <property name="text">
+                       <string>GNSS Fix OK</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="0">
+                     <widget class="QLabel" name="label_292">
+                      <property name="text">
+                       <string>Differencial Solution</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="6" column="0">
+                     <widget class="QLabel" name="label_293">
+                      <property name="text">
+                       <string>Relative position valid</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_294">
+                      <property name="text">
+                       <string>Is moving</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="8" column="0">
+                     <widget class="QLabel" name="label_295">
+                      <property name="text">
+                       <string>Relative position normalized</string>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDFIXok">
-                    <property name="layoutDirection">
-                     <enum>Qt::LeftToRight</enum>
-                    </property>
-                    <property name="autoFillBackground">
-                     <bool>false</bool>
-                    </property>
-                    <property name="inputMethodHints">
-                     <set>Qt::ImhNone</set>
-                    </property>
-                    <property name="text">
-                     <string>GNSS Fix OK</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                    <property name="tristate">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDDifSol">
-                    <property name="text">
-                     <string>Differencial Solution</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDPosVal">
-                    <property name="text">
-                     <string>Relative position valid</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDIsMoving">
-                    <property name="text">
-                     <string>Is moving</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDHeading">
-                    <property name="text">
-                     <string>Relative position heading valid</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QCheckBox" name="checkRELPOSNEDNorm">
-                    <property name="text">
-                     <string>Relative position normalized</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
                   </item>
                   <item>
                    <widget class="QGroupBox" name="groupRELPOSNED">
@@ -5785,6 +5842,2279 @@ shutdown</string>
                 </widget>
                </item>
                <item>
+                <widget class="QFrame" name="frameBESTNAV">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_26">
+                  <item row="19" column="0">
+                   <widget class="QLabel" name="label_229">
+                    <property name="text">
+                     <string>Velocity type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLabel" name="labelBESTNAVPostype">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLabel" name="labelBESTNAVlonsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="23" column="2">
+                   <widget class="QLabel" name="label_222">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="2">
+                   <widget class="QLabel" name="label_211">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_200">
+                    <property name="text">
+                     <string>Latitude</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="0">
+                   <widget class="QLabel" name="label_230">
+                    <property name="text">
+                     <string>Latency</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_205">
+                    <property name="text">
+                     <string>Latitude σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="1">
+                   <widget class="QLabel" name="labelBESTNAVsvs">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="2">
+                   <widget class="QLabel" name="label_217">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="0">
+                   <widget class="QLabel" name="label_224">
+                    <property name="text">
+                     <string>Number of satellites used in solution</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="2">
+                   <widget class="QLabel" name="label_220">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="1">
+                   <widget class="QLabel" name="labelBESTNAVsolage">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="2">
+                   <widget class="QLabel" name="label_216">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_203">
+                    <property name="text">
+                     <string>Undulation</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_201">
+                    <property name="text">
+                     <string>Longtitude</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_206">
+                    <property name="text">
+                     <string>Longtitude σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="2">
+                   <widget class="QLabel" name="label_213">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_207">
+                    <property name="text">
+                     <string>Height σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_204">
+                    <property name="text">
+                     <string>Datum id</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="17" column="1">
+                   <widget class="QLabel" name="labelBESTNAVgpsmask">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="1">
+                   <widget class="QLabel" name="labelBESTNAVdiffageV">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="1">
+                   <widget class="QLabel" name="labelBESTNAVdiffageP">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="1">
+                   <widget class="QLabel" name="labelBESTNAVextsolstat">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="16" column="1">
+                   <widget class="QLabel" name="labelBESTNAVgalmask">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="0">
+                   <widget class="QLabel" name="label_209">
+                    <property name="text">
+                     <string>Differential age</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="1">
+                   <widget class="QLabel" name="labelBESTNAVhspeedsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="18" column="1">
+                   <widget class="QLabel" name="labelBESTNAVVsol">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_196">
+                    <property name="text">
+                     <string>P-sol status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="2">
+                   <widget class="QLabel" name="label_197">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="2">
+                   <widget class="QLabel" name="label_212">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLabel" name="labelBESTNAVhgtsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="0">
+                   <widget class="QLabel" name="label_231">
+                    <property name="text">
+                     <string>Differential age</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="1">
+                   <widget class="QLabel" name="labelBESTNAVhspeed">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="19" column="1">
+                   <widget class="QLabel" name="labelBESTNAVveltype">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="16" column="0">
+                   <widget class="QLabel" name="label_226">
+                    <property name="text">
+                     <string>Galileo and BDS-3 signal mask</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="1">
+                   <widget class="QLabel" name="labelBESTNAVlatency">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="23" column="1">
+                   <widget class="QLabel" name="labelBESTNAVtrkgnd">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="0">
+                   <widget class="QLabel" name="label_232">
+                    <property name="text">
+                     <string>Horizontal speed</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_208">
+                    <property name="text">
+                     <string>Base station id</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLabel" name="labelBESTNAVdatum">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="0">
+                   <widget class="QLabel" name="label_238">
+                    <property name="text">
+                     <string>Horizontal speed σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="0">
+                   <widget class="QLabel" name="label_225">
+                    <property name="text">
+                     <string>Extended solution status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLabel" name="labelBESTNAVHgt">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="2">
+                   <widget class="QLabel" name="label_218">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="0">
+                   <widget class="QLabel" name="label_237">
+                    <property name="text">
+                     <string>Vertical speed σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLabel" name="labelBESTNAVlatsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLabel" name="labelBESTNAVLat">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="1">
+                   <widget class="QLabel" name="labelBESTNAVsvsused">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLabel" name="labelBESTNAVbaseID">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="2">
+                   <widget class="QLabel" name="label_214">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="2">
+                   <widget class="QLabel" name="label_239">
+                    <property name="text">
+                     <string>m/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="0">
+                   <widget class="QLabel" name="label_210">
+                    <property name="text">
+                     <string>Solution age</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="labelBESTNAVPsol">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="2">
+                   <widget class="QLabel" name="label_234">
+                    <property name="text">
+                     <string>[m/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="0">
+                   <widget class="QLabel" name="label_236">
+                    <property name="text">
+                     <string>Vertical speed</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLabel" name="labelBESTNAVLon">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_202">
+                    <property name="text">
+                     <string>Height</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_199">
+                    <property name="text">
+                     <string>Pos type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="2">
+                   <widget class="QLabel" name="label_233">
+                    <property name="text">
+                     <string>[m/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLabel" name="labelBESTNAVUnd">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="2">
+                   <widget class="QLabel" name="label_215">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="23" column="0">
+                   <widget class="QLabel" name="label_235">
+                    <property name="text">
+                     <string>Actual direction of motion over ground</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="1">
+                   <widget class="QLabel" name="labelBESTNAVvspeedsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="0">
+                   <widget class="QLabel" name="label_223">
+                    <property name="text">
+                     <string>Number of satellites tracked</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="18" column="0">
+                   <widget class="QLabel" name="label_228">
+                    <property name="text">
+                     <string>V-sol status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="2">
+                   <widget class="QLabel" name="label_221">
+                    <property name="text">
+                     <string>[m/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="2">
+                   <widget class="QLabel" name="label_219">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="1">
+                   <widget class="QLabel" name="labelBESTNAVvspeed">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="17" column="0">
+                   <widget class="QLabel" name="label_227">
+                    <property name="text">
+                     <string>GPS, GLONASS and BDS-2 signal mask</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="27" column="1">
+                   <spacer name="verticalSpacer_23">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameOBSVM">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_29">
+                  <item row="2" column="0">
+                   <widget class="QTableWidget" name="tableOBSVM">
+                    <property name="editTriggers">
+                     <set>QAbstractItemView::NoEditTriggers</set>
+                    </property>
+                    <column>
+                     <property name="text">
+                      <string>System freq</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>PRN/ slot</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>psr</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>adr</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>psr std</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>adr std</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>dopp</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>C/No</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>REV</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>locktime</string>
+                     </property>
+                    </column>
+                    <column>
+                     <property name="text">
+                      <string>ch-tr-status</string>
+                     </property>
+                    </column>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <spacer name="verticalSpacer_24">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item row="0" column="0">
+                   <layout class="QHBoxLayout" name="horizontalLayout_31">
+                    <item>
+                     <widget class="QLabel" name="label_296">
+                      <property name="text">
+                       <string>Total number of observations: </string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="labelOBSVMnum">
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameGPSEPH">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_28">
+                  <item row="0" column="2">
+                   <widget class="QLabel" name="label_260">
+                    <property name="text">
+                     <string>TextLabel</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_268">
+                    <property name="text">
+                     <string>Correction of the satellite mean angular velocity</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLabel" name="labelGPSEPHissueofdata2">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_266">
+                    <property name="text">
+                     <string>Reference time of the ephemeris</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="1">
+                   <widget class="QLabel" name="labelGPSEPHrightasc">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="23" column="0">
+                   <widget class="QLabel" name="label_282">
+                    <property name="text">
+                     <string>Issue of data</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLabel" name="labelGPSEPHzcount">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="1">
+                   <widget class="QLabel" name="labelGPSEPHinclrate">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="23" column="1">
+                   <widget class="QLabel" name="labelGPSEPHissueofdata">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_262">
+                    <property name="text">
+                     <string>Issue of data, ephemeris 1</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="28" column="0">
+                   <widget class="QLabel" name="label_287">
+                    <property name="text">
+                     <string>Satellite clock drift parameter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLabel" name="labelGPSEPHgpsweek">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="0">
+                   <widget class="QLabel" name="label_270">
+                    <property name="text">
+                     <string>Eccentricity of the satellite orbit</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="1">
+                   <widget class="QLabel" name="labelGPSEPHraterightasc">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="16" column="1">
+                   <widget class="QLabel" name="labelGPSEPHorbradsin">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="1">
+                   <widget class="QLabel" name="labelGPSEPHarglatcos">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="1">
+                   <widget class="QLabel" name="labelGPSEPHgroudelay">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="1">
+                   <widget class="QLabel" name="labelGPSEPHorbradcos">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="0">
+                   <widget class="QLabel" name="label_273">
+                    <property name="text">
+                     <string>Argument of latitude (amplitude of sine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_265">
+                    <property name="text">
+                     <string>Z count week number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_241">
+                    <property name="text">
+                     <string>Satellite PRN number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="1">
+                   <widget class="QLabel" name="labelGPSEPHarglatsin">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_264">
+                    <property name="text">
+                     <string>GPS week number</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLabel" name="labelGPSEPHissueofdata1">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="16" column="0">
+                   <widget class="QLabel" name="label_275">
+                    <property name="text">
+                     <string>Orbit radius  (amplitude of sine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="0">
+                   <widget class="QLabel" name="label_280">
+                    <property name="text">
+                     <string>Right ascension of ascending node</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="19" column="0">
+                   <widget class="QLabel" name="label_278">
+                    <property name="text">
+                     <string>Inclination angle at TOE time</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="17" column="0">
+                   <widget class="QLabel" name="label_276">
+                    <property name="text">
+                     <string>Inclination (amplitude of cosine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="31" column="0">
+                   <widget class="QLabel" name="label_290">
+                    <property name="text">
+                     <string>User range accuracy</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="18" column="1">
+                   <widget class="QLabel" name="labelGPSEPHinclsin">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="0">
+                   <widget class="QLabel" name="label_272">
+                    <property name="text">
+                     <string>Argument of latitude (amplitude of cosine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_263">
+                    <property name="text">
+                     <string>Issue of data, ephemeris 2</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLabel" name="labelGPSEPHreftime">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="1">
+                   <widget class="QLabel" name="labelGPSEPHargperigee">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="28" column="1">
+                   <widget class="QLabel" name="labelGPSEPHsatclockdrift">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="30" column="1">
+                   <widget class="QLabel" name="labelGPSEPHcorrmeanangvel">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="29" column="0">
+                   <widget class="QLabel" name="label_288">
+                    <property name="text">
+                     <string>Anti-spoofing</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="30" column="0">
+                   <widget class="QLabel" name="label_289">
+                    <property name="text">
+                     <string>Corrected mean angular velocity</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="17" column="1">
+                   <widget class="QLabel" name="labelGPSEPHinclcos">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLabel" name="labelGPSEPHhealth">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="27" column="1">
+                   <widget class="QLabel" name="labelGPSEPHsatclockrate">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="labelGPSEPHprn">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="1">
+                   <widget class="QLabel" name="labelGPSEPHreftimebias">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="1">
+                   <widget class="QLabel" name="labelGPSEPHsatclockbias">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_269">
+                    <property name="text">
+                     <string>Mean anomaly at TOE time</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="0">
+                   <widget class="QLabel" name="label_284">
+                    <property name="text">
+                     <string>Group delay</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="0">
+                   <widget class="QLabel" name="label_274">
+                    <property name="text">
+                     <string>Orbit radius  (amplitude of cosine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="0">
+                   <widget class="QLabel" name="label_279">
+                    <property name="text">
+                     <string>Rate of change of inclination angle</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="0">
+                   <widget class="QLabel" name="label_283">
+                    <property name="text">
+                     <string>Reference time of satellite clock bias</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="0">
+                   <widget class="QLabel" name="label_271">
+                    <property name="text">
+                     <string>Argument of perigee</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="0">
+                   <widget class="QLabel" name="label_285">
+                    <property name="text">
+                     <string>Satellite clock bias parameter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="27" column="0">
+                   <widget class="QLabel" name="label_286">
+                    <property name="text">
+                     <string>Satellite clock rate parameter</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="29" column="1">
+                   <widget class="QLabel" name="labelantispoofing">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_261">
+                    <property name="text">
+                     <string>Health status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="31" column="1">
+                   <widget class="QLabel" name="labelGPSEPHuserrangeacc">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="0">
+                   <widget class="QLabel" name="label_281">
+                    <property name="text">
+                     <string>Rate of change of the right ascension of ascending node</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLabel" name="labelGPSEPHsemimajor">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_267">
+                    <property name="text">
+                     <string>Semi-major axis of the satellite orbit</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="18" column="0">
+                   <widget class="QLabel" name="label_277">
+                    <property name="text">
+                     <string>Inclination (amplitude of sine)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="1">
+                   <widget class="QLabel" name="labelGPSEPHeccentr">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="19" column="1">
+                   <widget class="QLabel" name="labelGPSEPHinclattoe">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLabel" name="labelGPSEPHmeananomaly">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLabel" name="labelGPSEPHcorrmeansatangvel">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_321">
+                    <property name="text">
+                     <string>Time stamp of subframe 0</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLabel" name="labelGPSEPHtimestamp">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QLabel" name="label_323">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="2">
+                   <widget class="QLabel" name="label_324">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="2">
+                   <widget class="QLabel" name="label_325">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="2">
+                   <widget class="QLabel" name="label_326">
+                    <property name="text">
+                     <string>[rad/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="2">
+                   <widget class="QLabel" name="label_327">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="2">
+                   <widget class="QLabel" name="label_328">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="2">
+                   <widget class="QLabel" name="label_329">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="2">
+                   <widget class="QLabel" name="label_330">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="2">
+                   <widget class="QLabel" name="label_331">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="16" column="2">
+                   <widget class="QLabel" name="label_332">
+                    <property name="text">
+                     <string>[m]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="17" column="2">
+                   <widget class="QLabel" name="label_333">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="18" column="2">
+                   <widget class="QLabel" name="label_334">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="19" column="2">
+                   <widget class="QLabel" name="label_335">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="20" column="2">
+                   <widget class="QLabel" name="label_336">
+                    <property name="text">
+                     <string>[rad/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="21" column="2">
+                   <widget class="QLabel" name="label_337">
+                    <property name="text">
+                     <string>[rad]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="22" column="2">
+                   <widget class="QLabel" name="label_338">
+                    <property name="text">
+                     <string>[rad/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="24" column="2">
+                   <widget class="QLabel" name="label_339">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="25" column="2">
+                   <widget class="QLabel" name="label_340">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="26" column="2">
+                   <widget class="QLabel" name="label_341">
+                    <property name="text">
+                     <string>[s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="27" column="2">
+                   <widget class="QLabel" name="label_342">
+                    <property name="text">
+                     <string>[s/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="28" column="2">
+                   <widget class="QLabel" name="label_343">
+                    <property name="text">
+                     <string>[s/s/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="30" column="2">
+                   <widget class="QLabel" name="label_344">
+                    <property name="text">
+                     <string>[rad/s]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="31" column="2">
+                   <widget class="QLabel" name="label_345">
+                    <property name="text">
+                     <string>[m^2]</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameUNIHEADING">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_27">
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="label_250">
+                    <property name="text">
+                     <string>Number of satellites used</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="0">
+                   <widget class="QLabel" name="label_255">
+                    <property name="text">
+                     <string>GPS, GLONASS and BDS-2 signal
+mask</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_243">
+                    <property name="text">
+                     <string>Baseline length</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_247">
+                    <property name="text">
+                     <string>Pitch σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="2">
+                   <widget class="QLabel" name="label_257">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_248">
+                    <property name="text">
+                     <string>Base station ID</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGextsolstat">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_242">
+                    <property name="text">
+                     <string>Position type</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="0">
+                   <widget class="QLabel" name="label_252">
+                    <property name="text">
+                     <string>Number of satellites with L2
+signal above the elevation mask
+angle</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGheading">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="14" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGgpsmask">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGpostype">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="2">
+                   <widget class="QLabel" name="label_258">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGsolstat">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGgalmask">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGused">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="0">
+                   <widget class="QLabel" name="label_251">
+                    <property name="text">
+                     <string>Number of satellites above the
+elevation mask angle</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_198">
+                    <property name="text">
+                     <string>Solution status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="12" column="0">
+                   <widget class="QLabel" name="label_253">
+                    <property name="text">
+                     <string>Extended solution status</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGpitchsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGabove">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGtracked">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGpitch">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGbaseID">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="2">
+                   <widget class="QLabel" name="label_240">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="2">
+                   <widget class="QLabel" name="label_256">
+                    <property name="text">
+                     <string>[deg]</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="13" column="0">
+                   <widget class="QLabel" name="label_254">
+                    <property name="text">
+                     <string>Galileo and BDS-3 signal mask</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_244">
+                    <property name="text">
+                     <string>Heading</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_249">
+                    <property name="text">
+                     <string>Number of satellites tracked</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGheadingsko">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_246">
+                    <property name="text">
+                     <string>Heading σ</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGl2above">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLabel" name="labelUNIHEADINGlen">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_245">
+                    <property name="text">
+                     <string>Pitch</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="15" column="1">
+                   <spacer name="verticalSpacer_25">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameMASK">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_30">
+                  <item row="5" column="1">
+                   <widget class="QSpinBox" name="spinMASKQZSS">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="minimum">
+                     <number>-1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>90</number>
+                    </property>
+                    <property name="value">
+                     <number>-1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QSpinBox" name="spinMASKGAL">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="minimum">
+                     <number>-1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>90</number>
+                    </property>
+                    <property name="value">
+                     <number>-1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QCheckBox" name="checkMASKBDS">
+                    <property name="text">
+                     <string>BDS</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QCheckBox" name="checkMASKGPS">
+                    <property name="text">
+                     <string>GPS</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="label_298">
+                    <property name="text">
+                     <string>Min elevation</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QSpinBox" name="spinMASKGLO">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="minimum">
+                     <number>-1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>90</number>
+                    </property>
+                    <property name="value">
+                     <number>-1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_297">
+                    <property name="text">
+                     <string>System</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QSpinBox" name="spinMASKGPS">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="minimum">
+                     <number>-1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>90</number>
+                    </property>
+                    <property name="value">
+                     <number>-1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1" colspan="2">
+                   <widget class="QSpinBox" name="spinMASKCN0">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="maximum">
+                     <number>100</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QCheckBox" name="checkMASKGLO">
+                    <property name="text">
+                     <string>GLO</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QLabel" name="label_299">
+                    <property name="text">
+                     <string>Frequencies</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QSpinBox" name="spinMASKBDS">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="minimum">
+                     <number>-1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>90</number>
+                    </property>
+                    <property name="value">
+                     <number>-1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <layout class="QHBoxLayout" name="horizontalLayout_34">
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGPSl1ca">
+                      <property name="text">
+                       <string>L1C/A</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGPSl2c">
+                      <property name="text">
+                       <string>L2C</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QCheckBox" name="checkMASKGAL">
+                    <property name="text">
+                     <string>GAL</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_305">
+                    <property name="text">
+                     <string>CN0</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="2">
+                   <layout class="QHBoxLayout" name="horizontalLayout_38">
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKQZSSq1ca">
+                      <property name="text">
+                       <string>Q1CA</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKQZSSq2c">
+                      <property name="text">
+                       <string>Q2C</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QCheckBox" name="checkMASKQZSS">
+                    <property name="text">
+                     <string>QZSS</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="2">
+                   <layout class="QHBoxLayout" name="horizontalLayout_36">
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGLOr1">
+                      <property name="text">
+                       <string>R1</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGLOr2">
+                      <property name="text">
+                       <string>R2</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="2" column="2">
+                   <layout class="QHBoxLayout" name="horizontalLayout_35">
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKBDSb1">
+                      <property name="text">
+                       <string>B1</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKBDSb2">
+                      <property name="text">
+                       <string>B2</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="4" column="2">
+                   <layout class="QHBoxLayout" name="horizontalLayout_37">
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGALe1">
+                      <property name="text">
+                       <string>E1</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkMASKGALe5b">
+                      <property name="text">
+                       <string>E5b</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="6" column="1">
+                   <spacer name="verticalSpacer_27">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameMODE">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_11">
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_39" stretch="0,1">
+                    <item>
+                     <widget class="QLabel" name="label_300">
+                      <property name="text">
+                       <string>Mode: </string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QComboBox" name="comboMODE">
+                      <property name="currentIndex">
+                       <number>-1</number>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>ROVER</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>BASE</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>ROVER SURVEY</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>ROVER AUTOMOTIVE</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>ROVER UAV</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_26">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameCONFIGRTK">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_31">
+                  <item row="0" column="0">
+                   <layout class="QHBoxLayout" name="horizontalLayout_40">
+                    <item>
+                     <widget class="QComboBox" name="comboCONFIGRTK">
+                      <item>
+                       <property name="text">
+                        <string>DISABLE</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>RESET</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>USER_DEFAULTS</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_4">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QFrame" name="frameCONFIGRTKparams">
+                    <property name="frameShape">
+                     <enum>QFrame::StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                     <enum>QFrame::Raised</enum>
+                    </property>
+                    <layout class="QGridLayout" name="gridLayout_32" columnstretch="0,1">
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_301">
+                       <property name="text">
+                        <string>TIMEOUT: </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QComboBox" name="comboCONFIGRTKrel">
+                       <property name="layoutDirection">
+                        <enum>Qt::LeftToRight</enum>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>1 - Low reliability</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>2 - Normal reliability</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>3 - Relatively high reliability</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>4 - High reliability</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label_302">
+                       <property name="text">
+                        <string>RELIABILITY: </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QSpinBox" name="spinCONFIGRTK">
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                       <property name="minimum">
+                        <number>0</number>
+                       </property>
+                       <property name="maximum">
+                        <number>1800</number>
+                       </property>
+                       <property name="value">
+                        <number>600</number>
+                       </property>
+                       <property name="displayIntegerBase">
+                        <number>10</number>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameCONFIGDGPS">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_33" columnstretch="0,1">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_303">
+                    <property name="text">
+                     <string>TIMEOUT: </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QSpinBox" name="spinDGPS">
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                    <property name="maximum">
+                     <number>1800</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="frameCONFIGANTIJAM">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_34" columnstretch="0,1">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_304">
+                    <property name="text">
+                     <string>MODE: </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="comboCONFIGANTIJAM">
+                    <item>
+                     <property name="text">
+                      <string>DISABLE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>AUTO</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>FORCE</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
                 <spacer name="verticalSpacer_3">
                  <property name="orientation">
                   <enum>Qt::Vertical</enum>
@@ -5895,7 +8225,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>65</x>
-     <y>783</y>
+     <y>817</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
@@ -5911,7 +8241,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>114</x>
-     <y>783</y>
+     <y>817</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
@@ -5927,7 +8257,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>163</x>
-     <y>783</y>
+     <y>817</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
@@ -5942,8 +8272,8 @@ shutdown</string>
    <slot>pollConfigMessages(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>911</x>
-     <y>-3012</y>
+     <x>929</x>
+     <y>-6717</y>
     </hint>
     <hint type="destinationlabel">
      <x>783</x>
@@ -5958,8 +8288,8 @@ shutdown</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
-     <y>-69</y>
+     <x>542</x>
+     <y>-3804</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -5974,8 +8304,8 @@ shutdown</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
-     <y>-42</y>
+     <x>542</x>
+     <y>-3777</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -5990,8 +8320,8 @@ shutdown</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
-     <y>-15</y>
+     <x>542</x>
+     <y>-3750</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -6006,8 +8336,8 @@ shutdown</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
-     <y>14</y>
+     <x>542</x>
+     <y>-3723</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -6022,8 +8352,8 @@ shutdown</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>627</x>
-     <y>41</y>
+     <x>542</x>
+     <y>-3696</y>
     </hint>
     <hint type="destinationlabel">
      <x>845</x>
@@ -6038,8 +8368,8 @@ shutdown</string>
    <slot>changeBBRSelection(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>912</x>
-     <y>254</y>
+     <x>930</x>
+     <y>-3483</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -6054,8 +8384,8 @@ shutdown</string>
    <slot>enableNAV5AltLines(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>912</x>
-     <y>410</y>
+     <x>930</x>
+     <y>-3327</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -6070,8 +8400,8 @@ shutdown</string>
    <slot>showPortSettings(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>912</x>
-     <y>1249</y>
+     <x>930</x>
+     <y>-2488</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -6086,8 +8416,8 @@ shutdown</string>
    <slot>sendPoll()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>912</x>
-     <y>1249</y>
+     <x>930</x>
+     <y>-2488</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -6102,8 +8432,8 @@ shutdown</string>
    <slot>enableITFMSettings(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>799</x>
-     <y>2044</y>
+     <x>930</x>
+     <y>-1693</y>
     </hint>
     <hint type="destinationlabel">
      <x>963</x>
@@ -6118,8 +8448,8 @@ shutdown</string>
    <slot>enableRelposFrame(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>507</x>
-     <y>732</y>
+     <x>534</x>
+     <y>774</y>
     </hint>
     <hint type="destinationlabel">
      <x>963</x>
@@ -6134,8 +8464,8 @@ shutdown</string>
    <slot>enablePosFrame(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>506</x>
-     <y>613</y>
+     <x>514</x>
+     <y>646</y>
     </hint>
     <hint type="destinationlabel">
      <x>967</x>
@@ -6150,8 +8480,8 @@ shutdown</string>
    <slot>enableVelFrame(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>508</x>
-     <y>483</y>
+     <x>514</x>
+     <y>502</y>
     </hint>
     <hint type="destinationlabel">
      <x>961</x>
@@ -6191,6 +8521,102 @@ shutdown</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkMASKGPS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>MASKcheckClickEvent(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>386</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>224</x>
+     <y>834</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkMASKBDS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>MASKcheckClickEvent(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>417</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>224</x>
+     <y>836</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkMASKGLO</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>MASKcheckClickEvent(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>448</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>190</x>
+     <y>838</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkMASKGAL</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>MASKcheckClickEvent(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>479</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>208</x>
+     <y>838</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkMASKQZSS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>MASKcheckClickEvent(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>509</x>
+     <y>510</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>213</x>
+     <y>838</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboCONFIGRTK</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>comboCONFIGRTKchangeEvent(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>375</x>
+     <y>677</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>835</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>deviceChangeEvent()</slot>
@@ -6212,5 +8638,7 @@ shutdown</string>
   <slot>enableVelFrame(bool)</slot>
   <slot>enableRawFrame(bool)</slot>
   <slot>enableEphFrame(bool)</slot>
+  <slot>MASKcheckClickEvent(bool)</slot>
+  <slot>comboCONFIGRTKchangeEvent(QString)</slot>
  </slots>
 </ui>

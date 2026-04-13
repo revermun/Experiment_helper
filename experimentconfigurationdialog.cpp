@@ -521,7 +521,6 @@ void sortListWidgetByUserData(QListWidget* listWidget, int dataIndex, Qt::SortOr
     }
 }
 
-/// TODO: функция, которая принимает индекс userDat'ы и направлениие и сортирует по нему
 void experimentConfigurationDialog::sortDevices()
 {
     sortListWidgetByUserData(ui->listWidgetDevices, INDEX_DEVICE_TYPE, devicesSort);
@@ -544,60 +543,111 @@ void experimentConfigurationDialog::deleteDevice()
 
 void experimentConfigurationDialog::changeGroupBoxSettings(QGroupBox *groupSettings)
 {
-    // QComboBox *comboInterface = qobject_cast<QComboBox*>(sender());
-    // QGridLayout *groupLayoutOld = qobject_cast<QGridLayout*>(groupSettings->layout());
-    // foreach (auto object, groupSettings->children()) {
-    //     if(!qobject_cast<QGridLayout*>(object)){
-    //         QWidget *widget = qobject_cast<QWidget*>(object);
-    //         groupLayoutOld->removeWidget(widget);
-    //         delete widget;
-    //     }
-    // }
-    // delete groupLayoutOld;
-    // QGridLayout *groupLayoutNew = new QGridLayout();
-    // groupSettings->setLayout(groupLayoutNew);
-    // QString interface = comboInterface->currentText();
-    // if (interface == "Serial"){
-    //     QLabel *labelBaudrate = new QLabel("Нестабильность смещения: ");
-    //     QLineEdit *linebaudrate = new QLineEdit();
-    //     QLabel *label = new QLabel("Случайное блуждание: ");
-    //     QLineEdit *lineRandomLuft = new QLineEdit();
-    //     QLabel *labelStartError = new QLabel("Начальная погрешность: ");
-    //     QLineEdit *lineStartError = new QLineEdit();
+    QComboBox *comboInterface = qobject_cast<QComboBox*>(sender());
+    QGridLayout *groupLayoutOld = qobject_cast<QGridLayout*>(groupSettings->layout());
+    foreach (auto object, groupSettings->children()) {
+        if(!qobject_cast<QGridLayout*>(object)){
+            QWidget *widget = qobject_cast<QWidget*>(object);
+            groupLayoutOld->removeWidget(widget);
+            delete widget;
+        }
+    }
+    delete groupLayoutOld;
+    QGridLayout *groupLayoutNew = new QGridLayout();
+    groupSettings->setLayout(groupLayoutNew);
+    QString interface = comboInterface->currentText();
+    if (interface == "Serial"){
+        QLabel *labelBaudrate = new QLabel("Скорость передачи данных: ");
+        QComboBox *comboBaudrate = new QComboBox();
+        QStringList baudrates = {"9600", "19200", "38400", "57600", "115200", "230400", "460800"};
+        comboBaudrate->addItems(baudrates);
+        QLabel *labelParity = new QLabel("Бит чётности: ");
+        QComboBox *comboParity = new QComboBox();
+        QStringList parities = {"Нет", "Четный", "Нечетный", "Всегда 1", "Всегда 0"};
+        comboParity->addItems(parities);
+        QLabel *labelDataBits = new QLabel("Количество бит данных: ");
+        QComboBox *comboDataBits = new QComboBox();
+        QStringList dataBits = {"5", "6", "7", "8"};
+        comboDataBits->addItems(dataBits);
+        QLabel *labelStopBits = new QLabel("Количество стоповых битов: ");
+        QComboBox *comboStopBits = new QComboBox();
+        QStringList stopBits = {"1", "2"};
+        comboStopBits->addItems(stopBits);
 
-    //     groupLayoutNew->addWidget(labelShiftDistability, 0, 0);
-    //     groupLayoutNew->addWidget(lineShiftDistability, 0, 1);
-    //     groupLayoutNew->addWidget(labelRandomLuft, 1, 0);
-    //     groupLayoutNew->addWidget(lineRandomLuft, 1, 1);
-    //     groupLayoutNew->addWidget(labelStartError, 2, 0);
-    //     groupLayoutNew->addWidget(lineStartError, 2, 1);
-    // }
-    // else if (interface == "CAN"){
-    //     QLabel *labelFPS = new QLabel("Кол-во кадров в секунду: ");
-    //     QLineEdit *lineFPS = new QLineEdit();
-    //     QLabel *labelResolution = new QLabel("Разрешение съёмки: ");
-    //     QLineEdit *lineResolution = new QLineEdit();
+        groupLayoutNew->addWidget(labelBaudrate, 0, 0);
+        groupLayoutNew->addWidget(comboBaudrate, 0, 1);
+        groupLayoutNew->addWidget(labelParity, 1, 0);
+        groupLayoutNew->addWidget(comboParity, 1, 1);
+        groupLayoutNew->addWidget(labelDataBits, 2, 0);
+        groupLayoutNew->addWidget(comboDataBits, 2, 1);
+        groupLayoutNew->addWidget(labelStopBits, 3, 0);
+        groupLayoutNew->addWidget(comboStopBits, 3, 1);
+    }
+    else if (interface == "CAN"){
+        QLabel *labelBaudrate = new QLabel("Скорость передачи данных (Кб/с): ");
+        QComboBox *comboBaudrate = new QComboBox();
+        QStringList baudrates = {"250", "500", "800", "1000"};
+        comboBaudrate->addItems(baudrates);
 
-    //     groupLayoutNew->addWidget(labelFPS, 0, 0);
-    //     groupLayoutNew->addWidget(lineFPS, 0, 1);
-    //     groupLayoutNew->addWidget(labelResolution, 1, 0);
-    //     groupLayoutNew->addWidget(lineResolution, 1, 1);
+        groupLayoutNew->addWidget(labelBaudrate, 0, 0);
+        groupLayoutNew->addWidget(comboBaudrate, 0, 1);
 
-    // }
-    // else if (interface == "Коакс. кабель"){
-    //     QLabel *labelDirectory = new QLabel("Путь к Antex/PCV файлу: ");
-    //     QLineEdit *lineDirectory = new QLineEdit();
+    }
+    else if (interface == "Коакс. кабель"){
+        QLabel *labelLength = new QLabel("Длина кабеля: ");
+        QLineEdit *lineLength = new QLineEdit();
+        QLabel *labelMaterial = new QLabel("Материал: ");
+        QLineEdit *lineMaterial = new QLineEdit();
+        QLabel *labelSignalLoss = new QLabel("Величина потери сигнала в дБГц: ");
+        QLineEdit *lineSignalLoss = new QLineEdit();
 
-    //     groupLayoutNew->addWidget(labelDirectory, 0, 0);
-    //     groupLayoutNew->addWidget(lineDirectory, 0, 1);
-    // }
-    // else if (interface == "TCP"){
-    //     QLabel *labelDirectory = new QLabel("Путь к Antex/PCV файлу: ");
-    //     QLineEdit *lineDirectory = new QLineEdit();
+        groupLayoutNew->addWidget(labelLength, 0, 0);
+        groupLayoutNew->addWidget(lineLength, 0, 1);
+        groupLayoutNew->addWidget(labelMaterial, 1, 0);
+        groupLayoutNew->addWidget(lineMaterial, 1, 1);
+        groupLayoutNew->addWidget(labelSignalLoss, 2, 0);
+        groupLayoutNew->addWidget(lineSignalLoss, 2, 1);
+    }
+    else if (interface == "TCP"){
+        QLabel *labelAdress = new QLabel("Адрес сервера: ");
+        QLineEdit *lineAdress = new QLineEdit();
+        QLabel *labelPortNumber = new QLabel("Номер порта: ");
+        QLineEdit *linePortNumber = new QLineEdit();
 
-    //     groupLayoutNew->addWidget(labelDirectory, 0, 0);
-    //     groupLayoutNew->addWidget(lineDirectory, 0, 1);
-    // }
+        groupLayoutNew->addWidget(labelAdress, 0, 0);
+        groupLayoutNew->addWidget(lineAdress, 0, 1);
+        groupLayoutNew->addWidget(labelPortNumber, 1, 0);
+        groupLayoutNew->addWidget(linePortNumber, 1, 1);
+    }
+}
+
+void experimentConfigurationDialog::checkConnectionSettingsFields(QComboBox *comboDevice1, QComboBox *comboDevice2, QDialog *dialog)
+{
+    if (comboDevice1->currentText() == comboDevice2->currentText()){
+        QMessageBox::warning(this, "Ошибка", "Нельзя соединять устройство с самим собой!");
+        return;
+    }
+    if (comboDevice1->currentText().isEmpty() || comboDevice2->currentText().isEmpty()){
+        QMessageBox::warning(this, "Ошибка", "Устройства не выбраны!");
+        return;
+    }
+    else dialog->accept();
+}
+
+void experimentConfigurationDialog::changeDeviceOutputs(QComboBox *comboDeviceOutput){
+    comboDeviceOutput->clear();
+    QComboBox* comboDevice = qobject_cast<QComboBox*>(sender());
+    QString deviceName = comboDevice->currentText();
+    QListWidgetItem* deviceItem = new QListWidgetItem();
+    for (int i = 0; i < ui->listWidgetDevices->count(); ++i) {
+        if (ui->listWidgetDevices->item(i)->text() == deviceName){
+            deviceItem = ui->listWidgetDevices->item(i);
+            break;
+        }
+    }
+    QList<QVariant> data = deviceItem->data(Qt::UserRole).toList();
+    QStringList outputs = data.at(INDEX_DEVICE_OUTPUTS).toStringList();
+    comboDeviceOutput->addItems(outputs);
 }
 
 void experimentConfigurationDialog::addConnection()
@@ -622,8 +672,19 @@ void experimentConfigurationDialog::addConnection()
     QLabel *labelInteface = new QLabel("Тип связи: ");
     QComboBox *comboInterface = new QComboBox();
 
+    QStringList devices;
+    for (int i = 0; i < ui->listWidgetDevices->count(); ++i) {
+        devices.append(ui->listWidgetDevices->item(i)->text());
+    }
     QStringList interfaces =  {"Serial", "CAN", "Коакс. кабель", "TCP"};
     comboInterface->addItems(interfaces);
+
+    comboDevice1->addItems(devices);
+    comboDevice2->addItems(devices);
+    comboDevice1->setCurrentIndex(-1);
+    comboDevice2->setCurrentIndex(-1);
+    comboInterface->setCurrentIndex(-1);
+
 
     comboLayout->addWidget(labelDevice1,0,0);
     comboLayout->addWidget(comboDevice1,0,1);
@@ -652,27 +713,169 @@ void experimentConfigurationDialog::addConnection()
     layout->addLayout(hLayout);
 
 
-    QObject::connect(comboInterface, &QComboBox::currentTextChanged, this, [this, groupSettings](const QString& text) {changeGroupBoxSettings(groupSettings);});
-    QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+    QObject::connect(comboInterface, &QComboBox::currentTextChanged, this, [this, groupSettings]() {changeGroupBoxSettings(groupSettings);});
+    QObject::connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput1]() {changeDeviceOutputs(comboDeviceOutput1);});
+    QObject::connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput2]() {changeDeviceOutputs(comboDeviceOutput2);});
+    QObject::connect(okButton, &QPushButton::clicked, this, [this, comboDevice1, comboDevice2, &dialog]() {checkConnectionSettingsFields(comboDevice1, comboDevice2, &dialog);});
     QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
 
     if (dialog.exec() == QDialog::Accepted) {
-
+        QTableWidgetItem* device1Item = new QTableWidgetItem(comboDevice1->currentText());
+        QTableWidgetItem* device2Item = new QTableWidgetItem(comboDevice2->currentText());
+        QTableWidgetItem* device1OutputItem = new QTableWidgetItem(comboDeviceOutput1->currentText());
+        QTableWidgetItem* device2OutputItem = new QTableWidgetItem(comboDeviceOutput2->currentText());
+        QTableWidgetItem* connectionTypeItem = new QTableWidgetItem(comboInterface->currentText());
+        QList<QVariant> interfaceData;
+        foreach (auto obj, groupSettings->children()) {
+            if (qobject_cast<QLineEdit*>(obj)){
+                QLineEdit* line = qobject_cast<QLineEdit*>(obj);
+                interfaceData.append(QVariant(line->text()));
+            }
+            else if (qobject_cast<QComboBox*>(obj)){
+                QComboBox* combo = qobject_cast<QComboBox*>(obj);
+                interfaceData.append(QVariant(combo->currentText()));
+            }
+        }
+        qDebug() << interfaceData;
+        connectionTypeItem->setData(Qt::UserRole, interfaceData);
+        int row = ui->tableWidgetConnections->rowCount();
+        ui->tableWidgetConnections->setRowCount(row + 1);
+        ui->tableWidgetConnections->setItem(row, 0, device1Item);
+        ui->tableWidgetConnections->setItem(row, 1, device1OutputItem);
+        ui->tableWidgetConnections->setItem(row, 2, connectionTypeItem);
+        ui->tableWidgetConnections->setItem(row, 3, device2Item);
+        ui->tableWidgetConnections->setItem(row, 4, device2OutputItem);
     }
 }
 
 void experimentConfigurationDialog::editConnection()
 {
+    if (ui->tableWidgetConnections->selectedItems().isEmpty()){
+        QMessageBox::warning(this, "Ошибка", "Устройство не выбрано!");
+        return;
+    }
+    int row = ui->tableWidgetConnections->currentRow();
 
+    QDialog dialog(this);
+    dialog.setWindowTitle("Редактор связей");
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    QHBoxLayout *mainLayout = new QHBoxLayout();
+    QGridLayout *comboLayout = new QGridLayout();
+    QGroupBox *groupSettings = new QGroupBox("Настройка связи");
+    groupSettings->setAlignment(Qt::AlignHCenter);
+    QGridLayout *settingsLayout = new QGridLayout();
+    groupSettings->setLayout(settingsLayout);
+    QLabel *labelDevice1 = new QLabel("Ус-во 1: ");
+    QComboBox *comboDevice1 = new QComboBox();
+    QLabel *labelDeviceOutput1 = new QLabel("Вывод ус-ва 1: ");
+    QComboBox *comboDeviceOutput1 = new QComboBox();
+    QLabel *labelDevice2 = new QLabel("Ус-во 2: ");
+    QComboBox *comboDevice2 = new QComboBox();
+    QLabel *labelDeviceOutput2 = new QLabel("Вывод ус-ва 2: ");
+    QComboBox *comboDeviceOutput2 = new QComboBox();
+    QLabel *labelInteface = new QLabel("Тип связи: ");
+    QComboBox *comboInterface = new QComboBox();
+
+    QStringList devices;
+
+    QHBoxLayout *hLayout = new QHBoxLayout();
+    QPushButton *okButton = new QPushButton("Готово");
+    QPushButton *cancelButton = new QPushButton("Отмена");
+
+    QObject::connect(comboInterface, &QComboBox::currentTextChanged, this, [this, groupSettings]() {changeGroupBoxSettings(groupSettings);});
+    QObject::connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput1]() {changeDeviceOutputs(comboDeviceOutput1);});
+    QObject::connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput2]() {changeDeviceOutputs(comboDeviceOutput2);});
+    QObject::connect(okButton, &QPushButton::clicked, this, [this, comboDevice1, comboDevice2, &dialog]() {checkConnectionSettingsFields(comboDevice1, comboDevice2, &dialog);});
+    QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+    for (int i = 0; i < ui->listWidgetDevices->count(); ++i) {
+        devices.append(ui->listWidgetDevices->item(i)->text());
+    }
+    comboDevice1->addItems(devices);
+    comboDevice2->addItems(devices);
+    QStringList interfaces =  {"Serial", "CAN", "Коакс. кабель", "TCP"};
+    comboInterface->addItems(interfaces);
+
+    comboDevice1->setCurrentText(ui->tableWidgetConnections->item(row,0)->text());
+    comboDevice2->setCurrentText(ui->tableWidgetConnections->item(row,3)->text());
+    comboDeviceOutput1->setCurrentText(ui->tableWidgetConnections->item(row,1)->text());
+    comboDeviceOutput2->setCurrentText(ui->tableWidgetConnections->item(row,4)->text());
+    comboInterface->setCurrentText(ui->tableWidgetConnections->item(row,2)->text());
+
+    QList<QVariant> data = ui->tableWidgetConnections->item(row,2)->data(Qt::UserRole).toList();
+    int j = 0;
+    foreach (auto obj, groupSettings->children()) {
+        if (qobject_cast<QLineEdit*>(obj)){
+            QLineEdit* line = qobject_cast<QLineEdit*>(obj);
+            line->setText(data.at(j).toString());
+            j++;
+        }
+        else if (qobject_cast<QComboBox*>(obj)){
+            QComboBox* combo = qobject_cast<QComboBox*>(obj);
+            combo->setCurrentText(data.at(j).toString());
+            j++;
+        }
+    }
+
+    comboLayout->addWidget(labelDevice1,0,0);
+    comboLayout->addWidget(comboDevice1,0,1);
+    comboLayout->addWidget(labelDeviceOutput1,1,0);
+    comboLayout->addWidget(comboDeviceOutput1,1,1);
+    comboLayout->addWidget(labelDevice2,2,0);
+    comboLayout->addWidget(comboDevice2,2,1);
+    comboLayout->addWidget(labelDeviceOutput2,3,0);
+    comboLayout->addWidget(comboDeviceOutput2,3,1);
+    comboLayout->addWidget(labelInteface,4,0);
+    comboLayout->addWidget(comboInterface,4,1);
+
+
+    hLayout->addWidget(okButton);
+    hLayout->addWidget(cancelButton);
+    hLayout->addStretch(100);
+
+    mainLayout->addLayout(comboLayout);
+    mainLayout->addWidget(groupSettings);
+    layout->addLayout(mainLayout);
+    layout->addLayout(hLayout);
+
+
+    if (dialog.exec() == QDialog::Accepted) {
+        QTableWidgetItem* device1Item = new QTableWidgetItem(comboDevice1->currentText());
+        QTableWidgetItem* device2Item = new QTableWidgetItem(comboDevice2->currentText());
+        QTableWidgetItem* device1OutputItem = new QTableWidgetItem(comboDeviceOutput1->currentText());
+        QTableWidgetItem* device2OutputItem = new QTableWidgetItem(comboDeviceOutput2->currentText());
+        QTableWidgetItem* connectionTypeItem = new QTableWidgetItem(comboInterface->currentText());
+        QList<QVariant> interfaceData;
+        foreach (auto obj, groupSettings->children()) {
+            if (qobject_cast<QLineEdit*>(obj)){
+                QLineEdit* line = qobject_cast<QLineEdit*>(obj);
+                interfaceData.append(QVariant(line->text()));
+            }
+            else if (qobject_cast<QComboBox*>(obj)){
+                QComboBox* combo = qobject_cast<QComboBox*>(obj);
+                interfaceData.append(QVariant(combo->currentText()));
+            }
+        }
+        qDebug() << interfaceData;
+        connectionTypeItem->setData(Qt::UserRole, interfaceData);
+        ui->tableWidgetConnections->removeRow(row);
+        ui->tableWidgetConnections->insertRow(row);
+        ui->tableWidgetConnections->setItem(row, 0, device1Item);
+        ui->tableWidgetConnections->setItem(row, 1, device1OutputItem);
+        ui->tableWidgetConnections->setItem(row, 2, connectionTypeItem);
+        ui->tableWidgetConnections->setItem(row, 3, device2Item);
+        ui->tableWidgetConnections->setItem(row, 4, device2OutputItem);
+    }
 }
 
-void experimentConfigurationDialog::sortConnections()
-{
 
-}
 
 void experimentConfigurationDialog::deleteConnection()
 {
-
+    if (ui->tableWidgetConnections->selectedItems().isEmpty()){
+        QMessageBox::warning(this, "Ошибка", "Устройство не выбрано!");
+        return;
+    }
+    ui->tableWidgetConnections->removeRow(ui->tableWidgetConnections->currentRow());
 }
 

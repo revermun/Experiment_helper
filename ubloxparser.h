@@ -11,7 +11,7 @@
 #include <QBuffer>
 
 #include "ublox.h"
-///TODO: протоколы
+/// протоколы
 /// ubx-cfg-dat - SET реализация в первой вкладке
 /// ubx-cfg-cfg - Command
 /// ubx-cfg-dgnss - GET/SET
@@ -74,7 +74,6 @@ class UbloxParser
 public:
     UbloxParser(QSerialPort *connection);
     ~UbloxParser();
-    QMap<QString,QByteArray> parseMessage();
     QMap<QString,QByteArray> parseMessage(QByteArray* buff);
     bool sendMessage(QByteArray msg);
     static QByteArray calcCheckSum(QByteArray msg);

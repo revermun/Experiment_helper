@@ -9,6 +9,8 @@
 #include <QCheckBox>
 #include <QSerialPort>
 #include <QTableWidget>
+#include <QTime>
+#include <QTcpServer>
 
 #include "enums.h"
 
@@ -47,19 +49,24 @@ public slots:
     void openDataAndGraphs();
     void connectDevice();
     void disconnectDevice();
+    void startExperiment();
+    void parseMessage();
+    void sendUserEvent();
 
 private:
     void fillConnectionsTable();
     void addItemToConnectionsTable(QString protocol, QList<QString> parameters);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
     void setupTableSize(QTableWidget* table);
-    // QSerialPort connection;
+    void addItemToLogTable(QString localTime, QString GNSSTime, QString event);
     Ui::MainWindow *ui;
 
     //контейнеры
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
     QMap<QString, QSerialPort*> connectionsMap;
     QList<QList<QString>> notesList;
+    QMap<QString,QByteArray> bufferMap;
+    QMap<QString,QMap<QString,int>> flagsMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;
@@ -69,9 +76,12 @@ private:
     //флаги
     bool isLap = 0;
     int lapNumber = 0;
-    bool eventSettingsSolutionFound = 0;
-    bool eventSettingsSolutionLost = 0;
-    bool eventSettingsETC = 0;
+    bool eventSettingsSolFound = 0;
+    bool eventSettingsSolLost = 0;
+    bool eventSettingsRelSolFound = 0;
+    bool eventSettingsRelSolLost = 0;
+
+    QTime lapTime;
 
 };
 #endif // MAINWINDOW_H
