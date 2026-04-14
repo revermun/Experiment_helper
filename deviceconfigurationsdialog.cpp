@@ -31,11 +31,11 @@
 /// datum           BESTNAVA +                                          +
 /// RTK             CONGFIG RTK +                                       +
 /// antijam         CONFIG ANTIJAM +                                    +
-/// eph             GPSEPHA/BD3EPHA/GLOEPHA/GALEPHA x +          -
-/// raw             OBSVMA x  +                                         -
-/// vel pos         BESTNAVA x +                                        -
+/// eph             GPSEPHA/BD3EPHA/GLOEPHA/GALEPHA x +                 +
+/// raw             OBSVMA x  +                                         +
+/// vel pos         BESTNAVA x +                                        +
 /// mode            MODE +                                              +
-/// rel pos         UNIHEADINGA x +                                     -
+/// rel pos         UNIHEADINGA x +                                     +
 
 /// протоколы ublox
 /// ubx-cfg-dat - SET реализация в первой вкладке   |+

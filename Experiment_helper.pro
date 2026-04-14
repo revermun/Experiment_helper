@@ -24,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     connectionSettings.h \
+    convertors.h \
     dataandgraphsdialog.h \
     deviceconfigurationsdialog.h \
     enums.h \

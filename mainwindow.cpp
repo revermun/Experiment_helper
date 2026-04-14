@@ -7,6 +7,8 @@
 #include "experimentconfigurationdialog.h"
 #include "deviceconfigurationsdialog.h"
 #include "ubloxparser.h"
+#include "unicoreparser.h"
+#include "convertors.h"
 
 /// Мысли по поводу принципа работы приложения
 /// Чтение с портов:
@@ -146,7 +148,8 @@ void MainWindow::addItemToConnectionsTable(QString protocol, QList<QString> para
     if (protocol == "Serial"){
         QString transferProtocol =  parameters.at(INDEX_GENERAL_PROTOCOL);
         QString deviceType =        parameters.at(INDEX_GENERAL_DEVICE_TYPE);
-        QString baudrate =           parameters.at(INDEX_SERIAL_BAUDRATE);
+        QString port =              parameters.at(INDEX_SERIAL_PORT);
+        QString baudrate =          parameters.at(INDEX_SERIAL_BAUDRATE);
         QString dataBits =          parameters.at(INDEX_SERIAL_DATA_BITS);
         QString TCPPort =           parameters.at(INDEX_SERIAL_TCP_PORT);
         QString parity =            parameters.at(INDEX_SERIAL_PARITY);
@@ -238,14 +241,15 @@ void MainWindow::performAction(QAction *action)
             if (protocolName == "Serial"){
                 QString transferProtocol =  parametersXml.attribute("transfer_protocol");
                 QString deviceType =        parametersXml.attribute("device_type");
-                QString baudrate =           parametersXml.attribute("baudrate");
+                QString port =              parametersXml.attribute("Serial_port");
+                QString baudrate =          parametersXml.attribute("baudrate");
                 QString dataBits =          parametersXml.attribute("data_bits");
                 QString TCPPort =           parametersXml.attribute("TCP_port_number");
                 QString parity =            parametersXml.attribute("parity");
                 QString stopBits =          parametersXml.attribute("stop_bits");
                 QString TCPCount =          parametersXml.attribute("TCP_connections_number");
 
-                parameters << deviceName << deviceType << transferProtocol << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
+                parameters << deviceName << deviceType << transferProtocol << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
 
             }
             else if (protocolName == "CAN"){
@@ -307,7 +311,8 @@ void MainWindow::performAction(QAction *action)
             if (protocolName == "Serial"){
                 QString transferProtocol =  settings.second.at(INDEX_GENERAL_PROTOCOL);
                 QString deviceType =        settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-                QString baudrate =           settings.second.at(INDEX_SERIAL_BAUDRATE);
+                QString port =              settings.second.at(INDEX_SERIAL_PORT);
+                QString baudrate =          settings.second.at(INDEX_SERIAL_BAUDRATE);
                 QString dataBits =          settings.second.at(INDEX_SERIAL_DATA_BITS);
                 QString TCPPort =           settings.second.at(INDEX_SERIAL_TCP_PORT);
                 QString parity =            settings.second.at(INDEX_SERIAL_PARITY);
@@ -320,6 +325,7 @@ void MainWindow::performAction(QAction *action)
                 QDomElement protocolXml = connectionsDoc.createElement(protocolName);
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
+                protocolXml.setAttribute("Serial_port", port);
                 protocolXml.setAttribute("baudrate", baudrate);
                 protocolXml.setAttribute("data_bits", dataBits);
                 protocolXml.setAttribute("TCP_port_number", TCPPort);
@@ -429,14 +435,15 @@ void MainWindow::editConnection()
         parameters << deviceName << deviceType << transferProtocol;
 
         if(protocolName == "Serial"){
-            QString baudrate =   settings.second.at(INDEX_SERIAL_BAUDRATE);
+            QString port =      settings.second.at(INDEX_SERIAL_PORT);
+            QString baudrate =  settings.second.at(INDEX_SERIAL_BAUDRATE);
             QString dataBits =  settings.second.at(INDEX_SERIAL_DATA_BITS);
             QString TCPPort =   settings.second.at(INDEX_SERIAL_TCP_PORT);
             QString parity =    settings.second.at(INDEX_SERIAL_PARITY);
             QString stopBits =  settings.second.at(INDEX_SERIAL_STOP_BITS);
             QString TCPCount =  settings.second.at(INDEX_SERIAL_TCP_COUNT);
 
-            parameters << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
+            parameters << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
 
             QTableWidgetItem *portItem = new QTableWidgetItem(TCPPort);
             ui->tableWidgetConnections->setItem(ui->tableWidgetConnections->currentRow(), INDEX_CONN_TABLE_TCP_PORT, portItem);
@@ -520,14 +527,15 @@ void MainWindow::openConnectionSettings()
         parameters << deviceName << deviceType << transferProtocol;
 
         if(protocolName == "Serial"){
-            QString baudrate =   settings.second.at(INDEX_SERIAL_BAUDRATE);
+            QString port =      settings.second.at(INDEX_SERIAL_PORT);
+            QString baudrate =  settings.second.at(INDEX_SERIAL_BAUDRATE);
             QString dataBits =  settings.second.at(INDEX_SERIAL_DATA_BITS);
             QString TCPPort =   settings.second.at(INDEX_SERIAL_TCP_PORT);
             QString parity =    settings.second.at(INDEX_SERIAL_PARITY);
             QString stopBits =  settings.second.at(INDEX_SERIAL_STOP_BITS);
             QString TCPCount =  settings.second.at(INDEX_SERIAL_TCP_COUNT);
 
-            parameters << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
+            parameters << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
 
         }
         else if(protocolName == "CAN"){
@@ -730,7 +738,7 @@ void MainWindow::connectDevice()
         connection->setDataBits(databitsEnum);
         connection->setStopBits(stopBitsEnum);
         connection->setParity(parity);
-        port = ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_TCP_PORT)->text();
+        port = devicesMap[deviceName].second.at(INDEX_SERIAL_PORT);
         baudrate = devicesMap[deviceName].second.at(INDEX_SERIAL_BAUDRATE).toInt();
     }
     dumpSimpleMap(devicesMap);
@@ -969,6 +977,13 @@ void MainWindow::parseMessage()
                     flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_FALSE;
                 }
             }
+        }
+        else if (protocol == "Unicore"){
+            UnicoreParser parser(connection);
+            UnicoreMessage mess = parser.parseMessage(&buff);
+            if (mess.data.isEmpty()) return;
+            if (!mess.isAscii) return;
+
         }
     }
 }

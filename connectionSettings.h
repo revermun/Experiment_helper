@@ -37,27 +37,8 @@ public slots:
     void checkFields();
 
 private:
+    void setChildrenHidden(QObject* parent, bool isHidden);
     Ui::ConnectionSettings *ui;
     QPair<QString,QList<QString>> settings;
-    QLabel* labelDataBits;
-    QLabel* labelTCPNumber;
-    QLabel* labelEven;
-    QLabel* labelStopBits;
-    QLabel* labelConnectionCount;
-    QComboBox* comboBaudrate;
-    QComboBox* comboDataBits;
-    QComboBox* comboParity;
-    QComboBox* comboStopBits;
-    QComboBox* comboConnectionCount;
-    QLineEdit* lineEditTCPNumber;
-    QLabel* labelClientServer;
-    QLabel* labelAdress;
-    QLabel* labelPort;
-    QComboBox* comboClientServer;
-    QLineEdit* lineEditAdress;
-    QLineEdit* lineEditPort;
-    QLabel* labelBaudrate;
-    QLabel* labelCANType;
-    QComboBox* comboCANType;
 };
 #endif // CONNECTIONSETTINGS_H
