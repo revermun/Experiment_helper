@@ -1007,6 +1007,9 @@
             <layout class="QHBoxLayout" name="horizontalLayout_10">
              <item>
               <widget class="QPushButton" name="pushButtonSet">
+               <property name="toolTip">
+                <string>Отправить сообщение</string>
+               </property>
                <property name="styleSheet">
                 <string notr="true">image: url(:/resources/send.png);</string>
                </property>
@@ -1017,6 +1020,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="pushButtonPoll">
+               <property name="toolTip">
+                <string>Отправить запрос</string>
+               </property>
                <property name="styleSheet">
                 <string notr="true">image: url(:/resources/restart.png);</string>
                </property>
@@ -1027,6 +1033,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="pushButtonSaveInDevice">
+               <property name="toolTip">
+                <string>Хз</string>
+               </property>
                <property name="styleSheet">
                 <string notr="true">image: url(:/resources/save.png);</string>
                </property>
@@ -1047,6 +1056,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelResponse">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1073,7 +1089,7 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>-2332</y>
+                <y>0</y>
                 <width>686</width>
                 <height>7622</height>
                </rect>

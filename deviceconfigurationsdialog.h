@@ -18,7 +18,7 @@ class deviceConfigurationsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QSerialPort*> connectionsMap, QWidget *parent = nullptr);
+    explicit deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent = nullptr);
     ~deviceConfigurationsDialog();
 
 public slots:
@@ -51,15 +51,16 @@ private:
     void setChildrenEnabled(QObject* parent, bool isEnabled);
     void sendMSGPoll(uint8_t classID, uint8_t messageID);
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
-    QMap<QString, QSerialPort*> connectionsMap;
+    QMap<QString, QObject*> connectionsMap;
     QMap<QByteArray,QString> messagesNamesMap;
     QMap<QString, QPair<uint8_t,uint8_t>> messagesIDMapUBX;
     QMap<QString, QFrame*> framesMap;
     QMap<QString, QString> messagesDescriptionsMap;
-    QSerialPort* currentConnection = nullptr;
+    QObject* currentConnection = nullptr;
     QString currentItemText;
     QByteArray streamBuffer;
     QString protocol;
+    bool newResponse;
     int count = 0;
     bool velCheck;
     bool posCheck = false;

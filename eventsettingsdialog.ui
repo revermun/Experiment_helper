@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>eventSettingsDialog</class>
+ <widget class="QDialog" name="eventSettingsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>503</width>
+    <height>375</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QPushButton" name="pushButtonAdd">
+     <property name="toolTip">
+      <string>Добавить событие</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">image: url(:/resources/add.png);</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="4">
+    <widget class="QListWidget" name="listEvents"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="pushButtonEdit">
+     <property name="toolTip">
+      <string>Изменить событие</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">image: url(:/resources/edit.png);</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="pushButtonDelete">
+     <property name="toolTip">
+      <string>Удалить событие</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">image: url(:/resources/remove.png);</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>eventSettingsDialog</receiver>
+   <slot>addEvent()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>21</x>
+     <y>354</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>357</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonEdit</sender>
+   <signal>clicked()</signal>
+   <receiver>eventSettingsDialog</receiver>
+   <slot>editEvent()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>85</x>
+     <y>356</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>51</x>
+     <y>368</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonDelete</sender>
+   <signal>clicked()</signal>
+   <receiver>eventSettingsDialog</receiver>
+   <slot>deleteEvent()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>361</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>97</x>
+     <y>370</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>addEvent()</slot>
+  <slot>editEvent()</slot>
+  <slot>deleteEvent()</slot>
+ </slots>
+</ui>

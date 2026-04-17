@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QString>
 #include <QSerialPort>
+#include <QTcpSocket>
 #include <QDebug>
 #include <QDataStream>
 #include <QBuffer>
@@ -56,12 +57,12 @@ struct UnicoreMessage{
 class UnicoreParser
 {
 public:
-    UnicoreParser(QSerialPort *connection);
+    UnicoreParser(QObject *connection);
     static ULONG calcCRC(QByteArray msg);
     UnicoreMessage parseMessage(QByteArray* buff);
     bool sendMessage(QString msg);
 private:
-    QSerialPort* connection;
+    QObject* connection;
 };
 
 #endif // UNICOREPARSER_H

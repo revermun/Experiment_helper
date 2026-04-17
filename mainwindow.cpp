@@ -6,6 +6,7 @@
 #include "dataandgraphsdialog.h"
 #include "experimentconfigurationdialog.h"
 #include "deviceconfigurationsdialog.h"
+#include "eventsettingsdialog.h"
 #include "ubloxparser.h"
 #include "unicoreparser.h"
 #include "convertors.h"
@@ -18,6 +19,48 @@
 ///
 /// *В конфигурацию устройств пользователь не должен заходить посередине захода, следовательно там можно читать с порта
 /// *Во вкладке териминала нужно предупеждать о завершении захода
+
+/// Мысли по поводу правок:
+/// 1. Надо реализовать подключение по TCP. Выполнено, мыслей нет
+/// 2. Новые события для “Настройка событий”. Пока не представляю как это возможно сделать
+/// КАСТОМНЫЕ СОБЫТИЯ
+/// я) Наименование события.
+/// а) Выбор устройства (на котором мониторим возникновение события).
+/// б) Выбор сообщения (список сообщений протокола выбранного устройства). (нужно будет составить список сообщений)
+/// в) Номер пар-ра в сообщении. Можно ограничиться названием, а по словарю определять номер
+/// нужно составить алгоритм работы событий - единый для всех устройств
+/// Должен быть: контейнер содержащий в себе название события, название устройства,
+/// индентификатор сообщения, номер параметра, тип проверки, доп параметры для типа проверки
+/// При создании нового события нужно добавить в контейнер новый элемент, причем это распространяется и на заготовленные события
+/// При запуске эксперимента происходит проход по списку и отправляются сообщения на периодическую отправку заданных сообщений
+/// Во время эксперимента парсятся сообщения, а затем отправляются на проверку:
+/// В цикле идет сравнение со всеми элементами контейнера, при совпадении происходит унифицированный алгоритм проверки:
+/// Сначала смотрится тип проверки, затем по параметрам определяется, произошло событие или нет (ставится флаг),
+/// затем выводится сообщение
+/// Для нахождения событий полей флагов в Unicore придется работать с двоичным протоколом,
+/// а это значит что нужно расшифровывать сообщения и для него под свои нужды
+
+/// Задачи:
+/// 1. Добавить для U-blox функцию, расшифровывающую сообщение в строку
+/// 2. Изменить интерфейс окна настройки событий
+/// 3. Разработать логику кастомных событий
+///
+/// План:
+/// 1. Реализовать для Unicore
+/// 2. Добавить для U-blox функцию
+/// 3. Реализовать для U-blox
+///
+/// Соотнесение индекса поля со строкой:
+/// у Unicore всё просто - нужно данные разделить по запятой, а затем соотносить по списку
+/// у U-blox очень сложно - как вариант можно добавить функцию, которая преобразует данные в строку, подобную Unicore сообщению,
+/// а дальше также.
+/// 3. Работа по протоколу. Сделано, мыслей нет
+/// 6. “Конфигурация устройств”, “Основные настройки”.
+/// Откуда я должен достать ограничения антенны? У антены есть только путь к файлу, какая инфа хранится в нем?
+/// Как это реализовывать? Может проще отправить пользователя в работу по протоколу?
+/// Чем имеющаяся реализация хуже? Она же имеет тот же самый функционал, за исключением непонятного чекбокса антенны
+/// 8. Добавление устройств по файлу. В целом легко, можно добавить кнопку "добавить из файла", а дальше тот же самый
+/// функционал, что у действия "загрузить"
 
 
 /// При изменении/удалении чего либо имеющего свой файл нужно "на ходу" изменить этот файл !!!! надо уточнить !!!!
@@ -201,6 +244,8 @@ void MainWindow::addItemToConnectionsTable(QString protocol, QList<QString> para
 
 void MainWindow::fillConnectionsTable()
 {
+    ui->tableWidgetConnections->clearContents();
+    ui->tableWidgetConnections->setRowCount(0);
     for (const auto &key: devicesMap.keys()) {
         QString deviceName = key;
         QPair<QString,QList<QString>> settings = devicesMap.value(key);
@@ -208,6 +253,70 @@ void MainWindow::fillConnectionsTable()
         QList<QString> parameters = settings.second;
         addItemToConnectionsTable(protocolName,settings.second);
     }
+}
+
+void MainWindow::addConnectionFromFile()
+{
+    QString dir = QFileDialog::getOpenFileName(this,
+                                               tr(""), "/home", tr("Connection file (*.xml)"));
+    if (dir == "") {return;}
+
+    QFile file(dir);
+    if (!file.open(QIODevice::ReadWrite)) return;
+    QDomDocument doc("document");
+    file.close();
+    if (!doc.setContent(&file)) return;
+
+    QDomElement docElem = doc.documentElement();
+    QDomNode deviceXml = docElem.firstChild();
+    while(!deviceXml.isNull()) {
+        QDomElement e = deviceXml.toElement();
+        QString deviceName = e.tagName();
+        QDomElement parametersXml = deviceXml.firstChild().toElement();
+        QString protocolName = parametersXml.tagName();
+        QList<QString> parameters;
+        if (protocolName == "Serial"){
+            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
+            QString deviceType =        parametersXml.attribute("device_type");
+            QString port =              parametersXml.attribute("Serial_port");
+            QString baudrate =          parametersXml.attribute("baudrate");
+            QString dataBits =          parametersXml.attribute("data_bits");
+            QString TCPPort =           parametersXml.attribute("TCP_port_number");
+            QString parity =            parametersXml.attribute("parity");
+            QString stopBits =          parametersXml.attribute("stop_bits");
+            QString TCPCount =          parametersXml.attribute("TCP_connections_number");
+
+            parameters << deviceName << deviceType << transferProtocol << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
+
+        }
+        else if (protocolName == "CAN"){
+            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
+            QString deviceType =        parametersXml.attribute("device_type");
+            QString baudrate =           parametersXml.attribute("baudrate");
+            QString CANType =           parametersXml.attribute("CAN_type");
+
+            parameters << deviceName << deviceType << transferProtocol  << baudrate << CANType;
+        }
+        else if (protocolName == "TCP"){
+            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
+            QString deviceType =        parametersXml.attribute("device_type");
+            QString clientServer =      parametersXml.attribute("source");
+            QString port =              parametersXml.attribute("port_number");
+            QString adress =            parametersXml.attribute("adress");
+
+            parameters << deviceName << deviceType << transferProtocol  << clientServer << port << adress;
+        }
+        QPair<QString,QList<QString>> protocolPair;
+        protocolPair.first = protocolName;
+        protocolPair.second = parameters;
+        if(!devicesMap.contains(deviceName)){
+            devicesMap.insert(deviceName,protocolPair);
+        }
+        deviceXml = deviceXml.nextSibling();
+    }
+    fillConnectionsTable();
+
+    setupTableSize(ui->tableWidgetConnections);
 }
 /// TODO:: Можно выбрать пустую папку, если в ней нет нужных файлов, то они создаются пустыми, а походу работы с приложением
 /// заполняются
@@ -288,12 +397,30 @@ void MainWindow::performAction(QAction *action)
                 button->setEnabled(true);
             }
         }
+        setupTableSize(ui->tableWidgetConnections);
         QDir experimentDir(experimentDirectory);
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
-
-        setupTableSize(ui->tableWidgetConnections);
+        QString fieldsDir = dir + '/' + "Messages_fields.conf";
+        QFile fieldsFile(fieldsDir);
+        if (fieldsFile.open(QIODevice::ReadOnly)){
+            while (true){
+                QByteArray line = fieldsFile.readLine();
+                if (fieldsFile.atEnd()) break;
+                QString name = QString::fromUtf8(line.split(':').at(1));
+                QList<QByteArray> fields = line.split(':').at(2).split(',');
+                QString protocol = QString::fromUtf8(line.split(':').at(0));
+                QStringList fieldsStr;
+                QPair<QString,QStringList> pair;
+                foreach (QByteArray field, fields) {
+                    fieldsStr.append(QString::fromUtf8(field));
+                }
+                pair.first = protocol;
+                pair.second = fieldsStr;
+                fieldsMap[name] = pair;
+            }
+        }
     }
     else if (action->text() == "Сохранить" && action->property("root") == "Эксперимент"){
         if (experimentDirectory.isEmpty()){
@@ -608,53 +735,14 @@ void MainWindow::openNotes()
 
 void MainWindow::openEventSettings()
 {
-    QDialog dialog(this);
-    dialog.setWindowTitle("Настройка событий");
-    // dialog.setFixedSize(600, 250);
-
-    QGridLayout *layout = new QGridLayout(&dialog);
-
-    QLabel *labelTopLeft = new QLabel("Условия, являющиеся событиями:");
-    QLabel *labelTopRight = new QLabel("Вкл/Выкл");
-    QLabel *labelSolFound = new QLabel("Fixed решение RTK найдено");
-    QLabel *labelSolLost = new QLabel("Решение потеряно");
-    QLabel *labelRelSolFound = new QLabel("Относительное решение найдено");
-    QLabel *labelRelSolLost = new QLabel("Относительное решение потеряно");
-    QCheckBox *chebBoxSolFound = new QCheckBox();
-    QCheckBox *chebBoxSolLost = new QCheckBox();
-    QCheckBox *chebBoxRelSolFound = new QCheckBox();
-    QCheckBox *chebBoxRelSolLost = new QCheckBox();
-    QPushButton *okButton = new QPushButton("Готово");
-    QPushButton *cancelButton = new QPushButton("Отмена");
-
-    chebBoxSolFound->setChecked(eventSettingsSolFound);
-    chebBoxSolLost->setChecked(eventSettingsSolLost);
-    chebBoxRelSolFound->setChecked(eventSettingsRelSolFound);
-    chebBoxRelSolLost->setChecked(eventSettingsRelSolLost);
-
-    layout->addWidget(labelTopLeft, 0, 0);
-    layout->addWidget(labelTopRight, 0, 1);
-    layout->addWidget(labelSolFound, 1, 0);
-    layout->addWidget(labelSolLost, 2, 0);
-    layout->addWidget(labelRelSolFound, 3, 0);
-    layout->addWidget(labelRelSolLost, 4, 0);
-    layout->addWidget(chebBoxSolFound, 1, 1);
-    layout->addWidget(chebBoxSolLost, 2, 1);
-    layout->addWidget(chebBoxRelSolFound, 3, 1);
-    layout->addWidget(chebBoxRelSolLost, 4, 1);
-    layout->addWidget(okButton, 5, 0);
-    layout->addWidget(cancelButton, 5, 1);
-
-    QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-    QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
-    qDebug() << dialog.height() << dialog.width();
-    if (dialog.exec() == QDialog::Accepted) {
-        eventSettingsSolFound = chebBoxSolFound->isChecked();
-        eventSettingsSolLost = chebBoxSolLost->isChecked();
-        eventSettingsRelSolFound = chebBoxRelSolFound->isChecked();
-        eventSettingsRelSolLost = chebBoxRelSolLost->isChecked();
+    eventSettingsDialog eSD = eventSettingsDialog(&eventMap, devicesMap, fieldsMap, this);
+    eSD.exec();
+    foreach (QString key, eventMap.keys()) {
+        eventData data = eventMap[key];
+        qDebug() << data.device << data.message << data.fieldName << data.field  << data.protocol;
     }
 }
+
 /// TODO: надо что-то делать
 void MainWindow::openStartStopActions()
 {
@@ -683,15 +771,14 @@ void MainWindow::connectDevice()
         QMessageBox::warning(this, "Ошибка", "Это устройство уже подключено!");
         return;
     }
-    QSerialPort* connection = new QSerialPort(this);
-    QString port;
-    int baudrate;
     QString protocolName = ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_TYPE)->text();
     QTableWidgetItem *onnOffItem = new QTableWidgetItem;
     onnOffItem->setBackground(QBrush(QColor(255,255,0)));
-
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     if (protocolName == "Serial"){
+        QString port;
+        int baudrate;
+        QSerialPort* connection = new QSerialPort(this);
         QSerialPort::Parity parity = QSerialPort::NoParity;
         QString parityStr = devicesMap[deviceName].second.at(INDEX_SERIAL_PARITY);
         if (parityStr == "Нет"){
@@ -740,29 +827,59 @@ void MainWindow::connectDevice()
         connection->setParity(parity);
         port = devicesMap[deviceName].second.at(INDEX_SERIAL_PORT);
         baudrate = devicesMap[deviceName].second.at(INDEX_SERIAL_BAUDRATE).toInt();
+        connection->setPortName(port);
+        connection->setBaudRate(baudrate);
+        // пробуем подключится
+        if (!connection->open(QIODevice::ReadWrite)) {
+            onnOffItem->setBackground(QBrush(QColor(255,0,0)));
+            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+            QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
+            return;
+        }
+        else{
+            onnOffItem->setBackground(QBrush(QColor(0,255,0)));
+            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+            connectionsMap.insert(deviceName, connection);
+            QByteArray buffer;
+            bufferMap.insert(deviceName, buffer);
+            QMap<QString,int> flags;
+            flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
+            flagsMap.insert(deviceName,flags);
+        }
     }
-    dumpSimpleMap(devicesMap);
-    qDebug() << port << baudrate;
-    connection->setPortName(port);
-    connection->setBaudRate(baudrate);
+    else if (protocolName == "TCP"){
+        QTcpSocket* connection = new QTcpSocket(this);
+        QString port = devicesMap[deviceName].second.at(INDEX_TCP_PORT);
+        QString address = devicesMap[deviceName].second.at(INDEX_TCP_ADRESS);
 
-    // пробуем подключится
-    if (!connection->open(QIODevice::ReadWrite)) {
-        QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
-        return;
+        // Подключаем сигналы
+        connect(connection, &QTcpSocket::connected, this, [connection, onnOffItem, this, row, deviceName]() {
+            onnOffItem->setBackground(QBrush(QColor(0,255,0)));
+            this->ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+            this->connectionsMap.insert(deviceName, connection);
+            QByteArray buffer;
+            this->bufferMap.insert(deviceName, buffer);
+            QMap<QString,int> flags;
+            flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
+            flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
+            this->flagsMap.insert(deviceName,flags);
+        });
+
+        connect(connection, &QTcpSocket::disconnected, this, [connection, onnOffItem, this, row]() {
+            onnOffItem->setBackground(QBrush(QColor(255,0,0)));
+            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+            // QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
+            return;
+        });
+
+        // Запускаем асинхронное подключение
+        connection->connectToHost(address, port.toInt());
     }
-    // connection->close();
-    onnOffItem->setBackground(QBrush(QColor(0,255,0)));
-    ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
-    QByteArray buffer;
-    bufferMap.insert(deviceName, buffer);
-    QMap<QString,int> flags;
-    flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
-    flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
-    flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
-    flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
-    flagsMap.insert(deviceName,flags);
-    connectionsMap.insert(deviceName, connection);
 }
 
 void MainWindow::disconnectDevice()
@@ -782,8 +899,11 @@ void MainWindow::disconnectDevice()
         connectionsMap.remove(ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_ID)->text());
         return;
     }
-    QSerialPort* connection = connectionsMap[deviceName];
-    connection->close();
+    QObject* connection = connectionsMap[deviceName];
+    if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        ioCon->close();
+    }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     flagsMap.remove(deviceName);
@@ -837,15 +957,16 @@ void MainWindow::startExperiment()
         addItemToLogTable(localTime, "", event);
         if (eventSettingsSolFound || eventSettingsSolLost){
             foreach (QString key, connectionsMap.keys()) {
-                QSerialPort* connection = connectionsMap[key];
+                QObject* connection = connectionsMap[key];
                 QByteArray buff = bufferMap[key];
                 QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
                 QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
-                if (connection == nullptr) continue;
-                if (!connection->isOpen()) continue;
-
-                if(connection->waitForReadyRead(1)){
-                    buff.append(connection->readAll());
+                if (qobject_cast<QIODevice*>(connection)){
+                    QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+                    if (!ioCon->isOpen()) return;
+                    if(ioCon->waitForReadyRead(1)){
+                        buff.append(ioCon->readAll());
+                    }
                 }
                 if (buff.isEmpty()) continue;
                 if (protocol == "Ublox"){
@@ -914,15 +1035,17 @@ void MainWindow::parseMessage()
     int diffSeconds = currSeconds - startSeconds;
     ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
     foreach (QString key, connectionsMap.keys()) {
-        QSerialPort* connection = connectionsMap[key];
+        QObject* connection = connectionsMap[key];
         QByteArray buff = bufferMap[key];
         QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
         QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
         if (connection == nullptr) continue;
-        if (!connection->isOpen()) continue;
-
-        if(connection->waitForReadyRead(1)){
-            buff.append(connection->readAll());
+        if (qobject_cast<QIODevice*>(connection)){
+            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+            if (!ioCon->isOpen()) return;
+            if(ioCon->waitForReadyRead(1)){
+                buff.append(ioCon->readAll());
+            }
         }
         if (buff.isEmpty()) continue;
         if (protocol == "Ublox"){

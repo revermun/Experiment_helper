@@ -57,6 +57,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushButton">
+            <property name="toolTip">
+             <string>Добавить группу</string>
+            </property>
             <property name="styleSheet">
              <string notr="true">image: url(:/resources/add.png);</string>
             </property>

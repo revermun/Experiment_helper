@@ -15,5 +15,6 @@
         <file>resources/restart.png</file>
         <file>resources/send.png</file>
         <file>resources/stop.png</file>
+        <file>resources/load_file.png</file>
     </qresource>
 </RCC>

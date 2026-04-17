@@ -19,7 +19,7 @@
 /// |MASK                                               |   COMMAND   |     +    |
 /// |CONFIG RTK                                         |   COMMAND   |     +    |
 /// |CONFIG DPGS                                        |   COMMAND   |     +    |
-/// |CONFIG ANTIJAM                                     |   COMMAND   |     -    |
+/// |CONFIG ANTIJAM                                     |   COMMAND   |     +    |
 /// |MODE ROVER/BASE/ROVER SURVEY/ROVER AUTOMOTIVE/UAV  |   COMMAND   |     +    |
 /// ------------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@
 /// !!!!
 
 
-deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QSerialPort*> connectionsMap, QWidget *parent)
+deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::deviceConfigurationsDialog)
 {
@@ -252,6 +252,16 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
     timer->start(10);
+    QTimer *ResponseTimer = new QTimer(this);
+    connect(ResponseTimer, &QTimer::timeout, this, [this]() {
+        if (this->newResponse){
+            this->newResponse = false;
+        }
+        else{
+            ui->labelResponse->setText("");
+        }
+    });
+    ResponseTimer->start(2000);
 
 }
 
@@ -519,24 +529,33 @@ void deviceConfigurationsDialog::showPortSettings(QString text){
 
 void deviceConfigurationsDialog::parseMessage()
 {
+
     if (currentConnection == nullptr){
         return;
     }
-    if (!currentConnection->isOpen()){
-        return;
+
+    if (qobject_cast<QIODevice*>(currentConnection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(currentConnection);
+        if (!ioCon->isOpen()) return;
+        if(ioCon->waitForReadyRead(1)){
+            streamBuffer.append(ioCon->readAll());
+        }
     }
 
-    if(currentConnection->waitForReadyRead(1)){
-        streamBuffer.append(currentConnection->readAll());
-    }
     if (protocol == "Ublox"){
         UbloxParser parser(currentConnection);
         QMap<QString,QByteArray> mess = parser.parseMessage(&streamBuffer);
         if (mess.isEmpty()) return;
         if (mess["byteClass"].at(0) == ACK::_ACK::classID && mess["byteID"].at(0) == ACK::_ACK::messageID){
+            ui->labelResponse->setText("Принято ответное сообщение!");
+            ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
+            this->newResponse = true;
             qDebug() << "ACK-ACK";
         }
         else if (mess["byteClass"].at(0) == ACK::NAK::classID && mess["byteID"].at(0) == ACK::NAK::messageID){
+            ui->labelResponse->setText("Сообщение отклонено!");
+            ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
+            this->newResponse = true;
             qDebug() << "ACK-NAK";
         }
 
@@ -1401,9 +1420,15 @@ void deviceConfigurationsDialog::parseMessage()
         if (!mess.isAscii) return;
         if (mess.isCommand && mess.data.contains("command") && mess.data.contains("OK")){
             qDebug() << "OK";
+            ui->labelResponse->setText("Принято ответное сообщение!");
+            ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
+            this->newResponse = true;
         }
         else if (mess.isCommand && mess.data.contains("command") && !mess.data.contains("OK")){
             qDebug() << "NOT OK: "  << mess.data;
+            ui->labelResponse->setText("Сообщение отклонено!");
+            ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
+            this->newResponse = true;
         }
         if (mess.asciiHeader.messageName == "BESTNAVA"){
             QList<QByteArray> fields = mess.data.split(',');

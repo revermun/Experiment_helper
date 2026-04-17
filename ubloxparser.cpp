@@ -1,6 +1,6 @@
 #include "ubloxparser.h"
 
-UbloxParser::UbloxParser(QSerialPort* connection) {
+UbloxParser::UbloxParser(QObject* connection) {
     this->connection = connection;
     // this->connection->open(QSerialPort::ReadWrite);
 }
@@ -111,12 +111,30 @@ QMap<QString,QByteArray> UbloxParser::parseMessage(QByteArray *buff)
 
 bool UbloxParser::sendMessage(QByteArray msg)
 {
-    // qDebug() << msg.toHex(' ');
-    // connection->clear();
-    connection->write(msg);
-    bool res = !connection->flush();
-    if (res) qDebug() << "send failed!";
-    return res;
+    if (qobject_cast<QSerialPort*>(connection)){
+        QSerialPort* serialCon = qobject_cast<QSerialPort*>(connection);
+        serialCon->write(msg);
+        bool res = serialCon->flush();
+        if (!res) qDebug() << "send failed!";
+        return res;
+    }
+    else if (qobject_cast<QTcpSocket*>(connection)){
+        QTcpSocket* tcpCon = qobject_cast<QTcpSocket*>(connection);
+        tcpCon->write(msg);
+        bool res = tcpCon->flush();
+        if (!res) qDebug() << "send failed!";
+        return res;
+    }
+    else if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        bool res = ioCon->write(msg);
+        qDebug() << ioCon->write(msg);
+        return res;
+    }
+    else{
+        qDebug() << "uncknown connection type";
+        return false;
+    }
 }
 
 

@@ -1,6 +1,6 @@
 #include "unicoreparser.h"
 
-UnicoreParser::UnicoreParser(QSerialPort* connection)
+UnicoreParser::UnicoreParser(QObject* connection)
 {
     this->connection = connection;
 }
@@ -203,10 +203,17 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
 
 bool UnicoreParser::sendMessage(QString msg)
 {
-    msg+= "\r\n";
-    connection->write(msg.toLatin1());
-    bool res = !connection->flush();
-    if (res) qDebug() << "send failed!";
-    return res;
+    if (qobject_cast<QSerialPort*>(connection)){
+        QSerialPort* serialCon = qobject_cast<QSerialPort*>(connection);
+        msg+= "\r\n";
+        serialCon->write(msg.toLatin1());
+        bool res = serialCon->flush();
+        if (!res) qDebug() << "send failed!";
+        return res;
+    }
+    else{
+        qDebug() << "uncknown connection type";
+        return false;
+    }
 }
 

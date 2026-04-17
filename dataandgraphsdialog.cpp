@@ -2,7 +2,7 @@
 #include "ui_dataandgraphsdialog.h"
 #include "enums.h"
 
-dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QSerialPort*> connectionsMap, QWidget *parent)
+dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dataAndGraphsDialog)
 {
@@ -39,10 +39,13 @@ QGroupBox* dataAndGraphsDialog::addGroupBox()
     QHBoxLayout* btnLayout = new QHBoxLayout();
     QPushButton* settingsButton = new QPushButton(newGroupBox);
     settingsButton->setStyleSheet("image: url(:/resources/settings.png);");
+    settingsButton->setToolTip("Изменить группу");
     QPushButton* deleteButton = new QPushButton(newGroupBox);
     deleteButton->setStyleSheet("image: url(:/resources/remove.png);");
+    deleteButton->setToolTip("Удалить группу");
     QPushButton* graphButton = new QPushButton(newGroupBox);
     graphButton->setStyleSheet("image: url(:/resources/graph.png);");
+    graphButton->setToolTip("Открыть окно настройки графиков");
 
     QObject::connect(settingsButton, SIGNAL(clicked()), this, SLOT(openSettings()));
     QObject::connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteGroup()));
@@ -439,36 +442,37 @@ void dataAndGraphsDialog::writeToTerminal()
 {
     QByteArray stream;
     foreach (QString key, connectionsMap.keys()) {
-        QSerialPort* connection = connectionsMap[key];
-        if (key != ui->comboBoxDevice->currentText()){
-            connection->clear();
-            continue;
-        }
-        if (!(streamIsOpen && ui->comboBoxDevice->currentIndex()!= -1)){
-            connection->clear();
-            continue;
-        }
-
-        if (ui->comboBoxOutputType->currentText() == "Hex + space"){
-            while(connection->waitForReadyRead(1)){
-                stream.append(connection->readAll());
-                if(stream.isEmpty()){
-                    break;
-                }
-                stream = stream.toHex(' ');
-                ui->textEditTerminal->append(stream);
-                ui->textEditTerminal->append("");
+        if (qobject_cast<QSerialPort*>(connectionsMap[key])){
+            QSerialPort* serialCon = qobject_cast<QSerialPort*>(connectionsMap[key]);
+            if (key != ui->comboBoxDevice->currentText()){
+                serialCon->clear();
+                continue;
             }
-        }
-        else{
-            if (connection->canReadLine()) {
-                stream.append(connection->readLine(1024));
-                if(stream.isEmpty()){
-                    break;
+            if (!(streamIsOpen && ui->comboBoxDevice->currentIndex()!= -1)){
+                serialCon->clear();
+                continue;
+            }
+            if (ui->comboBoxOutputType->currentText() == "Hex + space"){
+                while(serialCon->waitForReadyRead(1)){
+                    stream.append(serialCon->readAll());
+                    if(stream.isEmpty()){
+                        break;
+                    }
+                    stream = stream.toHex(' ');
+                    ui->textEditTerminal->append(stream);
+                    ui->textEditTerminal->append("");
                 }
-                std::string qmessage = stream.toStdString();
-                ui->textEditTerminal->append(QString::fromStdString(qmessage));
-                ui->textEditTerminal->append("");
+            }
+            else{
+                if (serialCon->canReadLine()) {
+                    stream.append(serialCon->readLine(1024));
+                    if(stream.isEmpty()){
+                        break;
+                    }
+                    std::string qmessage = stream.toStdString();
+                    ui->textEditTerminal->append(QString::fromStdString(qmessage));
+                    ui->textEditTerminal->append("");
+                }
             }
         }
     }
@@ -537,30 +541,36 @@ void dataAndGraphsDialog::sendNum()
     QByteArray num = stringToNumFormat(mess);
     qDebug() << num;
     qDebug() << num.toHex();
-    QSerialPort* connection = connectionsMap[ui->comboBoxDevice->currentText()];
-    if (ui->checkBoxSlashR){
-        num += '\r';
+    QObject* connection = connectionsMap[ui->comboBoxDevice->currentText()];
+    if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        if (ui->checkBoxSlashR){
+            num += '\r';
+        }
+        if (ui->checkBoxSlashN){
+            num += '\n';
+        }
+        ioCon->write(num);
     }
-    if (ui->checkBoxSlashN){
-        num += '\n';
-    }
-    connection->write(num);
 }
 
 void dataAndGraphsDialog::sendASCII()
 {
     QString mess = ui->lineEditMessageToSend->text();
     QByteArray ascii = mess.toLatin1();
-    QSerialPort* connection = connectionsMap[ui->comboBoxDevice->currentText()];
-    if (ui->checkBoxSlashR){
-        ascii += '\r';
+    QObject* connection = connectionsMap[ui->comboBoxDevice->currentText()];
+    if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        if (ui->checkBoxSlashR){
+            ascii += '\r';
+        }
+        if (ui->checkBoxSlashN){
+            ascii += '\n';
+        }
+        qDebug() << ascii;
+        qDebug() << ascii.toHex();
+        ioCon->write(ascii);
     }
-    if (ui->checkBoxSlashN){
-        ascii += '\n';
-    }
-    qDebug() << ascii;
-    qDebug() << ascii.toHex();
-    connection->write(ascii);
 }
 
 //uniloglist

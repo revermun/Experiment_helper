@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>472</height>
+    <height>542</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,6 +42,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="whatsThis">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -591,8 +594,8 @@
    <slot>checkFields()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>227</x>
-     <y>463</y>
+     <x>236</x>
+     <y>533</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -607,8 +610,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>295</x>
-     <y>463</y>
+     <x>304</x>
+     <y>533</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -648,11 +651,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>comboTCPclientServer</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>ConnectionSettings</receiver>
+   <slot>toggleAdressEditable(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>179</x>
+     <y>113</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>178</x>
+     <y>60</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>changeProtocolComboBox(QString)</slot>
   <slot>changeSettings(QString)</slot>
   <slot>saveSettings()</slot>
   <slot>checkFields()</slot>
+  <slot>toggleAdressEditable(QString)</slot>
  </slots>
 </ui>

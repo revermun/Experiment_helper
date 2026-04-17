@@ -21,7 +21,7 @@ class dataAndGraphsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QSerialPort*> connectionsMap, QWidget *parent = nullptr);
+    explicit dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent = nullptr);
     ~dataAndGraphsDialog();
 
 public slots:
@@ -42,7 +42,7 @@ private:
     void rearrangeGrid();
 
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
-    QMap<QString, QSerialPort*> connectionsMap;
+    QMap<QString, QObject*> connectionsMap;
     QVector<QPair<QGroupBox*, QPair<int, int>>> groupBoxVector;
     Ui::dataAndGraphsDialog *ui;
 

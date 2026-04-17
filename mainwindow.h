@@ -10,24 +10,14 @@
 #include <QSerialPort>
 #include <QTableWidget>
 #include <QTime>
-#include <QTcpServer>
+#include <QTcpSocket>
 
 #include "enums.h"
+#include "structs.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
-
-
-struct tableConnectionsFields{
-    QString ID;
-    QString connectionType;
-    QString TCPPort;
-    int onOff;
-    int data;
-};
-
 
 
 class MainWindow : public QMainWindow
@@ -52,6 +42,7 @@ public slots:
     void startExperiment();
     void parseMessage();
     void sendUserEvent();
+    void addConnectionFromFile();
 
 private:
     void fillConnectionsTable();
@@ -63,10 +54,12 @@ private:
 
     //контейнеры
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
-    QMap<QString, QSerialPort*> connectionsMap;
+    QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
     QMap<QString,QByteArray> bufferMap;
     QMap<QString,QMap<QString,int>> flagsMap;
+    QMap<QString,eventData> eventMap;
+    QMap<QString,QPair<QString,QStringList>> fieldsMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;

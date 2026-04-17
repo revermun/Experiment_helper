@@ -97,6 +97,9 @@
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
             <widget class="QPushButton" name="pushButtonAddTeam">
+             <property name="toolTip">
+              <string>Добавить члена команды</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/add.png);</string>
              </property>
@@ -107,6 +110,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonEditTeam">
+             <property name="toolTip">
+              <string>Изменить члена команды</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/edit.png);</string>
              </property>
@@ -117,6 +123,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonDeleteTeam">
+             <property name="toolTip">
+              <string>Удалить члена команды</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/delete.png);</string>
              </property>
@@ -254,7 +263,7 @@
                <second>0</second>
                <year>2026</year>
                <month>2</month>
-               <day>8</day>
+               <day>7</day>
               </datetime>
              </property>
              <property name="currentSection">
@@ -341,6 +350,9 @@
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
             <widget class="QPushButton" name="pushButtonAddConnection">
+             <property name="toolTip">
+              <string>Добавить связь</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/add.png);</string>
              </property>
@@ -351,6 +363,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonEditConnection">
+             <property name="toolTip">
+              <string>Изменить связь</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/settings.png);</string>
              </property>
@@ -361,6 +376,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonDeleteConnection">
+             <property name="toolTip">
+              <string>Удалить связь</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/delete.png);</string>
              </property>
@@ -414,6 +432,9 @@
           <layout class="QHBoxLayout" name="horizontalLayout_10">
            <item>
             <widget class="QPushButton" name="pushButtonAddDevice">
+             <property name="toolTip">
+              <string>Добавить устройство</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/add.png);</string>
              </property>
@@ -424,6 +445,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonEditDevice">
+             <property name="toolTip">
+              <string>Изменить устройство</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/settings.png);</string>
              </property>
@@ -434,6 +458,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonDeleteDevice">
+             <property name="toolTip">
+              <string>Удалить устройство</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/delete.png);</string>
              </property>
@@ -451,6 +478,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButtonSortDevices">
+             <property name="toolTip">
+              <string>Сортировать</string>
+             </property>
              <property name="styleSheet">
               <string notr="true">image: url(:/resources/sort.png);</string>
              </property>

@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QString>
 #include <QSerialPort>
+#include <QTcpSocket>
 #include <QDebug>
 #include <QDataStream>
 #include <QBuffer>
@@ -72,7 +73,7 @@ enum messageIndexes{
 class UbloxParser
 {
 public:
-    UbloxParser(QSerialPort *connection);
+    UbloxParser(QObject *connection);
     ~UbloxParser();
     QMap<QString,QByteArray> parseMessage(QByteArray* buff);
     bool sendMessage(QByteArray msg);
@@ -82,7 +83,7 @@ public:
     Message* decodeMessage(QMap<QString,QByteArray> msg);
 
 private:
-    QSerialPort *connection;
+    QObject *connection;
 };
 
 #endif // UBLOXPARSER_H

@@ -14,6 +14,8 @@ SOURCES += \
     connectionSettings.cpp \
     dataandgraphsdialog.cpp \
     deviceconfigurationsdialog.cpp \
+    eventeditdialog.cpp \
+    eventsettingsdialog.cpp \
     experimentconfigurationdialog.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -28,11 +30,14 @@ HEADERS += \
     dataandgraphsdialog.h \
     deviceconfigurationsdialog.h \
     enums.h \
+    eventeditdialog.h \
+    eventsettingsdialog.h \
     experimentconfigurationdialog.h \
     mainwindow.h \
     notesdialog.h \
     qchecklist.h \
     startstopactionsdialog.h \
+    structs.h \
     ublox.h \
     ubloxparser.h \
     unicore.h \
@@ -42,6 +47,8 @@ FORMS += \
     connectionSettings.ui \
     dataandgraphsdialog.ui \
     deviceconfigurationsdialog.ui \
+    eventeditdialog.ui \
+    eventsettingsdialog.ui \
     experimentconfigurationdialog.ui \
     mainwindow.ui \
     notesdialog.ui \

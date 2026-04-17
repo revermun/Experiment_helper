@@ -161,6 +161,12 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Добавить устройство</string>
+          </property>
+          <property name="whatsThis">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Добавить устройство&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="styleSheet">
            <string notr="true">image: url(:/resources/add.png);</string>
           </property>
@@ -170,7 +176,23 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Добавить из файла&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/load_file.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButtonEdit">
+          <property name="toolTip">
+           <string>Изменить устройство</string>
+          </property>
           <property name="styleSheet">
            <string notr="true">image: url(:/resources/settings.png);</string>
           </property>
@@ -181,6 +203,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="pushButtonDelete">
+          <property name="toolTip">
+           <string>Удалить устройство</string>
+          </property>
           <property name="styleSheet">
            <string notr="true">image: url(:/resources/delete.png);</string>
           </property>
@@ -204,6 +229,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="pushButtonConnect">
+          <property name="toolTip">
+           <string>Подключить устройство</string>
+          </property>
           <property name="styleSheet">
            <string notr="true">image: url(:/resources/connect.png);</string>
           </property>
@@ -214,6 +242,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="pushButtonDisconnect">
+          <property name="toolTip">
+           <string>Отключить устройство</string>
+          </property>
           <property name="styleSheet">
            <string notr="true">image: url(:/resources/disconnect.png);</string>
           </property>
@@ -372,6 +403,9 @@
         </property>
         <property name="focusPolicy">
          <enum>Qt::StrongFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>Запустить/Остановить эксперимент</string>
         </property>
         <property name="autoFillBackground">
          <bool>false</bool>
@@ -611,8 +645,8 @@ border-radius: 150px;</string>
    <slot>deleteConnection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>127</x>
-     <y>481</y>
+     <x>200</x>
+     <y>503</y>
     </hint>
     <hint type="destinationlabel">
      <x>193</x>
@@ -627,8 +661,8 @@ border-radius: 150px;</string>
    <slot>editConnection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>89</x>
-     <y>483</y>
+     <x>151</x>
+     <y>503</y>
     </hint>
     <hint type="destinationlabel">
      <x>102</x>
@@ -764,6 +798,22 @@ border-radius: 150px;</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>addConnectionFromFile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>82</x>
+     <y>483</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>67</x>
+     <y>551</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openConnectionSettings()</slot>
@@ -778,5 +828,6 @@ border-radius: 150px;</string>
   <slot>disconnectDevice()</slot>
   <slot>startExperiment()</slot>
   <slot>sendUserEvent()</slot>
+  <slot>addConnectionFromFile()</slot>
  </slots>
 </ui>
