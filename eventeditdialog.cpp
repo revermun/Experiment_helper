@@ -10,36 +10,65 @@
 /// но думаю пока можно остановиться и на этом
 /// Можно это сделать конфигурируемым с помощью файла, чтоб не делать bloat code
 /// Формат: ID1:protocol:field1,field2,field3\nID2:field1,...
-eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,QPair<QString,QStringList>> fieldsMap, QWidget *parent)
+///
+/// РЕШЕНИЕ ПРОБЛЕМЫ ПОЛЕЙ И РАБОТЫ ПО ПРОТОКОЛУ - Конфигурационный файл с сообщениями и их полями
+/// В файле должна быть исчерпывающая информация о сообщениях и полях
+/// Файл будет в формате .xml
+/// На первом уровне будут сообщения, у них будут следующие параметры:
+/// protocol - Ublox или Unicore (в будущем можно будет дополнить)
+/// id - идентификатор сообщения
+/// type - conf/nav (для фильтрации во время сбора сообщений для событий)
+/// description - короткое описание на русском
+/// На втором уровне будут поля сообщений, у них будут следующие параметры:
+/// name - развернутое название (до 3х слов)
+/// type - int, uint, bitmap/flags, char
+/// size - 1,2,4,....(байт)
+/// min_value - число (для не int можно оставить пустым)
+/// max_value - число (для не int можно оставить пустым)
+/// units - единицы измерения (m/s, m, rad, deg, sm/s)
+/// scale - число на которое нужно умножить для получения действительного значения (10e-5,1,...)
+eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
     ui->setupUi(this);
     this->devicesMap = devicesMap;
-    this->fieldsMap = fieldsMap;
+    this->messagesMap = messagesMap;
     QStringList devices = devicesMap.keys();
     ui->comboDevice->addItems(devices);
-
+    ui->frameBitmap->setHidden(true);
+    ui->frameChar->setHidden(true);
+    ui->frameInt->setHidden(true);
 }
 
-eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,QPair<QString,QStringList>> fieldsMap, eventData data, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, eventData data, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
     ui->setupUi(this);
     this->devicesMap = devicesMap;
-    this->fieldsMap = fieldsMap;
+    this->messagesMap = messagesMap;
     QStringList devices = devicesMap.keys();
     ui->comboDevice->addItems(devices);
     ui->lineName->setText(data.name);
     ui->comboDevice->setCurrentText(data.device);
     ui->comboMessage->setCurrentText(data.message);
-    ui->comboMessageField->setCurrentText(QString::number(data.field));
+    ui->comboMessageField->setCurrentText(data.fieldName);
     ui->comboEventText->setCurrentText(data.text);
-    ui->checkLogIfEqual->setChecked(data.triggers.isEqual);
-    ui->checkLogIfGreater->setChecked(data.triggers.isGreater);
-    ui->checkLogIfLesser->setChecked(data.triggers.isLesser);
-    ui->spinThreshhold->setValue(data.triggers.threshhold);
+    if (data.fieldType == "int" || data.fieldType == "uint" || data.fieldType == "float" || data.fieldType == "double"){
+        ui->checkLogIfEqual->setChecked(data.intTriggers.isEqual);
+        ui->checkLogIfGreater->setChecked(data.intTriggers.isGreater);
+        ui->checkLogIfLesser->setChecked(data.intTriggers.isLesser);
+        ui->spinThreshhold->setValue(data.intTriggers.threshhold);
+    }
+    else if (data.fieldType == "bitmap"){
+        ui->spinEndBit->setValue(data.bitmapTriggers.endBit);
+        ui->spinStartBit->setValue(data.bitmapTriggers.startBit);
+        ui->spinValue->setValue(data.bitmapTriggers.value);
+    }
+    else if (data.fieldType == "char"){
+        ui->lineValue->setText(data.charTriggers.value);
+    }
 }
 
 eventEditDialog::~eventEditDialog()
@@ -51,9 +80,9 @@ eventEditDialog::~eventEditDialog()
 void eventEditDialog::comboDeviceChangeEvent(QString device){
     QString protocol = devicesMap[device].second.at(INDEX_GENERAL_PROTOCOL);
     QStringList messages;
-    foreach (QString mess, fieldsMap.keys()) {
-        if (fieldsMap[mess].first == protocol){
-            messages.append(mess);
+    foreach (QString mess, messagesMap.keys()) {
+        if (messagesMap[mess].protocol == protocol){
+            if (messagesMap[mess].type == "nav") messages.append(mess);
         }
     }
     ui->comboMessage->clear();
@@ -63,9 +92,32 @@ void eventEditDialog::comboDeviceChangeEvent(QString device){
 void eventEditDialog::comboMessageChangeEvent(QString message)
 {
     ui->comboMessageField->clear();
-    ui->comboMessageField->addItems(fieldsMap[message].second);
+    ui->comboMessageField->addItems(messagesMap[message].getSortedFieldKeys());
 }
 
+void eventEditDialog::comboFieldChangeEvent(QString field){
+    QString type = messagesMap[ui->comboMessage->currentText()].fields[field].type;
+    qDebug() << type;
+    ui->frameBitmap->setHidden(true);
+    ui->frameChar->setHidden(true);
+    ui->frameInt->setHidden(true);
+    if (type == "int" || type == "uint" || type == "float" || type == "double"){
+        ui->spinThreshhold->setValue(0);
+        ui->frameInt->setHidden(false);
+        ui->spinThreshhold->setMinimum(messagesMap[ui->comboMessage->currentText()].fields[field].min_value);
+        ui->spinThreshhold->setMaximum(messagesMap[ui->comboMessage->currentText()].fields[field].max_value);
+    }
+    else if (type == "bitmap"){
+        ui->spinEndBit->setValue(0);
+        ui->spinStartBit->setValue(0);
+        ui->spinValue->setValue(0);
+        ui->frameBitmap->setHidden(false);
+    }
+    else if (type == "char"){
+        ui->lineValue->clear();
+        ui->frameChar->setHidden(false);
+    }
+}
 void eventEditDialog::checkFields()
 {
     if (ui->comboEventType->currentIndex() == -1){
@@ -89,14 +141,30 @@ eventData eventEditDialog::getEventData(){
         data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
         data.message = ui->comboMessage->currentText();
         data.fieldName = ui->comboMessageField->currentText();
-        data.field = fieldsMap[data.message].second.indexOf(data.fieldName);
+        data.field = messagesMap[data.message].fields[data.fieldName].index;
+        QString type = messagesMap[data.message].fields[data.fieldName].type;
+        data.fieldType = type;
         data.text = ui->comboEventText->currentText();
-        eventData::Triggers triggers;
-        triggers.isEqual = ui->checkLogIfEqual->isChecked();
-        triggers.isGreater = ui->checkLogIfGreater->isChecked();
-        triggers.isLesser = ui->checkLogIfLesser->isChecked();
-        triggers.threshhold = ui->spinThreshhold->value();
-        data.triggers = triggers;
+        if (type == "int" || type == "uint" || type == "float" || type == "double"){
+            eventData::IntTriggers triggers;
+            triggers.isEqual = ui->checkLogIfEqual->isChecked();
+            triggers.isGreater = ui->checkLogIfGreater->isChecked();
+            triggers.isLesser = ui->checkLogIfLesser->isChecked();
+            triggers.threshhold = ui->spinThreshhold->value();
+            data.intTriggers = triggers;
+        }
+        else if (type == "bitmap"){
+            eventData::BitmapTriggers triggers;
+            triggers.startBit = ui->spinStartBit->value();
+            triggers.endBit = ui->spinEndBit->value();
+            triggers.value = ui->spinValue->value();
+            data.bitmapTriggers = triggers;
+        }
+        else if (type == "char"){
+            eventData::CharTriggers triggers;
+            triggers.value = ui->lineValue->text();
+            data.charTriggers = triggers;
+        }
     }
     return data;
 

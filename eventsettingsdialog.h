@@ -15,7 +15,7 @@ class eventSettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit eventSettingsDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,QPair<QString,QStringList>> fieldsMap, QWidget *parent = nullptr);
+    explicit eventSettingsDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
     ~eventSettingsDialog();
 
 
@@ -28,7 +28,7 @@ public slots:
 private:
     QMap<QString,eventData>* eventMap;
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
-    QMap<QString,QPair<QString,QStringList>> fieldsMap;
+    QMap<QString,Mess> messagesMap;
 
     Ui::eventSettingsDialog *ui;
 };

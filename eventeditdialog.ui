@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>411</width>
-    <height>339</height>
+    <width>422</width>
+    <height>522</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,33 +55,89 @@
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_3">
+      <item row="2" column="1">
+       <widget class="QComboBox" name="comboMessage"/>
+      </item>
+      <item row="11" column="0">
+       <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Сообщение</string>
+         <string>Сообщение при выполнении условия</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
-       <widget class="QCheckBox" name="checkLogIfGreater">
-        <property name="text">
-         <string/>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="comboDevice"/>
+      </item>
+      <item row="4" column="0" colspan="2">
+       <widget class="QFrame" name="frameInt">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Логировать при =</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QCheckBox" name="checkLogIfEqual">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Логировать при &lt;</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="checkLogIfLesser">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Логировать при &gt;</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="checkLogIfGreater">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Порог</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="spinThreshhold">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Логировать при &gt;</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Логировать при &lt;</string>
-        </property>
-       </widget>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="comboMessageField"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
@@ -90,43 +146,64 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="1">
-       <widget class="QSpinBox" name="spinThreshhold"/>
-      </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Сообщение при превышении</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Поле сообщения</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="comboDevice"/>
-      </item>
-      <item row="3" column="1">
-       <widget class="QComboBox" name="comboMessageField"/>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="comboMessage"/>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Порог</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="lineName"/>
       </item>
-      <item row="9" column="1">
+      <item row="5" column="0" colspan="2">
+       <widget class="QFrame" name="frameBitmap">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Конечный бит</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="spinEndBit">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Начальный бит</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="spinStartBit">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Значение</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="spinValue">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="11" column="1">
        <widget class="QComboBox" name="comboEventText">
         <property name="editable">
          <bool>true</bool>
@@ -141,10 +218,17 @@
         </item>
        </widget>
       </item>
-      <item row="6" column="1">
-       <widget class="QCheckBox" name="checkLogIfLesser">
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_4">
         <property name="text">
-         <string/>
+         <string>Поле сообщения</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Сообщение</string>
         </property>
        </widget>
       </item>
@@ -155,18 +239,26 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Логировать при =</string>
+      <item row="6" column="0" colspan="2">
+       <widget class="QFrame" name="frameChar">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QCheckBox" name="checkLogIfEqual">
-        <property name="text">
-         <string/>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
         </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>Значение</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineValue"/>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -193,8 +285,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>295</x>
-     <y>287</y>
+     <x>304</x>
+     <y>513</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -209,8 +301,8 @@
    <slot>checkFields()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>227</x>
-     <y>281</y>
+     <x>236</x>
+     <y>513</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -250,10 +342,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>comboMessageField</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>eventEditDialog</receiver>
+   <slot>comboFieldChangeEvent(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>379</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>417</x>
+     <y>154</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>comboDeviceChangeEvent(QString)</slot>
   <slot>comboMessageChangeEvent(QString)</slot>
   <slot>checkFields()</slot>
+  <slot>comboFieldChangeEvent(QString)</slot>
  </slots>
 </ui>

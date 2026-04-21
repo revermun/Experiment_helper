@@ -45,6 +45,8 @@ public slots:
     void addConnectionFromFile();
 
 private:
+    void getMessagesConfig();
+
     void fillConnectionsTable();
     void addItemToConnectionsTable(QString protocol, QList<QString> parameters);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
@@ -60,6 +62,7 @@ private:
     QMap<QString,QMap<QString,int>> flagsMap;
     QMap<QString,eventData> eventMap;
     QMap<QString,QPair<QString,QStringList>> fieldsMap;
+    QMap<QString,Mess> messagesMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;

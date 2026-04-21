@@ -173,9 +173,72 @@ MainWindow::MainWindow(QWidget *parent)
     connectionsRootElement = connectionsDoc.createElement("Connections");
     connectionsDoc.appendChild(connectionsRootElement);
 
+    getMessagesConfig();
+
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
     timer->start(1);
+}
+
+void MainWindow::getMessagesConfig()
+{
+    QString dir = QCoreApplication::applicationDirPath()+"/config_messages.xml";
+    QFile file(dir);
+    if (!file.open(QIODevice::ReadOnly)){
+        QMessageBox::warning(this, "Ошибка", "Не обнаружен конфигурационный файл config_messages.xml\n"
+                                             "Добавьте его в папку приложения и перезапустите!\n"
+                                             "Если у вас нет файла, то спросите его у разработчика.");
+        return;
+    }
+    QDomDocument doc("document");
+    if (!doc.setContent(&file)) {
+        file.close();
+        return;
+    }
+    file.close();
+
+    QDomElement docElem = doc.documentElement();
+    QDomNode messageXml = docElem.firstChild();
+    while(!messageXml.isNull()) {
+        QDomElement e = messageXml.toElement();
+        if(!e.isNull()) {
+            QString messageName = e.tagName();
+            Mess message;
+            message.name = messageName;
+            message.description = e.attribute("description");
+            message.id = e.attribute("id");
+            message.type = e.attribute("type");
+            message.protocol = e.attribute("protocol");
+            QDomNode fieldXml = messageXml.firstChild();
+            QMap<QString,Mess::Field> fields;
+            int index = 0;
+            while(!fieldXml.isNull()) {
+                QDomElement i = fieldXml.toElement();
+                if(!i.isNull()) {
+                    QString fieldName = i.tagName();
+                    Mess::Field field;
+                    field.name = fieldName;
+                    field.index = index;
+                    field.full_name = i.attribute("name");
+                    field.type = i.attribute("type");
+                    if (!i.attribute("size").isEmpty()) field.size = i.attribute("size").toInt();
+                    if (!i.attribute("min_value").isEmpty()) field.min_value = i.attribute("min_value").toInt();
+                    if (!i.attribute("max_value").isEmpty()) field.max_value = i.attribute("max_value").toInt();
+                    field.units = i.attribute("units");
+                    if (!i.attribute("scale").isEmpty()) {
+                        double doubleScale = i.attribute("scale").toDouble();
+                        field.scale = doubleScale;
+                    }
+                    fields[fieldName] = field;
+                    index++;
+                }
+                fieldXml = fieldXml.nextSibling();
+            }
+            message.fields = fields;
+            messagesMap[messageName] = message;
+        }
+        messageXml = messageXml.nextSibling();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -735,11 +798,11 @@ void MainWindow::openNotes()
 
 void MainWindow::openEventSettings()
 {
-    eventSettingsDialog eSD = eventSettingsDialog(&eventMap, devicesMap, fieldsMap, this);
+    eventSettingsDialog eSD = eventSettingsDialog(&eventMap, devicesMap, messagesMap, this);
     eSD.exec();
     foreach (QString key, eventMap.keys()) {
-        eventData data = eventMap[key];
-        qDebug() << data.device << data.message << data.fieldName << data.field  << data.protocol;
+        // eventData data = eventMap[key];
+        // qDebug() << data.device << data.message << data.fieldName << data.field  << data.protocol;
     }
 }
 
