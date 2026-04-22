@@ -64,10 +64,10 @@ eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> dev
     else if (data.fieldType == "bitmap"){
         ui->spinEndBit->setValue(data.bitmapTriggers.endBit);
         ui->spinStartBit->setValue(data.bitmapTriggers.startBit);
-        ui->spinValue->setValue(data.bitmapTriggers.value);
+        ui->spinValue->setValue(data.bitmapTriggers.bitValue);
     }
     else if (data.fieldType == "char"){
-        ui->lineValue->setText(data.charTriggers.value);
+        ui->lineValue->setText(data.charTriggers.charValue);
     }
 }
 
@@ -82,7 +82,7 @@ void eventEditDialog::comboDeviceChangeEvent(QString device){
     QStringList messages;
     foreach (QString mess, messagesMap.keys()) {
         if (messagesMap[mess].protocol == protocol){
-            if (messagesMap[mess].type == "nav") messages.append(mess);
+            if (messagesMap[mess].type != "conf") messages.append(mess);
         }
     }
     ui->comboMessage->clear();
@@ -97,7 +97,7 @@ void eventEditDialog::comboMessageChangeEvent(QString message)
 
 void eventEditDialog::comboFieldChangeEvent(QString field){
     QString type = messagesMap[ui->comboMessage->currentText()].fields[field].type;
-    qDebug() << type;
+    ui->labelFieldType->setText(type);
     ui->frameBitmap->setHidden(true);
     ui->frameChar->setHidden(true);
     ui->frameInt->setHidden(true);
@@ -140,6 +140,7 @@ eventData eventEditDialog::getEventData(){
         data.device = ui->comboDevice->currentText();
         data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
         data.message = ui->comboMessage->currentText();
+        data.messageId = messagesMap[data.message].id.toInt();
         data.fieldName = ui->comboMessageField->currentText();
         data.field = messagesMap[data.message].fields[data.fieldName].index;
         QString type = messagesMap[data.message].fields[data.fieldName].type;
@@ -157,14 +158,15 @@ eventData eventEditDialog::getEventData(){
             eventData::BitmapTriggers triggers;
             triggers.startBit = ui->spinStartBit->value();
             triggers.endBit = ui->spinEndBit->value();
-            triggers.value = ui->spinValue->value();
+            triggers.bitValue = ui->spinValue->value();
             data.bitmapTriggers = triggers;
         }
         else if (type == "char"){
             eventData::CharTriggers triggers;
-            triggers.value = ui->lineValue->text();
+            triggers.charValue = ui->lineValue->text();
             data.charTriggers = triggers;
         }
+        data.status = INDEX_FLAGS_UNKNOWN;
     }
     return data;
 

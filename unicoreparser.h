@@ -23,30 +23,30 @@ struct UnicoreMessage{
     bool isCommand;
 
     struct BinaryHeader {
-        quint8 cpuIdle;         // CPU idle 0-100
-        quint16 messageId;      // Message ID
-        quint16 messageLength;  // Message length (длина данных)
-        quint8 timeRef;         // Reference time (GPST or BDST)
-        quint8 timeStatus;      // Time status
-        quint16 wn;             // Week number
-        quint32 ms;             // Seconds of week (ms)
-        quint32 reserved;       // Reserved
-        quint8 version;         // Release version
-        quint8 leapSec;         // Leap second
-        quint16 delayMs;        // Output delay
+        quint8 cpuIdle;
+        quint16 messageId;
+        quint16 messageLength;
+        quint8 timeRef;
+        quint8 timeStatus;
+        quint16 wn;
+        quint32 ms;
+        quint32 reserved;
+        quint8 version;
+        quint8 leapSec;
+        quint16 delayMs;
     } binaryHeader;
 
     struct AsciiHeader {
-        QString messageName;    // Имя сообщения (например, "PVT", "OBS" и т.д.)
-        quint8 cpuIdle;         // CPU idle
-        QString timeRef;         // Reference time
-        QString timeStatus;      // Time status
-        quint16 wn;             // Week number
-        quint32 ms;             // Seconds of week (ms)
-        quint32 reserved;       // Reserved
-        quint8 version;         // Version
-        quint8 leapSec;         // Leap second
-        quint16 delayMs;        // Output delay
+        QString messageName;
+        quint8 cpuIdle;
+        QString timeRef;
+        QString timeStatus;
+        quint16 wn;
+        quint32 ms;
+        quint32 reserved;
+        quint8 version;
+        quint8 leapSec;
+        quint16 delayMs;
     } asciiHeader;
 
 
@@ -60,6 +60,8 @@ public:
     UnicoreParser(QObject *connection);
     static ULONG calcCRC(QByteArray msg);
     UnicoreMessage parseMessage(QByteArray* buff);
+    UnicoreMessage parseAsciiMessage(QByteArray* buff);
+    UnicoreMessage parseBinaryMessage(QByteArray* buff);
     bool sendMessage(QString msg);
 private:
     QObject* connection;

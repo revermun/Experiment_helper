@@ -16,6 +16,7 @@ eventSettingsDialog::eventSettingsDialog(QMap<QString,eventData>* eventMap,QMap<
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);
         QVariant message =   QVariant(data.message);
+        QVariant messageId =   QVariant(data.messageId);
         QVariant fieldName = QVariant(data.fieldName);
         QVariant field =     QVariant(data.field);
         QVariant fieldType = QVariant(data.fieldType);
@@ -26,12 +27,11 @@ eventSettingsDialog::eventSettingsDialog(QMap<QString,eventData>* eventMap,QMap<
         QVariant threshhold =    QVariant(data.intTriggers.threshhold);
         QVariant startBit =    QVariant(data.bitmapTriggers.startBit);
         QVariant endBit =     QVariant(data.bitmapTriggers.endBit);
-        QVariant bitValue =      QVariant(data.bitmapTriggers.value);
-        QVariant charValue =    QVariant(data.charTriggers.value);
-        eventMap->insert(data.name,data);
+        QVariant bitValue =      QVariant(data.bitmapTriggers.bitValue);
+        QVariant charValue =    QVariant(data.charTriggers.charValue);
         QListWidgetItem* item = new QListWidgetItem;
         item->setText(data.name);
-        QList<QVariant> variantList = {name, device, protocol, message, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
+        QList<QVariant> variantList = {name, device, protocol, message, messageId, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
         item->setData(Qt::UserRole, variantList);
         ui->listEvents->addItem(item);
     }
@@ -51,6 +51,7 @@ void eventSettingsDialog::addEvent()
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);
         QVariant message =   QVariant(data.message);
+        QVariant messageId =   QVariant(data.messageId);
         QVariant fieldName = QVariant(data.fieldName);
         QVariant field =     QVariant(data.field);
         QVariant fieldType = QVariant(data.fieldType);
@@ -61,12 +62,12 @@ void eventSettingsDialog::addEvent()
         QVariant threshhold =    QVariant(data.intTriggers.threshhold);
         QVariant startBit =    QVariant(data.bitmapTriggers.startBit);
         QVariant endBit =     QVariant(data.bitmapTriggers.endBit);
-        QVariant bitValue =      QVariant(data.bitmapTriggers.value);
-        QVariant charValue =    QVariant(data.charTriggers.value);
+        QVariant bitValue =      QVariant(data.bitmapTriggers.bitValue);
+        QVariant charValue =    QVariant(data.charTriggers.charValue);
         eventMap->insert(data.name,data);
         QListWidgetItem* item = new QListWidgetItem;
         item->setText(data.name);
-        QList<QVariant> variantList = {name, device, protocol, message, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
+        QList<QVariant> variantList = {name, device, protocol, message, messageId, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
         item->setData(Qt::UserRole, variantList);
         ui->listEvents->addItem(item);
     }
@@ -85,18 +86,19 @@ void eventSettingsDialog::editEvent()
     dataOld.device = variantList.at(1).toString();
     dataOld.protocol = variantList.at(2).toString();
     dataOld.message = variantList.at(3).toString();
-    dataOld.fieldName = variantList.at(4).toString();
-    dataOld.field = variantList.at(5).toInt();
-    dataOld.fieldType = variantList.at(6).toString();
-    dataOld.text = variantList.at(7).toString();
-    dataOld.intTriggers.isGreater = variantList.at(8).toBool();
-    dataOld.intTriggers.isLesser = variantList.at(9).toBool();
-    dataOld.intTriggers.isEqual = variantList.at(10).toBool();
-    dataOld.intTriggers.threshhold = variantList.at(11).toInt();
-    dataOld.bitmapTriggers.startBit = variantList.at(12).toInt();
-    dataOld.bitmapTriggers.endBit = variantList.at(13).toInt();
-    dataOld.bitmapTriggers.value = variantList.at(14).toInt();
-    dataOld.charTriggers.value = variantList.at(15).toString();
+    dataOld.messageId = variantList.at(4).toInt();
+    dataOld.fieldName = variantList.at(5).toString();
+    dataOld.field = variantList.at(6).toInt();
+    dataOld.fieldType = variantList.at(7).toString();
+    dataOld.text = variantList.at(8).toString();
+    dataOld.intTriggers.isGreater = variantList.at(9).toBool();
+    dataOld.intTriggers.isLesser = variantList.at(10).toBool();
+    dataOld.intTriggers.isEqual = variantList.at(11).toBool();
+    dataOld.intTriggers.threshhold = variantList.at(12).toInt();
+    dataOld.bitmapTriggers.startBit = variantList.at(13).toInt();
+    dataOld.bitmapTriggers.endBit = variantList.at(14).toInt();
+    dataOld.bitmapTriggers.bitValue = variantList.at(15).toUInt();
+    dataOld.charTriggers.charValue = variantList.at(16).toString();
     eventEditDialog eED = eventEditDialog(devicesMap, messagesMap, dataOld, this);
     if (eED.exec() == QDialog::Accepted){
         eventData data = eED.getEventData();
@@ -104,6 +106,7 @@ void eventSettingsDialog::editEvent()
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);
         QVariant message =   QVariant(data.message);
+        QVariant messageId =   QVariant(data.messageId);
         QVariant fieldName = QVariant(data.fieldName);
         QVariant field =     QVariant(data.field);
         QVariant fieldType = QVariant(data.fieldType);
@@ -114,12 +117,12 @@ void eventSettingsDialog::editEvent()
         QVariant threshhold =    QVariant(data.intTriggers.threshhold);
         QVariant startBit =    QVariant(data.bitmapTriggers.startBit);
         QVariant endBit =     QVariant(data.bitmapTriggers.endBit);
-        QVariant bitValue =      QVariant(data.bitmapTriggers.value);
-        QVariant charValue =    QVariant(data.charTriggers.value);
+        QVariant bitValue =      QVariant(data.bitmapTriggers.bitValue);
+        QVariant charValue =    QVariant(data.charTriggers.charValue);
         eventMap->remove(dataOld.name);
         eventMap->insert(data.name,data);
         item->setText(data.name);
-        QList<QVariant> variantList = {name, device, protocol, message, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
+        QList<QVariant> variantList = {name, device, protocol, message, messageId, fieldName, field, fieldType, text, isGreater, isLesser, isEqual, threshhold, startBit, endBit, bitValue, charValue};
         item->setData(Qt::UserRole, variantList);
         ui->listEvents->addItem(item);
     }
@@ -132,6 +135,7 @@ void eventSettingsDialog::deleteEvent()
         return;
     }
     QString name = ui->listEvents->currentItem()->text();
-    ui->listEvents->takeItem(ui->listEvents->currentRow());
-    eventMap->remove(name);
+    QListWidgetItem *item = ui->listEvents->takeItem(ui->listEvents->currentRow());
+    qDebug() << eventMap->remove(name);
+    delete item;
 }

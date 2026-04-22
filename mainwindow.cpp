@@ -173,6 +173,9 @@ MainWindow::MainWindow(QWidget *parent)
     connectionsRootElement = connectionsDoc.createElement("Connections");
     connectionsDoc.appendChild(connectionsRootElement);
 
+    eventRootElement = eventDoc.createElement("Events");
+    eventDoc.appendChild(eventRootElement);
+
     getMessagesConfig();
 
     QTimer *timer = new QTimer(this);
@@ -393,6 +396,7 @@ void MainWindow::performAction(QAction *action)
         if (dir == "") {return;}
         this->experimentDirectory = dir;
         this->devicesMap.clear();
+        this->eventMap.clear();
         ///Чтение конфига устройств и заполнение таблицы
 
         QString connectionsConfigDir = dir + '/' + "Configurations" + '/' + "connections.xml";
@@ -450,6 +454,45 @@ void MainWindow::performAction(QAction *action)
             deviceXml = deviceXml.nextSibling();
         }
         fillConnectionsTable();
+        setupTableSize(ui->tableWidgetConnections);
+
+        QString eventsConfigDir = dir + '/' + "Configurations" + '/' + "events.xml";
+        QFile eventFile(eventsConfigDir);
+        eventFile.open(QIODevice::ReadWrite) /*return*/;
+        QDomDocument eventDoc("document");
+        eventFile.close();
+        if (!eventDoc.setContent(&eventFile)) /*return*/;
+
+        docElem = eventDoc.documentElement();
+        QDomNode eventXml = docElem.firstChild();
+        while(!eventXml.isNull()) {
+            QDomElement e = eventXml.toElement();
+            QString eventName = e.tagName().replace('_',' ');
+            eventData event;
+            event.name                      = e.attribute("name");
+            event.device                    = e.attribute("device");
+            event.protocol                  = e.attribute("protocol");
+            event.message                   = e.attribute("message");
+            event.messageId                 = e.attribute("messageId").toInt();
+            event.fieldName                 = e.attribute("fieldName");
+            event.field                     = e.attribute("field").toInt();
+            event.fieldType                 = e.attribute("fieldType");
+            event.text                      = e.attribute("text");
+            event.intTriggers.isGreater     = e.attribute("isGreater").toInt();
+            event.intTriggers.isLesser      = e.attribute("isLesser").toInt();
+            event.intTriggers.isEqual       = e.attribute("isEqual").toInt();
+            event.intTriggers.threshhold    = e.attribute("threshhold").toInt();
+            event.bitmapTriggers.startBit   = e.attribute("startBit").toInt();
+            event.bitmapTriggers.endBit     = e.attribute("endBit").toInt();
+            event.bitmapTriggers.bitValue   = e.attribute("bitValue").toInt();
+            event.charTriggers.charValue    = e.attribute("charValue");
+            event.status                    = e.attribute("status").toInt();
+
+            if(!eventMap.contains(eventName)){
+                eventMap[eventName] = event;
+            }
+            eventXml = eventXml.nextSibling();
+        }
         notesDialog nD(experimentDirectory,isLap,this);
         notesList = nD.getNotes();
         qDebug() << notesList;
@@ -460,30 +503,11 @@ void MainWindow::performAction(QAction *action)
                 button->setEnabled(true);
             }
         }
-        setupTableSize(ui->tableWidgetConnections);
         QDir experimentDir(experimentDirectory);
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
         experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
-        QString fieldsDir = dir + '/' + "Messages_fields.conf";
-        QFile fieldsFile(fieldsDir);
-        if (fieldsFile.open(QIODevice::ReadOnly)){
-            while (true){
-                QByteArray line = fieldsFile.readLine();
-                if (fieldsFile.atEnd()) break;
-                QString name = QString::fromUtf8(line.split(':').at(1));
-                QList<QByteArray> fields = line.split(':').at(2).split(',');
-                QString protocol = QString::fromUtf8(line.split(':').at(0));
-                QStringList fieldsStr;
-                QPair<QString,QStringList> pair;
-                foreach (QByteArray field, fields) {
-                    fieldsStr.append(QString::fromUtf8(field));
-                }
-                pair.first = protocol;
-                pair.second = fieldsStr;
-                fieldsMap[name] = pair;
-            }
-        }
+
     }
     else if (action->text() == "Сохранить" && action->property("root") == "Эксперимент"){
         if (experimentDirectory.isEmpty()){
@@ -509,10 +533,10 @@ void MainWindow::performAction(QAction *action)
                 QString stopBits =          settings.second.at(INDEX_SERIAL_STOP_BITS);
                 QString TCPCount =          settings.second.at(INDEX_SERIAL_TCP_COUNT);
 
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName);
+                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName);
+                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("Serial_port", port);
@@ -530,10 +554,10 @@ void MainWindow::performAction(QAction *action)
                 QString baudrate =           settings.second.at(INDEX_CAN_BAUDRATE);
                 QString CANType =           settings.second.at(INDEX_CAN_TYPE);
 
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName);
+                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName);
+                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("baudrate", baudrate);
@@ -547,10 +571,10 @@ void MainWindow::performAction(QAction *action)
                 QString port =              settings.second.at(INDEX_TCP_PORT);
                 QString adress =            settings.second.at(INDEX_TCP_ADRESS);
 
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName);
+                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName);
+                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("source", clientServer);
@@ -559,15 +583,66 @@ void MainWindow::performAction(QAction *action)
                 deviceXml.appendChild(protocolXml);
             }
         }
-        QFile file( experimentDirectory + '/' + "Configurations" + '/' + "connections.xml" );
-        if( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+        QFile connFile = QFile( experimentDirectory + '/' + "Configurations" + '/' + "connections.xml" );
+        if( !connFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
         {
             qDebug( "Failed to open file for writing." );
         }
-        QTextStream stream( &file );
-        stream.setCodec("UTF-8");
-        stream << connectionsDoc.toString();
-        file.close();
+        QTextStream connStream( &connFile );
+        connStream.setCodec("UTF-8");
+        connStream << connectionsDoc.toString();
+        connFile.close();
+        for (const auto &key: eventMap.keys()) {
+            QString eventName = key;
+            eventData event = eventMap.value(key);
+            QString name        = event.name;
+            QString device      = event.device;
+            QString protocol    = event.protocol;
+            QString message     = event.message;
+            QString messageId   = QString::number(event.messageId);
+            QString fieldName   = event.fieldName;
+            QString field       = QString::number(event.field);
+            QString fieldType   = event.fieldType;
+            QString text        = event.text;
+            QString isGreater   = QString::number(event.intTriggers.isGreater);
+            QString isLesser    = QString::number(event.intTriggers.isLesser);
+            QString isEqual     = QString::number(event.intTriggers.isEqual);
+            QString threshhold  = QString::number(event.intTriggers.threshhold);
+            QString startBit    = QString::number(event.bitmapTriggers.startBit);
+            QString endBit      = QString::number(event.bitmapTriggers.endBit);
+            QString bitValue    = QString::number(event.bitmapTriggers.bitValue);
+            QString charValue   = event.charTriggers.charValue;
+            QString status      = QString::number(event.status);
+            QDomElement eventXml = eventDoc.createElement(eventName.replace(' ','_'));
+            eventXml.setAttribute("name", name);
+            eventXml.setAttribute("device", device);
+            eventXml.setAttribute("protocol", protocol);
+            eventXml.setAttribute("message", message);
+            eventXml.setAttribute("messageId", messageId);
+            eventXml.setAttribute("fieldName", fieldName);
+            eventXml.setAttribute("field", field);
+            eventXml.setAttribute("fieldType", fieldType);
+            eventXml.setAttribute("text", text);
+            eventXml.setAttribute("isGreater", isGreater);
+            eventXml.setAttribute("isLesser", isLesser);
+            eventXml.setAttribute("isEqual", isEqual);
+            eventXml.setAttribute("threshhold", threshhold);
+            eventXml.setAttribute("startBit", startBit);
+            eventXml.setAttribute("endBit", endBit);
+            eventXml.setAttribute("bitValue", bitValue);
+            eventXml.setAttribute("charValue", charValue);
+            eventXml.setAttribute("status", status);
+            eventRootElement.appendChild(eventXml);
+        }
+        QFile eventFile = QFile( experimentDirectory + '/' + "Configurations" + '/' + "events.xml" );
+        if( !eventFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+        {
+            qDebug( "Failed to open file for writing." );
+        }
+        QTextStream eventStream( &eventFile );
+        eventStream.setCodec("UTF-8");
+        eventStream << eventDoc.toString();
+        eventFile.close();
     }
     else if (action->text() == "Конфигурация эксперимента"){
         experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(this);
@@ -581,8 +656,6 @@ void MainWindow::performAction(QAction *action)
         deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap,connectionsMap,this);
         experimentDialog.exec();
     }
-
-
 }
 
 void MainWindow::deleteConnection()
@@ -800,10 +873,6 @@ void MainWindow::openEventSettings()
 {
     eventSettingsDialog eSD = eventSettingsDialog(&eventMap, devicesMap, messagesMap, this);
     eSD.exec();
-    foreach (QString key, eventMap.keys()) {
-        // eventData data = eventMap[key];
-        // qDebug() << data.device << data.message << data.fieldName << data.field  << data.protocol;
-    }
 }
 
 /// TODO: надо что-то делать
@@ -905,12 +974,7 @@ void MainWindow::connectDevice()
             connectionsMap.insert(deviceName, connection);
             QByteArray buffer;
             bufferMap.insert(deviceName, buffer);
-            QMap<QString,int> flags;
-            flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
-            flagsMap.insert(deviceName,flags);
+
         }
     }
     else if (protocolName == "TCP"){
@@ -925,12 +989,6 @@ void MainWindow::connectDevice()
             this->connectionsMap.insert(deviceName, connection);
             QByteArray buffer;
             this->bufferMap.insert(deviceName, buffer);
-            QMap<QString,int> flags;
-            flags["RTK Sol found"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Sol lost"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Rel Sol found"] = INDEX_FLAGS_UNKNOWN;
-            flags["RTK Rel Sol lost"] = INDEX_FLAGS_UNKNOWN;
-            this->flagsMap.insert(deviceName,flags);
         });
 
         connect(connection, &QTcpSocket::disconnected, this, [connection, onnOffItem, this, row]() {
@@ -969,7 +1027,6 @@ void MainWindow::disconnectDevice()
     }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
-    flagsMap.remove(deviceName);
     bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
 }
@@ -1019,10 +1076,10 @@ void MainWindow::startExperiment()
         QString event = "Эксперимент начат";
         addItemToLogTable(localTime, "", event);
         if (eventSettingsSolFound || eventSettingsSolLost){
-            foreach (QString key, connectionsMap.keys()) {
-                QObject* connection = connectionsMap[key];
-                QByteArray buff = bufferMap[key];
-                QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
+            foreach (QString connDevice, connectionsMap.keys()) {
+                QObject* connection = connectionsMap[connDevice];
+                QByteArray buff = bufferMap[connDevice];
+                QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
                 QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
                 if (qobject_cast<QIODevice*>(connection)){
                     QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
@@ -1031,42 +1088,20 @@ void MainWindow::startExperiment()
                         buff.append(ioCon->readAll());
                     }
                 }
-                if (buff.isEmpty()) continue;
-                if (protocol == "Ublox"){
-                    UbloxParser parser(connection);
-                    QByteArray msg;
-                    QByteArray hdr;
-                    QByteArray checkSum;
-                    hdr.resize(2);
-                    hdr[0] = 0xb5;
-                    hdr[1] = 0x62;
-                    QByteArray en;
-                    en.resize(4);
-                    en[0] = CFG::MSG::classID;
-                    en[1] = CFG::MSG::messageID;
-                    en[2] = 0x08;
-                    en[3] = 0x00;
-                    QByteArray payload;
-                    payload.resize(8);
-                    payload[2] = 0x00;
-                    payload[3] = 0x00;
-                    payload[4] = 0x00;
-                    payload[5] = 0x01;
-                    payload[6] = 0x00;
-                    payload[7] = 0x00;
+                foreach (QString eventName, eventMap.keys()) {
+                    eventData event = eventMap[eventName];
+                    event.status = INDEX_FLAGS_UNKNOWN;
+                    QString eventDevice = event.device;
+                    qDebug() << connDevice << eventDevice;
+                    if (connDevice != eventDevice) continue;
+                    if (event.protocol == "Ublox"){
 
-                    payload[0] = NAV::SOL::classID;
-                    payload[1] = NAV::SOL::messageID;
-                    msg = hdr + en + payload;
-                    checkSum = UbloxParser::calcCheckSum(en + payload);
-                    msg.append(checkSum);
-                    parser.sendMessage(msg);
-                    payload[0] = NAV::RELPOSNED::classID;
-                    payload[1] = NAV::RELPOSNED::messageID;
-                    msg = hdr + en + payload;
-                    checkSum = UbloxParser::calcCheckSum(en + payload);
-                    msg.append(checkSum);
-                    parser.sendMessage(msg);
+                    }
+                    else if (event.protocol == "Unicore"){
+                        UnicoreParser parser(connection);
+                        qDebug() << event.message + "B + 1";
+                        parser.sendMessage(event.message + "B 1");
+                    }
                 }
             }
         }
@@ -1080,12 +1115,6 @@ void MainWindow::startExperiment()
         QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
         QString event = "Эксперимент завершен";
         addItemToLogTable(localTime, "", event);
-        dumpNestedMap(flagsMap);
-        foreach (QString key, flagsMap.keys()) {
-            foreach (QString flag, flagsMap[key].keys()) {
-                flagsMap[key][flag] = INDEX_FLAGS_UNKNOWN;
-            }
-        }
     }
 }
 
@@ -1097,10 +1126,10 @@ void MainWindow::parseMessage()
     int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
     int diffSeconds = currSeconds - startSeconds;
     ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
-    foreach (QString key, connectionsMap.keys()) {
-        QObject* connection = connectionsMap[key];
-        QByteArray buff = bufferMap[key];
-        QPair<QString,QList<QString>> deviceInfo = devicesMap[key];
+    foreach (QString connDevice, connectionsMap.keys()) {
+        QObject* connection = connectionsMap[connDevice];
+        QByteArray buff = bufferMap[connDevice];
+        QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
         QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
         if (connection == nullptr) continue;
         if (qobject_cast<QIODevice*>(connection)){
@@ -1116,62 +1145,134 @@ void MainWindow::parseMessage()
             QMap<QString,QByteArray> mess = parser.parseMessage(&buff);
             if (mess.isEmpty()) continue;
             Message* decodedMessage = parser.decode(mess);
-            if (dynamic_cast<NAV::SOL*>(decodedMessage)){
-                NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
-                U4 iTOW = info->iTOW;
-                U1 gpsFix = info->gpsFix;
-                if (gpsFix == 0){
-                    if (eventSettingsSolLost && (flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_UNKNOWN)){
-                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-                        QString event = key + ": Решение потеряно";
-                        addItemToLogTable(localTime, QString::number(iTOW), event);
-                    }
-                    flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_TRUE;
-                    flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_FALSE;
-                }
-                else {
-                    if (eventSettingsSolFound && (flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_UNKNOWN)){
-                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-                        QString event = key + ": Решение найдено";
-                        addItemToLogTable(localTime, QString::number(iTOW), event);
-                    }
-                    flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_TRUE;
-                    flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_FALSE;
-                }
-            }
-            else if (dynamic_cast<NAV::RELPOSNED*>(decodedMessage)){
-                NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
-                U4 iTOW = info->iTOW;
-                X4 flags = info->flags;
-                U1 relSol = getBits(flags,3,4);
-                if (relSol == 0){
-                    if (eventSettingsRelSolLost && (flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_UNKNOWN)){
-                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
-                        QString event = key + ": Относительное решение потеряно";
-                        addItemToLogTable(localTime, QString::number(iTOW), event);
-                    }
-                    flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_TRUE;
-                    flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_FALSE;
-                }
-                else {
-                    if (eventSettingsRelSolFound && (flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_UNKNOWN)){
-                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
-                        QString event = key + ": Относительное решение найдено";
-                        addItemToLogTable(localTime, QString::number(iTOW), event);
-                    }
-                    flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_TRUE;
-                    flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_FALSE;
-                }
-            }
         }
         else if (protocol == "Unicore"){
             UnicoreParser parser(connection);
-            UnicoreMessage mess = parser.parseMessage(&buff);
-            if (mess.data.isEmpty()) return;
-            if (!mess.isAscii) return;
-
+            UnicoreMessage mess = parser.parseBinaryMessage(&buff);
+            if (mess.data.isEmpty()) continue;
+            foreach (QString eventName, eventMap.keys()) {
+                eventData *event = &eventMap[eventName];
+                // qDebug() << event.messageId << mess.binaryHeader.messageId;
+                if (event->device != connDevice) continue;
+                if (event->messageId != mess.binaryHeader.messageId) continue;
+                QStringList fields = messagesMap[event->message].getSortedFieldKeys();
+                int offset = 0;
+                int i = 0;
+                while(i != event->field){
+                    offset += messagesMap[event->message].fields[fields.at(i)].size;
+                    i++;
+                }
+                qDebug() << "offset" << offset;
+                int size = messagesMap[event->message].fields[event->fieldName].size;
+                QByteArray data = mess.data.mid(offset,size);
+                QDataStream stream(data);
+                stream.setByteOrder(QDataStream::BigEndian);
+                bool check = false;
+                if (event->fieldType == "int" || event->fieldType == "uint" || event->fieldType == "float" || event->fieldType == "double"){
+                    int flags = (int)event->intTriggers.isEqual +
+                                ((int)event->intTriggers.isGreater << 1) +
+                                ((int)event->intTriggers.isLesser << 2);
+                    int thresh = event->intTriggers.threshhold;
+                    if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "uint" && size == 2) check = compareValue<quint16>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "int" && size == 4) check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "uint" && size == 4) check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "int" && size == 8) check = compareValue<qint64>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "uint" && size == 8) check = compareValue<quint64>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "float") check = compareValue<float>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "double") check = compareValue<double>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "int") check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
+                    else if (event->fieldType == "uint") check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
+                    else {
+                        qWarning() << "Unsupported field type:" << event->fieldType;
+                    }
+                }
+                else if (event->fieldType == "char"){
+                    check = QString::fromLatin1(data) == event->charTriggers.charValue;
+                }
+                else if (event->fieldType == "bitmap"){
+                    if (size == 1) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                    else if (size == 2) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                    else if (size == 4) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                    else {
+                        qWarning() << "Unsupported size:" << event->fieldType;
+                    }
+                }
+                if (check){
+                    if (event->status != INDEX_FLAGS_TRUE){
+                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+                        event->status = INDEX_FLAGS_TRUE;
+                        addItemToLogTable(localTime, QString::number(mess.binaryHeader.ms), event->text);
+                    }
+                }
+                else{
+                    event->status = INDEX_FLAGS_FALSE;
+                }
+            }
         }
     }
+        // if (protocol == "Ublox"){
+        //     UbloxParser parser(connection);
+        //     QMap<QString,QByteArray> mess = parser.parseMessage(&buff);
+        //     if (mess.isEmpty()) continue;
+        //     Message* decodedMessage = parser.decode(mess);
+        //     if (dynamic_cast<NAV::SOL*>(decodedMessage)){
+        //         NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
+        //         U4 iTOW = info->iTOW;
+        //         U1 gpsFix = info->gpsFix;
+        //         if (gpsFix == 0){
+        //             if (eventSettingsSolLost && (flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_UNKNOWN)){
+        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+        //                 QString event = key + ": Решение потеряно";
+        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
+        //             }
+        //             flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_TRUE;
+        //             flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_FALSE;
+        //         }
+        //         else {
+        //             if (eventSettingsSolFound && (flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_UNKNOWN)){
+        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
+        //                 QString event = key + ": Решение найдено";
+        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
+        //             }
+        //             flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_TRUE;
+        //             flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_FALSE;
+        //         }
+        //     }
+        //     else if (dynamic_cast<NAV::RELPOSNED*>(decodedMessage)){
+        //         NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
+        //         U4 iTOW = info->iTOW;
+        //         X4 flags = info->flags;
+        //         U1 relSol = getBits(flags,3,4);
+        //         if (relSol == 0){
+        //             if (eventSettingsRelSolLost && (flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_UNKNOWN)){
+        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+        //                 QString event = key + ": Относительное решение потеряно";
+        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
+        //             }
+        //             flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_TRUE;
+        //             flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_FALSE;
+        //         }
+        //         else {
+        //             if (eventSettingsRelSolFound && (flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_UNKNOWN)){
+        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+        //                 QString event = key + ": Относительное решение найдено";
+        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
+        //             }
+        //             flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_TRUE;
+        //             flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_FALSE;
+        //         }
+        //     }
+        // }
+        // else if (protocol == "Unicore"){
+        //     UnicoreParser parser(connection);
+        //     UnicoreMessage mess = parser.parseMessage(&buff);
+        //     if (mess.data.isEmpty()) return;
+        //     if (!mess.isAscii) return;
+
+        // }
 }
 
 

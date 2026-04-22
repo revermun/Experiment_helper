@@ -18,6 +18,7 @@ struct eventData{
     QString device;
     QString protocol;
     QString message;
+    int messageId;
     QString fieldName;
     int field;
     QString fieldType;
@@ -31,11 +32,12 @@ struct eventData{
     struct BitmapTriggers{
         int startBit;
         int endBit;
-        int value;
+        uint bitValue;
     }bitmapTriggers;
     struct CharTriggers{
-        QString value;
+        QString charValue;
     }charTriggers;
+    int status;
 };
 
 struct Mess{

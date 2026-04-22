@@ -59,14 +59,14 @@ private:
     QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
     QMap<QString,QByteArray> bufferMap;
-    QMap<QString,QMap<QString,int>> flagsMap;
     QMap<QString,eventData> eventMap;
-    QMap<QString,QPair<QString,QStringList>> fieldsMap;
     QMap<QString,Mess> messagesMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;
     QDomElement connectionsRootElement;
+    QDomDocument eventDoc;
+    QDomElement eventRootElement;
     QString experimentDirectory;
 
     //флаги
