@@ -72,7 +72,18 @@
 /// !!!!
 
 
-deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
+/// Работа с сообщениями по файлу/мапе с сообщениями
+/// При выборе устройства идет прогон по мапе: сверяются названия протокола и тип сообщений
+/// Если название протокола совпадает, то смотрим тип сообщения:
+/// Если nav, то в ветку навигационных; Если conf, то в ветку конфигурационных
+/// При выборе сообщения, находим его в мапе, отправляем запрос в зависимости от протокола
+/// Затем после парсинга сообщения получаем id, прогон по мапе со сверкой id, если id совпал
+/// то делаем прогон по полям сообщения:
+/// full_name - в первый столбец лэйблов
+/// value - во второй столбец лэйблов, умножая на scale (в программе всегда double)
+/// units - в третий столбец лэйблов
+
+deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::deviceConfigurationsDialog)
 {
@@ -525,7 +536,6 @@ void deviceConfigurationsDialog::showPortSettings(QString text){
     }
     else setChildrenHidden(ui->framePRTUART, false);
 }
-
 
 void deviceConfigurationsDialog::parseMessage()
 {

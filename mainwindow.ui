@@ -133,19 +133,6 @@
          </column>
         </widget>
        </item>
-       <item row="2" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
     </item>
@@ -426,25 +413,23 @@ border-radius: 150px;</string>
     <item row="1" column="1">
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Добавить событие:</string>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="title">
+         <string>Добавить событие</string>
         </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLineEdit" name="lineEditAddEvent"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButtonSendEvent">
+           <property name="text">
+            <string>Отправить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <widget class="QPushButton" name="pushButtonSendEvent">
-          <property name="text">
-           <string>Отправить</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="lineEditAddEvent"/>
-        </item>
-       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -452,6 +437,19 @@ border-radius: 150px;</string>
          <widget class="QPushButton" name="pushButtonEventSettings">
           <property name="text">
            <string>Настройка событий</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Очистить лог событий&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">image: url(:/resources/clear.png);</string>
+          </property>
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>
@@ -646,7 +644,7 @@ border-radius: 150px;</string>
    <hints>
     <hint type="sourcelabel">
      <x>200</x>
-     <y>503</y>
+     <y>495</y>
     </hint>
     <hint type="destinationlabel">
      <x>193</x>
@@ -662,7 +660,7 @@ border-radius: 150px;</string>
    <hints>
     <hint type="sourcelabel">
      <x>151</x>
-     <y>503</y>
+     <y>495</y>
     </hint>
     <hint type="destinationlabel">
      <x>102</x>
@@ -789,8 +787,8 @@ border-radius: 150px;</string>
    <slot>sendUserEvent()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>443</x>
-     <y>516</y>
+     <x>1169</x>
+     <y>524</y>
     </hint>
     <hint type="destinationlabel">
      <x>449</x>
@@ -814,6 +812,22 @@ border-radius: 150px;</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>clearLogTable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>561</x>
+     <y>555</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>587</x>
+     <y>553</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openConnectionSettings()</slot>
@@ -829,5 +843,6 @@ border-radius: 150px;</string>
   <slot>startExperiment()</slot>
   <slot>sendUserEvent()</slot>
   <slot>addConnectionFromFile()</slot>
+  <slot>clearLogTable()</slot>
  </slots>
 </ui>

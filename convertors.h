@@ -25,7 +25,7 @@ template<typename T>
 inline bool compareValue(QDataStream& stream, double thresh, int flags, const QString& typeName) {
     T value;
     stream >> value;
-    qDebug() << "data (type:" << typeName << ")" << value;
+    qDebug() << "data: " << value << "event value: " << thresh;
 
     switch (flags) {
     case 1: return value == thresh;
@@ -44,7 +44,7 @@ template<>
 inline bool compareValue<float>(QDataStream& stream, double thresh, int flags, const QString& typeName) {
     float value;
     stream >> value;
-    qDebug() << "data (type:" << typeName << ")" << value;
+    qDebug() << "data: " << value << "event value: " << thresh;
 
     switch (flags) {
     case 1: return qFuzzyCompare(value, (float)thresh);
@@ -62,8 +62,7 @@ template<>
 inline bool compareValue<double>(QDataStream& stream, double thresh, int flags, const QString& typeName) {
     double value;
     stream >> value;
-    qDebug() << "data (type:" << typeName << ")" << value;
-
+    qDebug() << "data: " << value << "event value: " << thresh;
     switch (flags) {
     case 1: return qFuzzyCompare(value, thresh);
     case 2: return value > thresh;
@@ -79,7 +78,7 @@ template<typename T>
 inline bool compareBitmap(QDataStream& stream, int startBit, int endBit, unsigned int value) {
     T bits;
     stream >> bits;
-    qDebug() << bits;
+    qDebug() << "data: " << bits << "event value: " << value;
 
     return getBits(bits, startBit, endBit) == value;
 }

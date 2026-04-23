@@ -653,7 +653,7 @@ void MainWindow::performAction(QAction *action)
             QMessageBox::warning(this, "Ошибка", "Нельзя конфигурировать устройства во время захода!\nЗавершите заход!");
             return;
         }
-        deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap,connectionsMap,this);
+        deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap, connectionsMap, messagesMap, this);
         experimentDialog.exec();
     }
 }
@@ -671,6 +671,7 @@ void MainWindow::deleteConnection()
     }
     devicesMap.remove(deviceName);
     ui->tableWidgetConnections->removeRow(ui->tableWidgetConnections->currentRow());
+    setupTableSize(ui->tableWidgetConnections);
 }
 
 void MainWindow::editConnection()
@@ -731,12 +732,6 @@ void MainWindow::editConnection()
         protocolPair.first = protocolName;
         protocolPair.second = parameters;
         devicesMap[deviceName] = protocolPair;
-        // вывод списка
-        // qDebug() << "------------------------------------";
-        // dumpSimpleMap<QString,QPair<QString,QList<QString>>>(devicesMap);
-        // qDebug() << "------------------------------------";
-
-        // addItemToConnectionsTable(protocolName, settings.second);
     }
 }
 /*
@@ -822,10 +817,6 @@ void MainWindow::openConnectionSettings()
         if(!devicesMap.contains(deviceName)){
             devicesMap.insert(deviceName,protocolPair);
         }
-        // вывод списка
-        // qDebug() << "------------------------------------";
-        // dumpSimpleMap<QString,QPair<QString,QList<QString>>>(devicesMap);
-        // qDebug() << "------------------------------------";
 
         addItemToConnectionsTable(protocolName, settings.second);
     }
@@ -972,7 +963,7 @@ void MainWindow::connectDevice()
             onnOffItem->setBackground(QBrush(QColor(0,255,0)));
             ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
             connectionsMap.insert(deviceName, connection);
-            QByteArray buffer;
+            QByteArray* buffer = new QByteArray();
             bufferMap.insert(deviceName, buffer);
 
         }
@@ -987,7 +978,7 @@ void MainWindow::connectDevice()
             onnOffItem->setBackground(QBrush(QColor(0,255,0)));
             this->ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
             this->connectionsMap.insert(deviceName, connection);
-            QByteArray buffer;
+            QByteArray* buffer = new QByteArray();
             this->bufferMap.insert(deviceName, buffer);
         });
 
@@ -1027,6 +1018,7 @@ void MainWindow::disconnectDevice()
     }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
+    delete bufferMap[deviceName];
     bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
 }
@@ -1037,22 +1029,19 @@ void MainWindow::sendUserEvent()
     QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
     QString event = ui->lineEditAddEvent->text();
     addItemToLogTable(localTime, "", event);
+    ui->lineEditAddEvent->clear();
 }
 
-/// TODO:: логика старта эксперимента
-/// При старте в лог пишется событие "эксперимент начат"
-/// При остановке в лог пишется событие "эксперимент завершен"
-/// В зависимости от заданных флагов в окне настроек лога должны выводиться соответствующие события
-/// Нужен таймер, и парсинг сообщений наподобие того, что в deviceConfigurations, только ограниченный парой сообщений
-/// fix решение найдено:
-/// Для ublox это NAV-SOL поле gps-fix меняется с нуля на не ноль
-///
-/// решение потеряно:
-/// Для ublox это NAV-SOL поле gps-fix меняется с не нуля на ноль
-/// Для таких сообщений должна быть примерно такая форма <ID устройства>: <тело сообщения>
+void MainWindow::clearLogTable()
+{
+    ui->tableWidgetLog->clearContents();
+    ui->tableWidgetLog->setRowCount(0);
+}
 
 void MainWindow::addItemToLogTable(QString localTime, QString GNSSTime, QString event)
 {
+    QScrollBar* scrollBar = ui->tableWidgetLog->verticalScrollBar();
+    bool isAtBottom = scrollBar->value() == scrollBar->maximum();
     int row = ui->tableWidgetLog->rowCount()+1;
     ui->tableWidgetLog->setRowCount(row);
     QTableWidgetItem* localTimeItem = new QTableWidgetItem(localTime);
@@ -1061,6 +1050,7 @@ void MainWindow::addItemToLogTable(QString localTime, QString GNSSTime, QString 
     ui->tableWidgetLog->setItem(row-1,0,localTimeItem);
     ui->tableWidgetLog->setItem(row-1,1,GNSSTimeItem);
     ui->tableWidgetLog->setItem(row-1,2,eventItem);
+    if (isAtBottom) ui->tableWidgetLog->scrollToBottom();
 }
 
 void MainWindow::startExperiment()
@@ -1075,37 +1065,34 @@ void MainWindow::startExperiment()
         QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
         QString event = "Эксперимент начат";
         addItemToLogTable(localTime, "", event);
-        if (eventSettingsSolFound || eventSettingsSolLost){
-            foreach (QString connDevice, connectionsMap.keys()) {
-                QObject* connection = connectionsMap[connDevice];
-                QByteArray buff = bufferMap[connDevice];
-                QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
-                QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
-                if (qobject_cast<QIODevice*>(connection)){
-                    QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
-                    if (!ioCon->isOpen()) return;
-                    if(ioCon->waitForReadyRead(1)){
-                        buff.append(ioCon->readAll());
-                    }
+        foreach (QString connDevice, connectionsMap.keys()) {
+            QObject* connection = connectionsMap[connDevice];
+            QByteArray buff = *bufferMap[connDevice];
+            QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
+            QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+            if (qobject_cast<QIODevice*>(connection)){
+                QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+                if (!ioCon->isOpen()) continue;
+                if(ioCon->waitForReadyRead(1)){
+                    buff.append(ioCon->readAll());
                 }
-                foreach (QString eventName, eventMap.keys()) {
-                    eventData event = eventMap[eventName];
-                    event.status = INDEX_FLAGS_UNKNOWN;
-                    QString eventDevice = event.device;
-                    qDebug() << connDevice << eventDevice;
-                    if (connDevice != eventDevice) continue;
-                    if (event.protocol == "Ublox"){
+            }
+            foreach (QString eventName, eventMap.keys()) {
+                eventData* event = &eventMap[eventName];
+                event->status = INDEX_FLAGS_UNKNOWN;
+                QString eventDevice = event->device;
+                qDebug() << connDevice << eventDevice;
+                if (connDevice != eventDevice) continue;
+                if (event->protocol == "Ublox"){
 
-                    }
-                    else if (event.protocol == "Unicore"){
-                        UnicoreParser parser(connection);
-                        qDebug() << event.message + "B + 1";
-                        parser.sendMessage(event.message + "B 1");
-                    }
+                }
+                else if (event->protocol == "Unicore"){
+                    UnicoreParser parser(connection);
+                    qDebug() << event->message + "B 1";
+                    parser.sendMessage(event->message + "B 1");
                 }
             }
         }
-
     }
     else{
         ui->pushButtonStart->setStyleSheet("image: url(:/resources/start.png);\n"
@@ -1128,7 +1115,7 @@ void MainWindow::parseMessage()
     ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
     foreach (QString connDevice, connectionsMap.keys()) {
         QObject* connection = connectionsMap[connDevice];
-        QByteArray buff = bufferMap[connDevice];
+        QByteArray *buff = bufferMap[connDevice];
         QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
         QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
         if (connection == nullptr) continue;
@@ -1136,23 +1123,22 @@ void MainWindow::parseMessage()
             QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
             if (!ioCon->isOpen()) return;
             if(ioCon->waitForReadyRead(1)){
-                buff.append(ioCon->readAll());
+                buff->append(ioCon->readAll());
             }
         }
-        if (buff.isEmpty()) continue;
+        if (buff->isEmpty()) continue;
         if (protocol == "Ublox"){
             UbloxParser parser(connection);
-            QMap<QString,QByteArray> mess = parser.parseMessage(&buff);
+            QMap<QString,QByteArray> mess = parser.parseMessage(buff);
             if (mess.isEmpty()) continue;
             Message* decodedMessage = parser.decode(mess);
         }
         else if (protocol == "Unicore"){
             UnicoreParser parser(connection);
-            UnicoreMessage mess = parser.parseBinaryMessage(&buff);
+            UnicoreMessage mess = parser.parseBinaryMessage(buff);
             if (mess.data.isEmpty()) continue;
             foreach (QString eventName, eventMap.keys()) {
                 eventData *event = &eventMap[eventName];
-                // qDebug() << event.messageId << mess.binaryHeader.messageId;
                 if (event->device != connDevice) continue;
                 if (event->messageId != mess.binaryHeader.messageId) continue;
                 QStringList fields = messagesMap[event->message].getSortedFieldKeys();
@@ -1162,12 +1148,13 @@ void MainWindow::parseMessage()
                     offset += messagesMap[event->message].fields[fields.at(i)].size;
                     i++;
                 }
-                qDebug() << "offset" << offset;
                 int size = messagesMap[event->message].fields[event->fieldName].size;
                 QByteArray data = mess.data.mid(offset,size);
                 QDataStream stream(data);
                 stream.setByteOrder(QDataStream::BigEndian);
                 bool check = false;
+                qDebug() << '\n';
+                qDebug() << ("event: " + event->name) << ("field: " + event->fieldName) << ("type: " + event->fieldType);
                 if (event->fieldType == "int" || event->fieldType == "uint" || event->fieldType == "float" || event->fieldType == "double"){
                     int flags = (int)event->intTriggers.isEqual +
                                 ((int)event->intTriggers.isGreater << 1) +
@@ -1190,6 +1177,7 @@ void MainWindow::parseMessage()
                     }
                 }
                 else if (event->fieldType == "char"){
+                    qDebug() << ("data: " + QString::fromLatin1(data)) << ("event value: " + event->charTriggers.charValue);
                     check = QString::fromLatin1(data) == event->charTriggers.charValue;
                 }
                 else if (event->fieldType == "bitmap"){
@@ -1213,66 +1201,6 @@ void MainWindow::parseMessage()
             }
         }
     }
-        // if (protocol == "Ublox"){
-        //     UbloxParser parser(connection);
-        //     QMap<QString,QByteArray> mess = parser.parseMessage(&buff);
-        //     if (mess.isEmpty()) continue;
-        //     Message* decodedMessage = parser.decode(mess);
-        //     if (dynamic_cast<NAV::SOL*>(decodedMessage)){
-        //         NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
-        //         U4 iTOW = info->iTOW;
-        //         U1 gpsFix = info->gpsFix;
-        //         if (gpsFix == 0){
-        //             if (eventSettingsSolLost && (flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol lost"] == INDEX_FLAGS_UNKNOWN)){
-        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-        //                 QString event = key + ": Решение потеряно";
-        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
-        //             }
-        //             flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_TRUE;
-        //             flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_FALSE;
-        //         }
-        //         else {
-        //             if (eventSettingsSolFound && (flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Sol found"] == INDEX_FLAGS_UNKNOWN)){
-        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
-        //                 QString event = key + ": Решение найдено";
-        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
-        //             }
-        //             flagsMap[key]["RTK Sol found"] = INDEX_FLAGS_TRUE;
-        //             flagsMap[key]["RTK Sol lost"] = INDEX_FLAGS_FALSE;
-        //         }
-        //     }
-        //     else if (dynamic_cast<NAV::RELPOSNED*>(decodedMessage)){
-        //         NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
-        //         U4 iTOW = info->iTOW;
-        //         X4 flags = info->flags;
-        //         U1 relSol = getBits(flags,3,4);
-        //         if (relSol == 0){
-        //             if (eventSettingsRelSolLost && (flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol lost"] == INDEX_FLAGS_UNKNOWN)){
-        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
-        //                 QString event = key + ": Относительное решение потеряно";
-        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
-        //             }
-        //             flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_TRUE;
-        //             flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_FALSE;
-        //         }
-        //         else {
-        //             if (eventSettingsRelSolFound && (flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_FALSE || flagsMap[key]["RTK Rel Sol found"] == INDEX_FLAGS_UNKNOWN)){
-        //                 QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
-        //                 QString event = key + ": Относительное решение найдено";
-        //                 addItemToLogTable(localTime, QString::number(iTOW), event);
-        //             }
-        //             flagsMap[key]["RTK Rel Sol found"] = INDEX_FLAGS_TRUE;
-        //             flagsMap[key]["RTK Rel Sol lost"] = INDEX_FLAGS_FALSE;
-        //         }
-        //     }
-        // }
-        // else if (protocol == "Unicore"){
-        //     UnicoreParser parser(connection);
-        //     UnicoreMessage mess = parser.parseMessage(&buff);
-        //     if (mess.data.isEmpty()) return;
-        //     if (!mess.isAscii) return;
-
-        // }
 }
 
 

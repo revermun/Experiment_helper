@@ -42,7 +42,6 @@ UnicoreMessage UnicoreParser::parseBinaryMessage(QByteArray *buff)
             uint16_t MessageLength  = (uint8_t)buff->at(6) | ((uint8_t)buff->at(7) << 8);
             int totalMsgLen = 24 + MessageLength + 4;
             if (totalMsgLen > buff->size()) {
-                buff->remove(0,1);
                 break;
             }
             uint8_t* buffdata = reinterpret_cast<uint8_t*>(buff->data());
@@ -84,11 +83,6 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
     if (!buff || buff->isEmpty()) return res;
     /// Для бинарных сообщений crc считается для заголовка и тела
     while (size > 24) {
-        // Поиск синхро-байтов
-        if ((uint8_t)buff->at(0) != 0xaa && (uint8_t)buff->at(0) != '#' && (uint8_t)buff->at(0) != '$') {
-            buff->remove(0,1);
-            continue;
-        }
         if ((uint8_t)buff->at(0) == '#'){
             if (buff->left(11) == "#UNILOGLIST"){
                 int endPos = buff->indexOf("\r\n\r\n",0);
@@ -222,7 +216,6 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
     UnicoreMessage res;
     int size = buff->size();
     if (!buff || buff->isEmpty()) return res;
-    /// Для бинарных сообщений crc считается для заголовка и тела
     while (size > 24) {
         if ((uint8_t)buff->at(0) == 0xaa) {
             if ((uint8_t)buff->at(1) != 0x44) {
@@ -237,7 +230,6 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
             uint16_t MessageLength  = (uint8_t)buff->at(6) | ((uint8_t)buff->at(7) << 8);
             int totalMsgLen = 24 + MessageLength + 4;
             if (totalMsgLen > size) {
-                buff->remove(0,1);
                 break;
             }
             uint8_t* buffdata = reinterpret_cast<uint8_t*>(buff->data());
@@ -261,7 +253,6 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
                 res.data = buff->mid(24,MessageLength);
                 res.crc = buff->mid(MessageLength+24,4);
                 res.isAscii = false;
-                qDebug() << binHeader.messageId;
                 buff->remove(0, MessageLength + 24 + 4);
                 return res;
             }

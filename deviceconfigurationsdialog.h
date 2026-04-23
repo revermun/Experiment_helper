@@ -8,6 +8,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QTreeWidgetItem>
 #include <QTableWidget>
+#include <structs.h>
 
 namespace Ui {
 class deviceConfigurationsDialog;
@@ -18,7 +19,7 @@ class deviceConfigurationsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent = nullptr);
+    explicit deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
     ~deviceConfigurationsDialog();
 
 public slots:
@@ -50,6 +51,7 @@ private:
     void setChildrenHidden(QObject* parent, bool isHidden);
     void setChildrenEnabled(QObject* parent, bool isEnabled);
     void sendMSGPoll(uint8_t classID, uint8_t messageID);
+    QMap<QString,Mess> messagesMap;
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
     QMap<QString, QObject*> connectionsMap;
     QMap<QByteArray,QString> messagesNamesMap;

@@ -11,6 +11,7 @@
 #include <QTableWidget>
 #include <QTime>
 #include <QTcpSocket>
+#include <QScrollBar>
 
 #include "enums.h"
 #include "structs.h"
@@ -43,6 +44,7 @@ public slots:
     void parseMessage();
     void sendUserEvent();
     void addConnectionFromFile();
+    void clearLogTable();
 
 private:
     void getMessagesConfig();
@@ -58,7 +60,7 @@ private:
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
     QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
-    QMap<QString,QByteArray> bufferMap;
+    QMap<QString,QByteArray*> bufferMap;
     QMap<QString,eventData> eventMap;
     QMap<QString,Mess> messagesMap;
 
