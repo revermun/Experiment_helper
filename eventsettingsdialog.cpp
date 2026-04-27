@@ -86,7 +86,7 @@ void eventSettingsDialog::editEvent()
     dataOld.device = variantList.at(1).toString();
     dataOld.protocol = variantList.at(2).toString();
     dataOld.message = variantList.at(3).toString();
-    dataOld.messageId = variantList.at(4).toInt();
+    dataOld.messageId = variantList.at(4).toString();
     dataOld.fieldName = variantList.at(5).toString();
     dataOld.field = variantList.at(6).toInt();
     dataOld.fieldType = variantList.at(7).toString();

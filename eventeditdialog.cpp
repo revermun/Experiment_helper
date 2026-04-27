@@ -140,7 +140,7 @@ eventData eventEditDialog::getEventData(){
         data.device = ui->comboDevice->currentText();
         data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
         data.message = ui->comboMessage->currentText();
-        data.messageId = messagesMap[data.message].id.toInt();
+        data.messageId = messagesMap[data.message].id;
         data.fieldName = ui->comboMessageField->currentText();
         data.field = messagesMap[data.message].fields[data.fieldName].index;
         QString type = messagesMap[data.message].fields[data.fieldName].type;

@@ -41,73 +41,6 @@ QByteArray UbloxParser::createPollMessage(uint8_t byteClass, uint8_t byteID){
     return msg;
 }
 
-QMap<QString,QByteArray> UbloxParser::parseMessage(QByteArray *buff)
-{
-    QMap<QString,QByteArray> map;
-
-    int index = 0;
-    int size = buff->size();
-
-    while (index <= size - 8) { // Минимум 8 байт: 2(синхро) + 4(заг) + 2(CRC)
-        // Поиск синхро-байтов
-        if ((uint8_t)buff->at(index) != 0xb5) {
-            index++;
-            continue;
-        }
-
-        if ((uint8_t)buff->at(index + 1) != 0x62) {
-            index += 2;
-            continue;
-        }
-
-        // Читаем длину payload
-        uint16_t payloadLen = (uint8_t)buff->at(index + 4) | ((uint8_t)buff->at(index + 5) << 8);
-        int totalMsgLen = 2 + 4 + payloadLen + 2; // синхро(2) + заг(4) + payload + CRC(2)
-
-        // Проверяем, хватает ли данных
-        if (index + totalMsgLen > size) {
-            // Неполное сообщение - оставляем в буфере
-            break;
-        }
-
-        // Извлекаем компоненты сообщения
-        uint8_t byteClass = (uint8_t)buff->at(index + 2);
-        uint8_t byteID = (uint8_t)buff->at(index + 3);
-
-        QByteArray payload;
-        if (payloadLen > 0) {
-            payload = buff->mid(index + 6, payloadLen);
-        }
-
-        QByteArray checkSum = buff->mid(index + 6 + payloadLen, 2);
-        QByteArray msg = buff->mid(index + 2, 4 + payloadLen); // без синхро-байтов
-
-        // Проверка контрольной суммы
-        if (calcCheckSum(msg) == checkSum) {
-            // Валидное сообщение найдено
-            map.insert("byteClass", QByteArray(1, byteClass));
-            map.insert("byteID", QByteArray(1, byteID));
-            map.insert("payload", payload);
-
-            // Удаляем обработанные данные из буфера (ВКЛЮЧАЯ текущее сообщение)
-            buff->remove(0, index + totalMsgLen);
-
-            return map;
-        }
-
-        // Если CRC не совпал, продолжаем поиск со следующего байта
-        index++;
-    }
-
-    // Если дошли сюда - валидное сообщение не найдено
-    // Но нужно удалить все байты до index (мусорные данные)
-    if (index > 0) {
-        buff->remove(0, index);
-    }
-
-    return map; // пустая карта
-}
-
 UbloxMessage UbloxParser::parseMessage(QByteArray *buff)
 {
     UbloxMessage res;
@@ -162,7 +95,7 @@ UbloxMessage UbloxParser::parseMessage(QByteArray *buff)
             // Удаляем обработанные данные из буфера (ВКЛЮЧАЯ текущее сообщение)
             buff->remove(0, index + totalMsgLen);
 
-            return map;
+            return res;
         }
 
         // Если CRC не совпал, продолжаем поиск со следующего байта
@@ -175,7 +108,7 @@ UbloxMessage UbloxParser::parseMessage(QByteArray *buff)
         buff->remove(0, index);
     }
 
-    return map; // пустая карта
+    return res; // пустая карта
 }
 
 
@@ -208,13 +141,13 @@ bool UbloxParser::sendMessage(QByteArray msg)
 }
 
 
-Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
+Message* UbloxParser::decode(UbloxMessage msg)
 {
-    uint8_t byteClass = msg["byteClass"].at(0);
-    uint8_t byteID = msg["byteID"].at(0);
+    uint8_t byteClass = msg.messClass;
+    uint8_t byteID = msg.messId;
     if (byteClass == CFG::MSG::classID && byteID == CFG::MSG::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -226,7 +159,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     if (byteClass == CFG::DAT::GET::classID && byteID == CFG::DAT::GET::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -238,7 +171,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::GNSS::classID && byteID == CFG::GNSS::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -262,7 +195,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::_CFG::classID && byteID == CFG::_CFG::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -274,7 +207,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::DGNSS::classID && byteID == CFG::DGNSS::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -286,7 +219,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::DAT::SET::classID && byteID == CFG::DAT::SET::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -298,7 +231,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::NAV5::classID && byteID == CFG::NAV5::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -313,7 +246,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::PRT::classID && byteID == CFG::PRT::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         CFG::PRT* mes = new CFG::PRT();
@@ -338,7 +271,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::RATE::classID && byteID == CFG::RATE::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -350,7 +283,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::RST::classID && byteID == CFG::RST::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -362,7 +295,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == CFG::ITFM::classID && byteID == CFG::ITFM::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -374,7 +307,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::POSECEF::classID && byteID == NAV::POSECEF::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -386,7 +319,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::CLOCK::classID && byteID == NAV::CLOCK::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -398,7 +331,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::DOP::classID && byteID == NAV::DOP::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -410,7 +343,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::ORB::classID && byteID == NAV::ORB::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -441,7 +374,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::DGPS::classID && byteID == NAV::DGPS::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -471,7 +404,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::POSLLH::classID && byteID == NAV::POSLLH::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -483,7 +416,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::RELPOSNED::classID && byteID == NAV::RELPOSNED::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -498,7 +431,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::SAT::classID && byteID == NAV::SAT::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -524,7 +457,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::SOL::classID && byteID == NAV::SOL::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -537,7 +470,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::STATUS::classID && byteID == NAV::STATUS::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -549,7 +482,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::VELECEF::classID && byteID == NAV::VELECEF::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -561,7 +494,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == NAV::VELNED::classID && byteID == NAV::VELNED::messageID){
         
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         
@@ -573,7 +506,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == RXM::RAWX::classID && byteID == RXM::RAWX::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 
@@ -594,7 +527,7 @@ Message* UbloxParser::decode(QMap<QString, QByteArray> msg)
     }
     else if (byteClass == RXM::SFRBX::classID && byteID == RXM::SFRBX::messageID){
 
-        QByteArray payload = msg["payload"];
+        QByteArray payload = msg.data;
         QDataStream stream(payload);
         stream.setByteOrder(QDataStream::LittleEndian);
 

@@ -73,13 +73,11 @@ class UbloxParser
 public:
     UbloxParser(QObject *connection);
     ~UbloxParser();
-    QMap<QString,QByteArray> parseMessage(QByteArray* buff);
     UbloxMessage parseMessage(QByteArray *buff);
     bool sendMessage(QByteArray msg);
     static QByteArray calcCheckSum(QByteArray msg);
-    static Message* decode(QMap<QString,QByteArray>);
+    static Message* decode(UbloxMessage msg);
     static QByteArray createPollMessage(uint8_t byteClass, uint8_t byteID);
-    Message* decodeMessage(QMap<QString,QByteArray> msg);
 
 private:
     QObject *connection;

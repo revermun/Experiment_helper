@@ -25,6 +25,11 @@
 
 
 /// Особые сообщения
+/// Требуют расшифровки флагов
+/// NAV-RELPOSNED
+/// NAV-SOL
+/// NAV-STATUS
+///
 /// Null поля до получения решения
 /// ADRDOP
 ///
@@ -38,6 +43,9 @@
 /// SATINFO
 /// SATELITE
 /// SATECEF
+/// NAV-ORB
+/// NAV-DGPS
+/// NAV-SAT
 
 /// Обязательные сообщения
 /// OBSVH           |-
@@ -165,18 +173,12 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     messagesIDMapUBX["RAWX"] = QPair<uint8_t,uint8_t>(RXM::RAWX::classID, RXM::RAWX::messageID);
     messagesIDMapUBX["SFRBX"] = QPair<uint8_t,uint8_t>(RXM::SFRBX::classID, RXM::SFRBX::messageID);
 
-    framesMap["NAV-CLOCK"] = ui->frameCLOCK;
     framesMap["NAV-DGPS"] = ui->frameDGPS;
-    framesMap["NAV-DOP"] = ui->frameDOP;
     framesMap["NAV-ORB"] = ui->frameORB;
-    framesMap["NAV-POSECEF"] = ui->framePOSECEF;
-    framesMap["NAV-POSLLH"] = ui->framePOSLLH;
     framesMap["NAV-RELPOSNED"] = ui->frameRELPOSNED;
     framesMap["NAV-SAT"] = ui->frameSAT;
     framesMap["NAV-SOL"] = ui->frameSOL;
     framesMap["NAV-STATUS"] = ui->frameSTATUS;
-    framesMap["NAV-VELECEF"] = ui->frameVELECEF;
-    framesMap["NAV-VELNED"] = ui->frameVELNED;
     framesMap["CFG-DGNSS"] = ui->frameDGNSS;
     framesMap["CFG-GNSS"] = ui->frameGNSS;
     framesMap["CFG-CFG"] = ui->frameCFG;
@@ -185,7 +187,6 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     framesMap["CFG-NAV5"] = ui->frameNAV5;
     framesMap["CFG-PRT"] = ui->framePRT;
     framesMap["CFG-RATE"] = ui->frameRATE;
-    framesMap["CFG-CLOCK"] = ui->frameCLOCK;
     framesMap["CFG-RST"] = ui->frameRST;
     framesMap["CFG-ITFM"] = ui->frameITFM;
     framesMap["OBSVM"] = ui->frameOBSVM;
@@ -609,141 +610,355 @@ void deviceConfigurationsDialog::parseMessage()
 
     if (protocol == "Ublox"){
         UbloxParser parser(currentConnection);
-        QMap<QString,QByteArray> mess = parser.parseMessage(&streamBuffer);
-        if (mess.isEmpty()) return;
-        if (mess["byteClass"].at(0) == ACK::_ACK::classID && mess["byteID"].at(0) == ACK::_ACK::messageID){
+        UbloxMessage mess = parser.parseMessage(&streamBuffer);
+        QByteArray data = mess.data;
+        uint8_t messId = mess.messId;
+        uint8_t messClass = mess.messClass;
+        if (mess.data.isEmpty()) return;
+        if (messClass == ACK::_ACK::classID && messId == ACK::_ACK::messageID){
             ui->labelResponse->setText("Принято ответное сообщение!");
             ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
             this->newResponse = true;
-            qDebug() << "ACK-ACK";
+            qDebug() << "ACK-ACK" << mess.data.toHex(' ');
         }
-        else if (mess["byteClass"].at(0) == ACK::NAK::classID && mess["byteID"].at(0) == ACK::NAK::messageID){
+        else if (messClass == ACK::NAK::classID && messId == ACK::NAK::messageID){
             ui->labelResponse->setText("Сообщение отклонено!");
             ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
             this->newResponse = true;
-            qDebug() << "ACK-NAK";
+            qDebug() << "ACK-NAK" << mess.data.toHex(' ');
         }
 
         Message* decodedMessage = parser.decode(mess);
-        if (dynamic_cast<CFG::MSG::MSGRATES*>(decodedMessage)){
-            CFG::MSG::MSGRATES *info = dynamic_cast<CFG::MSG::MSGRATES*>(decodedMessage);
-            U1 msgClass = info->msgClass;
-            U1 msgID = info->msgID;
-            U1 rate1 = info->rate1;
-            U1 rate2 = info->rate2;
-            U1 rate3 = info->rate3;
-            U1 rate4 = info->rate4;
-            U1 rate5 = info->rate5;
-            // U1 rate6 = info->rate6;
-            QMap<QByteArray,QString> map = messagesNamesMap;
-            QByteArray key;
-            key.resize(2);
-            key[0] = msgClass;
-            key[1] = msgID;
-            QString messName = map[key];
-            if (ui->tabWidget->currentIndex() == 1) ui->comboMSG->setCurrentText(messName);
-            ui->spinMSGI2C->setValue(rate1);
-            ui->spinMSGUART1->setValue(rate2);
-            ui->spinMSGUART2->setValue(rate3);
-            ui->spinMSGUSB->setValue(rate4);
-            ui->spinMSGSPI->setValue(rate5);
-            if (messName == "SFRBX"){
-                ui->checkRecieverEph->setChecked((rate1 + rate2 + rate3 + rate4 + rate5) > 0);
-                ui->spinRecieverEph1->setValue(rate1);
-                ui->spinRecieverEph2->setValue(rate2);
-                ui->spinRecieverEph3->setValue(rate3);
-                ui->spinRecieverEph4->setValue(rate4);
-                ui->spinRecieverEph5->setValue(rate5);
+        if (messClass == NAV::ORB::classID && messId == NAV::ORB::messageID){
+            NAV::ORB *info = dynamic_cast<NAV::ORB*>(decodedMessage);
+            // U4 iTOW = info->iTOW;
+            // U1 version = info->version;
+            // U1 numSv = info->numSv;
+            // U1 reserved1 = info->reserved1;
+            // U1 reserved2 = info->reserved2;
+            int i = 0;
+            ui->tableORB->clearContents();
+            ui->tableORB->setRowCount(0);
+            foreach (NAV::ORB::Repeated svData, info->repeatedList) {
+                // U1 gnssId = svData->gnssId;
+                U1 svId = svData.svId;
+                X1 svFlag = svData.svFlag;
+                X1 eph = svData.eph;
+                X1 alm = svData.alm;
+                X1 otherOrb = svData.otherOrb;
+                U1 health = (U1)getBits(svFlag,0,1);
+                U1 visibility = (U1)getBits(svFlag,2,3);
+                U1 ephUsability = (U1)getBits(eph,0,4);
+                U1 ephSource = (U1)getBits(eph,5,7);
+                U1 almUsability = (U1)getBits(alm,0,4);
+                U1 almSource = (U1)getBits(alm,5,7);
+                U1 anoAopUsability = (U1)getBits(otherOrb,0,4);
+                U1 type = (U1)getBits(otherOrb,5,7);
+                QString healthStr = health == 0x00? "unknown":
+                                    health == 0x01? "healthy":
+                                    health == 0x02? "not healty":"";
+                QString visibilityStr = visibility == 0x00? "unknown":
+                                        visibility == 0x01? "below horizon":
+                                        visibility == 0x02? "above horizon":
+                                        visibility == 0x03? "above elevation mask":"";
+                QString ephUsabilityStr = ephUsability == 31? "The usability period is unknown":
+                                          ephUsability == 30? "The usability period is more than 450 minutes":
+                                          ephUsability == 0? "Ephemeris can no longer be used":
+                                                             "The usability period is between " + QString::number((ephUsability-1)*15) + " and " + QString::number((ephUsability)*15) + " minutes";
+                QString ephSourceStr = ephSource == 0x00? "not available":
+                                       ephSource == 0x01? "GNSS transmission":
+                                       ephSource == 0x02? "external aiding":
+                                                          "other";
+                QString almUsabilityStr = almUsability == 31? "The usability period is unknown":
+                                          almUsability == 30? "The usability period is more than 30 days":
+                                          almUsability == 0?  "Almanac can no longer be used":
+                                                             "The usability period is between " + QString::number((almUsability-1)) + " and " + QString::number((almUsability)) + " days";
+                QString almSourceStr = almSource == 0x00? "not available":
+                                       almSource == 0x01? "GNSS transmission":
+                                       almSource == 0x02? "external aiding":
+                                                          "other";
+                QString anoAopUsabilityStr = anoAopUsability == 31? "The usability period is unknown":
+                                             anoAopUsability == 30? "The usability period is more than 30 days":
+                                             anoAopUsability == 0?  "Almanac can no longer be used":
+                                                                    "The usability period is between " + QString::number((anoAopUsability-1)) + " and " + QString::number((anoAopUsability)) + " days";
+                QString typeStr = type == 0x00? "not available":
+                                  type == 0x01? "GNSS transmission":
+                                  type == 0x02? "external aiding":
+                                                     "other";
 
+                ui->tableORB->insertRow(i);
+                QTableWidgetItem *item;
+                item = new QTableWidgetItem(svId); ui->tableORB->setItem(i,0,item);
+                item = new QTableWidgetItem(ephUsabilityStr + "\n" + ephSourceStr); ui->tableORB->setItem(i,1,item);
+                item = new QTableWidgetItem(almUsabilityStr + "\n" + almSourceStr); ui->tableORB->setItem(i,2,item);
+                item = new QTableWidgetItem(anoAopUsabilityStr + "\n" + typeStr); ui->tableORB->setItem(i,3,item);
+                item = new QTableWidgetItem(healthStr); ui->tableORB->setItem(i,4,item);
+                item = new QTableWidgetItem(visibilityStr); ui->tableORB->setItem(i,5,item);
+                i++;
             }
-            if (messName == "RAWX"){
-                ui->checkRecieverRaw->setChecked((rate1 + rate2 + rate3 + rate4 + rate5) > 0);
-                ui->spinRecieverRaw1->setValue(rate1);
-                ui->spinRecieverRaw2->setValue(rate2);
-                ui->spinRecieverRaw3->setValue(rate3);
-                ui->spinRecieverRaw4->setValue(rate4);
-                ui->spinRecieverRaw5->setValue(rate5);
-            }
-            if (messName == "VELNED" || messName == "VELECEF"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0) velCheck = true;
-            }
-            if (messName == "VELNED"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
-                    ui->checkRecieverVelNED->setChecked(true);
-                    ui->spinRecieverVel1->setValue(rate1);
-                    ui->spinRecieverVel2->setValue(rate2);
-                    ui->spinRecieverVel3->setValue(rate3);
-                    ui->spinRecieverVel4->setValue(rate4);
-                    ui->spinRecieverVel5->setValue(rate5);
-                }
-                else {ui->checkRecieverVelNED->setChecked(false); velCheck = false;}
-            }
-            if (messName == "VELECEF"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
-                    ui->checkRecieverVelECEF->setChecked(true);
-                    ui->spinRecieverVel1->setValue(rate1);
-                    ui->spinRecieverVel2->setValue(rate2);
-                    ui->spinRecieverVel3->setValue(rate3);
-                    ui->spinRecieverVel4->setValue(rate4);
-                    ui->spinRecieverVel5->setValue(rate5);
-                }
-                else {ui->checkRecieverVelECEF->setChecked(false);
-                    if (!velCheck){
-                        ui->spinRecieverVel1->setValue(rate1);
-                        ui->spinRecieverVel2->setValue(rate2);
-                        ui->spinRecieverVel3->setValue(rate3);
-                        ui->spinRecieverVel4->setValue(rate4);
-                        ui->spinRecieverVel5->setValue(rate5);
-                    }
-
-                }
-                ui->checkRecieverVel->setChecked(velCheck);
-
-            }
-            if (messName == "POSLLH" || messName == "POSECEF"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0) posCheck = true;
-            }
-            if (messName == "POSLLH"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
-                    ui->checkRecieverPosLLH->setChecked(true);
-                    ui->spinRecieverPos1->setValue(rate1);
-                    ui->spinRecieverPos2->setValue(rate2);
-                    ui->spinRecieverPos3->setValue(rate3);
-                    ui->spinRecieverPos4->setValue(rate4);
-                    ui->spinRecieverPos5->setValue(rate5);
-                }
-                else {ui->checkRecieverPosLLH->setChecked(false); posCheck = false;}
-            }
-            if (messName == "POSECEF"){
-                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
-                    ui->checkRecieverPosECEF->setChecked(true);
-                    ui->spinRecieverPos1->setValue(rate1);
-                    ui->spinRecieverPos2->setValue(rate2);
-                    ui->spinRecieverPos3->setValue(rate3);
-                    ui->spinRecieverPos4->setValue(rate4);
-                    ui->spinRecieverPos5->setValue(rate5);
-                }
-                else {ui->checkRecieverPosECEF->setChecked(false);
-                    if (!posCheck){
-                        ui->spinRecieverPos1->setValue(rate1);
-                        ui->spinRecieverPos2->setValue(rate2);
-                        ui->spinRecieverPos3->setValue(rate3);
-                        ui->spinRecieverPos4->setValue(rate4);
-                        ui->spinRecieverPos5->setValue(rate5);
-                    }
-                }
-                ui->checkRecieverPos->setChecked(posCheck);
-            }
-            if (messName == "RELPOSNED"){
-                ui->checkRecieverRelpos->setChecked((rate1 + rate2 + rate3 + rate4 + rate5) > 0);
-                ui->spinRecieverRelPos1->setValue(rate1);
-                ui->spinRecieverRelPos2->setValue(rate2);
-                ui->spinRecieverRelPos3->setValue(rate3);
-                ui->spinRecieverRelPos4->setValue(rate4);
-                ui->spinRecieverRelPos5->setValue(rate5);
-            }
+            setupTableSize(ui->tableORB);
         }
-        else if (dynamic_cast<CFG::DGNSS*>(decodedMessage)){
+        else if (messClass == NAV::DGPS::classID && messId == NAV::DGPS::messageID){
+            ui->tableDGPS->clearContents();
+            ui->tableDGPS->setRowCount(0);
+            NAV::DGPS *info = dynamic_cast<NAV::DGPS*>(decodedMessage);
+            U4 iTOW = info->iTOW;
+            I4 age = info->age;
+            I2 baseId = info->baseId;
+            I2 baseHealth = info->baseHealth;
+            // U1 numCh = info->numCh;
+            U1 status = info->status;
+            // U1 reserved1 = info->reserved1;
+            // U1 reserved2 = info->reserved2;
+            ui->labelDGPSITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
+            ui->labelDGPSAge->setText(QString::number((double)age/1000, 'f', 3) + " s");
+            ui->labelDGPSId->setText(QString::number(baseId));
+            ui->labelDGPSBaseHealth->setText(QString::number(baseHealth));
+            QString statusStr = status == 0x01? "PR+PRR correction": "none";
+            ui->labelDGPSStatus->setText(statusStr);
+            int i = 0;
+            foreach (NAV::DGPS::Repeated chData, info->repeatedList) {
+                U1 svId = chData.svId;
+                X1 flags = chData.flags;
+                U2 ageC = chData.ageC;
+                R4 prc = chData.prc;
+                R4 prrc = chData.prrc;
+                bool GPSUsed = getBit(flags,4);
+                U1 channel = getBits(flags,0,3);
+                ui->tableDGPS->insertRow(i);
+                QTableWidgetItem *item;
+                item = new QTableWidgetItem(svId); ui->tableDGPS->setItem(i,0,item);
+                item = new QTableWidgetItem(GPSUsed); ui->tableDGPS->setItem(i,1,item);
+                item = new QTableWidgetItem(channel); ui->tableDGPS->setItem(i,2,item);
+                item = new QTableWidgetItem(QString::number((double)ageC/1000, 'f', 3)); ui->tableDGPS->setItem(i,3,item);
+                item = new QTableWidgetItem(prc); ui->tableDGPS->setItem(i,4,item);
+                item = new QTableWidgetItem(prrc); ui->tableDGPS->setItem(i,5,item);
+                i++;
+            }
+            setupTableSize(ui->tableDGPS);
+        }
+        else if (messClass == NAV::SAT::classID && messId == NAV::SAT::messageID){
+            ui->tableSAT->clearContents();
+            ui->tableSAT->setRowCount(0);
+            NAV::SAT *info = dynamic_cast<NAV::SAT*>(decodedMessage);
+            U4 iTOW = info->iTOW;
+            // U1 version = info->version;
+            // U1 numSvs = info->numSvs;
+            // U1 reserved1 = info->reserved1;
+            // U1 reserved2 = info->reserved2;
+            ui->labelSATITOW->setText(QString::number((double)iTOW/1000, 'f', 3));
+            int i = 0;
+            foreach (NAV::SAT::Repeated chData, info->repeatedList) {
+                U1 gnssId = chData.gnssId;
+                U1 svId = chData.svId;
+                U1 cno = chData.cno;
+                I1 elev = chData.elev;
+                I2 azim = chData.azim;
+                I2 prRes = chData.prRes;
+                X4 flags = chData.flags;
+
+                U1 qualityInd = getBits(flags,0,2);
+                bool svUsed = getBit(flags,3);
+                U1 health = getBits(flags,4,5);
+                bool diffCor = getBit(flags,6);
+                bool smothed = getBit(flags,7);
+                U1 orbitSource = getBits(flags,8,10);
+                bool eph = getBit(flags,11);
+                bool alm = getBit(flags,12);
+                bool ano = getBit(flags,13);
+                bool aop = getBit(flags,14);
+                QString elevStr = abs(elev)<=90? QString::number(elev):"unknown";
+                QString azimStr = abs(elev)<=180? QString::number(azim):"unknown";
+                QString qualityIndStr =     qualityInd == 0? "no signal":
+                                            qualityInd == 1? "searching signal":
+                                            qualityInd == 2? "signal aquired":
+                                            qualityInd == 3? "signal detected but unusable":
+                                            qualityInd == 4? "code locked and time synchronized":
+                                            qualityInd == 5 || qualityInd == 6 || qualityInd == 7? "code and carrier locked and time synchronized": "unknown";
+                QString healthStr = health == 1? "healthy":
+                                    health == 2? "unhealthy": "unknown";
+                QString orbitSourceStr =    orbitSource == 0? "no orbit information":
+                                            orbitSource == 1? "ephemeris is used":
+                                            orbitSource == 2? "almanac is used":
+                                            orbitSource == 3? "AssistNow Offline orbit is used":
+                                            orbitSource == 4? "AssistNow Autonomous orbit is used":
+                                            orbitSource == 5 || orbitSource == 6 || orbitSource == 7? "other orbit information is used": "unknown";
+                ui->tableSAT->insertRow(i);
+                QTableWidgetItem *item;
+                item = new QTableWidgetItem(gnssId); ui->tableSAT->setItem(i,0,item);
+                item = new QTableWidgetItem(svId); ui->tableSAT->setItem(i,1,item);
+                item = new QTableWidgetItem(cno); ui->tableSAT->setItem(i,2,item);
+                item = new QTableWidgetItem(elevStr); ui->tableSAT->setItem(i,3,item);
+                item = new QTableWidgetItem(azimStr); ui->tableSAT->setItem(i,4,item);
+                item = new QTableWidgetItem(prRes); ui->tableSAT->setItem(i,5,item);
+                item = new QTableWidgetItem(qualityIndStr); ui->tableSAT->setItem(i,6,item);
+                item = new QTableWidgetItem(svUsed); ui->tableSAT->setItem(i,7,item);
+                item = new QTableWidgetItem(healthStr); ui->tableSAT->setItem(i,8,item);
+                item = new QTableWidgetItem(diffCor); ui->tableSAT->setItem(i,9,item);
+                item = new QTableWidgetItem(smothed); ui->tableSAT->setItem(i,10,item);
+                item = new QTableWidgetItem(orbitSourceStr); ui->tableSAT->setItem(i,11,item);
+                item = new QTableWidgetItem(eph); ui->tableSAT->setItem(i,12,item);
+                item = new QTableWidgetItem(alm); ui->tableSAT->setItem(i,13,item);
+                item = new QTableWidgetItem(ano); ui->tableSAT->setItem(i,14,item);
+                item = new QTableWidgetItem(aop); ui->tableSAT->setItem(i,15,item);
+                i++;
+            }
+            setupTableSize(ui->tableSAT);
+        }
+        else if (messClass == NAV::RELPOSNED::classID && messId == NAV::RELPOSNED::messageID){
+            NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
+            // U1 version = info->version;
+            // U1 reserved1 = info->reserved1;
+            U2 refStationId = info->refStationId;
+            U4 iTOW = info->iTOW;
+            I4 relPosN = info->relPosN;
+            I4 relPosE = info->relPosE;
+            I4 relPosD = info->relPosD;
+            I4 relPosLength = info->relPosLength;
+            I4 relPosHeading = info->relPosHeading;
+            // U1 reserved2 = info->reserved2;
+            // U1 reserved3 = info->reserved3;
+            // U1 reserved4 = info->reserved4;
+            // U1 reserved5 = info->reserved5;
+            I1 relPosHPN = info->relPosHPN;
+            I1 relPosHPE = info->relPosHPE;
+            I1 relPosHPD = info->relPosHPD;
+            I1 relPosHPLength = info->relPosHPLength;
+            // U4 accN = info->accN;
+            // U4 accE = info->accE;
+            // U4 accD = info->accD;
+            // U4 accLength = info->accLength;
+            // U4 accHeading = info->accHeading;
+            // U1 reserved6 = info->reserved6;
+            // U1 reserved7 = info->reserved7;
+            // U1 reserved8 = info->reserved8;
+            // U1 reserved9 = info->reserved9;
+            X4 flags = info->flags;
+            bool gnnsFixOk = getBit(flags, 0);
+            bool diffSoln = getBit(flags, 1);
+            bool relPosValid = getBit(flags,2);
+            int carSoln = (int)getBit(flags, 3) + ((int)getBit(flags, 4) << 1);
+            bool isMoving = getBit(flags, 5);
+            // bool refPosMiss = getBit(flags, 6);
+            // bool refObsMiss = getBit(flags, 7);
+            bool relPosHeadingValid = getBit(flags, 8);
+            bool relPosNormalized = getBit(flags, 9);
+            QString carSol = carSoln == 0? "no carrier phase range solution":
+                                 carSoln == 1? "carrier phase range solution with doubleing ambiguities"
+                                              :"carrier phase range solution with fixed ambiguities";
+            ui->checkRELPOSNEDFIXok->setChecked(gnnsFixOk);
+            ui->checkRELPOSNEDDifSol->setChecked(diffSoln);
+            ui->checkRELPOSNEDIsMoving->setChecked(isMoving);
+            ui->checkRELPOSNEDNorm->setChecked(relPosNormalized);
+            ui->checkRELPOSNEDHeading->setChecked(relPosHeadingValid);
+            ui->checkRELPOSNEDPosVal->setChecked(relPosValid);
+            ui->labelRELPOSNEDStatus->setText(carSol);
+            ui->labelRELPOSNEDITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
+            ui->labelRELPOSNEDD->setText(QString::number((double)relPosD/100, 'f', 2) + " m");
+            ui->labelRELPOSNEDN->setText(QString::number((double)relPosN/100, 'f', 2) + " m");
+            ui->labelRELPOSNEDE->setText(QString::number((double)relPosE/100, 'f', 2) + " m");
+            ui->labelRELPOSNEDHPD->setText(QString::number((double)relPosHPD/10000, 'f', 4) + " m");
+            ui->labelRELPOSNEDHPN->setText(QString::number((double)relPosHPN/10000, 'f', 4) + " m");
+            ui->labelRELPOSNEDHPE->setText(QString::number((double)relPosHPE/10000, 'f', 4) + " m");
+            ui->labelRELPOSNEDL->setText(QString::number((double)relPosLength/100, 'f', 2) + " m");
+            ui->labelRELPOSNEDH->setText(QString::number((double)relPosHeading/100000, 'f', 5) + " degrees");
+            ui->labelRELPOSNEDHPL->setText(QString::number((double)relPosHPLength/10000, 'f', 4) + " m");
+            ui->labelRELPOSNEDID->setText(QString::number(refStationId));
+        }
+        else if (messClass == NAV::SOL::classID && messId == NAV::SOL::messageID){
+            NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
+            U4 iTOW = info->iTOW;
+            // I4 fTOW = info->fTOW;
+            I2 week = info->week;
+            U1 gpsFix = info->gpsFix;
+            X1 flags = info->flags;
+            I4 ecefX = info->ecefX;
+            I4 ecefY = info->ecefY;
+            I4 ecefZ = info->ecefZ;
+            U4 pAcc = info->pAcc;
+            I4 ecefVX = info->ecefVX;
+            I4 ecefVY = info->ecefVY;
+            I4 ecefVZ = info->ecefVZ;
+            U4 sAcc = info->sAcc;
+            U2 pDOP = info->pDOP;
+            // U1 reserved1 = info->reserved1;
+            U1 numSV = info->numSV;
+            // U4 reserved = info->reserved;
+            // qDebug() << iTOW << fTOW << week << gpsFix << flags << ecefX << ecefY << ecefZ << pAcc << ecefVX << ecefVY << ecefVZ << sAcc << pDOP << reserved1 << numSV << reserved;
+            QString fixType = gpsFix == 0? "No Fix":
+                              gpsFix == 1? "Dead Reckoning only":
+                              gpsFix == 2? "2D-Fix":
+                              gpsFix == 3? "3D-Fix":
+                              gpsFix == 4? "GPS + dead reckoning combined":
+                              gpsFix == 5? "Time only fix": "reserved";
+            QString GPSfixOK = getBit(flags,0)? "GPSfixOK ":"";
+            QString DiffSoln = getBit(flags,1)? "DiffSoln ":"";
+            QString WKNSET = getBit(flags,2)? "WKNSET ":"";
+            QString TOWSET = getBit(flags,3)? "TOWSET ":"";
+            QTableWidgetItem *item;
+            item = new QTableWidgetItem(QString::number((double)week) + ":" + QString::number((double)iTOW/1000, 'f', 3) + " s"); ui->tableSOL->setItem(0,1,item);
+            item = new QTableWidgetItem(fixType); ui->tableSOL->setItem(1,1,item);
+            item = new QTableWidgetItem(GPSfixOK + DiffSoln + WKNSET + TOWSET); ui->tableSOL->setItem(2,1,item);
+            item = new QTableWidgetItem("(" + QString::number((double)ecefX/100, 'f', 2) + "," + QString::number((double)ecefY/100, 'f', 2) + "," + QString::number((double)ecefZ/100, 'f', 2) + ")"); ui->tableSOL->setItem(3,1,item);
+            item = new QTableWidgetItem(QString::number((double)pAcc)); ui->tableSOL->setItem(4,1,item);
+            item = new QTableWidgetItem("(" + QString::number((double)ecefVX/100, 'f', 2) + "," + QString::number((double)ecefVY/100, 'f', 2) + "," + QString::number((double)ecefVZ/100, 'f', 2) + ")");  ui->tableSOL->setItem(5,1,item);
+            item = new QTableWidgetItem(QString::number((double)sAcc/100, 'f', 3) + " m/s") ;  ui->tableSOL->setItem(6,1,item);
+            item = new QTableWidgetItem(QString::number((double)pDOP/100));  ui->tableSOL->setItem(7,1,item);
+            item = new QTableWidgetItem(QString::number((double)numSV));  ui->tableSOL->setItem(8,1,item);
+            setupTableSize(ui->tableSOL);
+        }
+        else if (messClass == NAV::STATUS::classID && messId == NAV::STATUS::messageID){
+            NAV::STATUS *info = dynamic_cast<NAV::STATUS*>(decodedMessage);
+            U4 iTOW = info->iTOW;
+            U1 gpsFix = info->gpsFix;
+            X1 flags = info->flags;
+            X1 fixStat = info->fixStat;
+            X1 flags2 = info->flags2;
+            U4 ttff = info->ttff;
+            U4 msss = info->msss;
+            ui->labelSTATUSITOW->setText(QString::number((double)iTOW/1000) + " s");
+            QString gpsFixstr = gpsFix == 0x00? "no fix":
+                                    gpsFix == 0x01? "dead reckoning only":
+                                    gpsFix == 0x02? "2D-fix":
+                                    gpsFix == 0x03? "3D-fix":
+                                    gpsFix == 0x04? "GPS + dead reckoning combined":
+                                    gpsFix == 0x05? "Time only fix":
+                                    "reserved";
+            bool gpsFixOK = getBit(flags,0);
+            bool diffSoln = getBit(flags,1);
+            bool wknSet = getBit(flags,2);
+            bool towSet = getBit(flags,3);
+            bool diffCor = getBit(fixStat,0);
+            uint8_t mapMatching = (uint8_t)getBit(fixStat, 6) + ((uint8_t)getBit(fixStat, 7) << 1);
+            QString mapMatchingStr = mapMatching == 0x00? "none":
+                                         mapMatching == 0x01? "valid but not used":
+                                         mapMatching == 0x02? "valid and used":
+                                         "valid and used, map matching data was applied";
+            uint8_t psmState = (uint8_t)getBit(flags2, 0) + ((uint8_t)getBit(flags2, 1) << 1);
+            QString psmStateStr = psmState == 0x00? "ACQUISITION":
+                                      psmState == 0x01? "TRACKING":
+                                      psmState == 0x02? "POWER OPTIMIZED TRACKING":
+                                      "INACTIVE";
+            uint8_t spoofDetState = (uint8_t)getBit(flags2, 3) + ((uint8_t)getBit(flags2, 4) << 1);
+            QString spoofDetStateStr = spoofDetState == 0x00? "Unknown or deactivated":
+                                           spoofDetState == 0x01? "No spoofing indicated":
+                                           spoofDetState == 0x02? "Spoofing indicated":
+                                           "Multiple spoofing indications";
+            QTableWidgetItem *item;
+            item = new QTableWidgetItem(gpsFixstr); ui->tableSTATUS->setItem(0,1,item);
+            item = new QTableWidgetItem(gpsFixOK); ui->tableSTATUS->setItem(1,1,item);
+            item = new QTableWidgetItem(diffSoln); ui->tableSTATUS->setItem(2,1,item);
+            item = new QTableWidgetItem(wknSet); ui->tableSTATUS->setItem(3,1,item);
+            item = new QTableWidgetItem(towSet); ui->tableSTATUS->setItem(4,1,item);
+            item = new QTableWidgetItem(diffCor); ui->tableSTATUS->setItem(5,1,item);
+            item = new QTableWidgetItem(mapMatchingStr); ui->tableSTATUS->setItem(6,1,item);
+            item = new QTableWidgetItem(QString::number((double)ttff/1000, 'f',3)); ui->tableSTATUS->setItem(7,1,item);
+            item = new QTableWidgetItem(QString::number((double)msss/1000, 'f',3)); ui->tableSTATUS->setItem(8,1,item);
+            item = new QTableWidgetItem(psmStateStr); ui->tableSTATUS->setItem(9,1,item);
+            item = new QTableWidgetItem(spoofDetStateStr); ui->tableSTATUS->setItem(10,1,item);
+            setupTableSize(ui->tableSTATUS);
+        }
+        else if (messClass == CFG::DGNSS::classID && messId == CFG::DGNSS::messageID){
             CFG::DGNSS *info = dynamic_cast<CFG::DGNSS*>(decodedMessage);
             U1 dgnssMode = info->dgnssMode;
             int index;
@@ -754,122 +969,7 @@ void deviceConfigurationsDialog::parseMessage()
             ui->comboDGNSS->setCurrentIndex(index);
             ui->checkRecieverRTKSolution->setChecked(index);
         }
-        else if (dynamic_cast<CFG::DAT::GET*>(decodedMessage)){
-            CFG::DAT::GET *info = dynamic_cast<CFG::DAT::GET*>(decodedMessage);
-            U2 datumNum = info->datumNum;
-            U4 datumName1 = info->datumName1;
-            U2 datumName2 = info->datumName2;
-            QByteArray name;
-            QDataStream stream(&name, QIODevice::WriteOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-            stream << datumName1 << datumName2;
-            qDebug() << name;
-            R8 majA = info->majA;
-            R8 flat = info->flat;
-            R4 dX = info->dX;
-            R4 dY = info->dY;
-            R4 dZ = info->dZ;
-            R4 rotX = info->rotX;
-            R4 rotY = info->rotY;
-            R4 rotZ = info->rotZ;
-            R4 scale = info->scale;
-            ui->labelDATName->setText(name);
-            ui->labelDATID->setText(QString::number(datumNum));
-            ui->labelDATMajA->setText(QString::number(majA,'f',4));
-            ui->labelDATFlatt->setText(QString::number(flat,'f',10));
-            ui->labelDATXShift->setText(QString::number(dX,'f',3));
-            ui->labelDATYShift->setText(QString::number(dY,'f',3));
-            ui->labelDATZShift->setText(QString::number(dZ,'f',3));
-            ui->labelDATXRot->setText(QString::number(rotX,'f',3));
-            ui->labelDATYRot->setText(QString::number(rotY,'f',3));
-            ui->labelDATZRot->setText(QString::number(rotZ,'f',3));
-            ui->labelDATScale->setText(QString::number(scale,'f',3));
-            ui->lineRecieverDatumId->setText(name);
-        }
-        else if (dynamic_cast<CFG::RATE*>(decodedMessage)){
-            CFG::RATE *info = dynamic_cast<CFG::RATE*>(decodedMessage);
-            U2 measRate = info->measRate;
-            U2 navRate = info->navRate;
-            U2 timeRef = info->timeRef;
-            ui->spinRATEPer->setValue(measRate);
-            ui->spinRATE->setValue(navRate);
-            ui->comboRATE->setCurrentIndex(timeRef);
-        }
-        else if (dynamic_cast<CFG::PRT::USB*>(decodedMessage)){
-            CFG::PRT::USB *info = dynamic_cast<CFG::PRT::USB*>(decodedMessage);
-            // U1 reserved1 = info->reserved1;
-            X2 txReady = info->txReady;
-            // U4 reserved2 = info->reserved2;
-            // U4 reserved3 = info->reserved3;
-            X2 inProtoMask = info->inProtoMask;
-            X2 outProtoMask = info->outProtoMask;
-            U4 reserved4 = info->reserved4;
-            bool en = getBit(txReady,0);
-            bool pol = getBit(txReady,1);
-            bool txTimeout = getBit(reserved4,17);
-            U1 pin = getBits(txReady,2,6);
-            U2 threshhold = getBits(txReady,7,15);
-            for(int i = 0; i<ui->comboPRTIn->count(); i++){
-                if (ui->comboPRTIn->itemText(i).section(' ',0,0).toUInt() == inProtoMask){
-                    ui->comboPRTIn->setCurrentIndex(i);
-                    break;
-                }
-            }
-            for(int i = 0; i<ui->comboPRTOut->count(); i++){
-                if (ui->comboPRTOut->itemText(i).section(' ',0,0).toUInt() == outProtoMask){
-                    ui->comboPRTOut->setCurrentIndex(i);
-                    break;
-                }
-            }
-            ui->checkTXEn->setChecked(en);
-            ui->checkTXPol->setChecked(pol);
-            ui->spinTXPin->setValue(pin);
-            ui->checkTXTimeout->setChecked(txTimeout);
-            ui->spinTXThreshhold->setValue(threshhold*8);
-        }
-        else if (dynamic_cast<CFG::PRT::UART*>(decodedMessage)){
-            CFG::PRT::UART *info = dynamic_cast<CFG::PRT::UART*>(decodedMessage);
-            // U1 portID = info->portID;
-            // U1 reserved1 = info->reserved1;
-            X2 txReady = info->txReady;
-            X4 mode = info->mode;
-            U4 baudRate = info->baudRate;
-            X2 inProtoMask = info->inProtoMask;
-            X2 outProtoMask = info->outProtoMask;
-            X2 flags = info->flags;
-            // U2 reserved2 = info->reserved2;
-            bool en = getBit(txReady,0);
-            bool pol = getBit(txReady,1);
-            bool txTimeout = getBit(flags,1);
-            U1 pin = getBits(txReady,2,6);
-            U2 threshhold = getBits(txReady,7,15);
-            for(int i = 0; i<ui->comboPRTIn->count(); i++){
-                if (ui->comboPRTIn->itemText(i).section(' ',0,0).toUInt() == inProtoMask){
-                    ui->comboPRTIn->setCurrentIndex(i);
-                    break;
-                }
-            }
-            for(int i = 0; i<ui->comboPRTOut->count(); i++){
-                if (ui->comboPRTOut->itemText(i).section(' ',0,0).toUInt() == outProtoMask){
-                    ui->comboPRTOut->setCurrentIndex(i);
-                    break;
-                }
-            }
-            ui->checkTXEn->setChecked(en);
-            ui->checkTXPol->setChecked(pol);
-            ui->spinTXPin->setValue(pin);
-            ui->checkTXTimeout->setChecked(txTimeout);
-            ui->spinTXThreshhold->setValue(threshhold*8);
-            U1 charLen = getBits(mode, 6, 7);
-            U1 parity = getBits(mode, 9, 11);
-            if(parity > 1) parity = 2;
-            U1 nStopBits = getBits(mode, 12, 13);
-            ui->comboUARTDataBits->setCurrentIndex(charLen);
-            ui->comboUARTParity->setCurrentIndex(parity);
-            ui->comboUARTStopBits->setCurrentIndex(nStopBits);
-            ui->comboUARTBaud->setCurrentText(QString::number(baudRate));
-        }
-        else if (dynamic_cast<CFG::GNSS*>(decodedMessage)){
+        else if (messClass == CFG::GNSS::classID && messId == CFG::GNSS::messageID){
             CFG::GNSS *info = dynamic_cast<CFG::GNSS*>(decodedMessage);
             // U1 msgVer = info->msgVer;
             U1 numTrkChHw = info->numTrkChHw;
@@ -941,7 +1041,6 @@ void deviceConfigurationsDialog::parseMessage()
                     L1 = getBit(sigCfgMask,0);
                     ui->checkGNSSIMESSigL1C->setChecked(L1);
                     ui->comboRecieverSystems->setitemCheckState(7, L1);
-
                     break;
                 case 0x05:
                     L1C = getBit(sigCfgMask,0);
@@ -967,7 +1066,112 @@ void deviceConfigurationsDialog::parseMessage()
                 }
             }
         }
-        else if (dynamic_cast<CFG::NAV5*>(decodedMessage)){
+        else if (messClass == CFG::MSG::classID && messId == CFG::MSG::messageID){
+            CFG::MSG::MSGRATES *info = dynamic_cast<CFG::MSG::MSGRATES*>(decodedMessage);
+            U1 msgClass = info->msgClass;
+            U1 msgID = info->msgID;
+            U1 rate1 = info->rate1;
+            U1 rate2 = info->rate2;
+            U1 rate3 = info->rate3;
+            U1 rate4 = info->rate4;
+            U1 rate5 = info->rate5;
+            // U1 rate6 = info->rate6;
+            QMap<QByteArray,QString> map = messagesNamesMap;
+            QByteArray key;
+            key.resize(2);
+            key[0] = msgClass;
+            key[1] = msgID;
+            QString messName = map[key];
+            if (ui->tabWidget->currentIndex() == 1) ui->comboMSG->setCurrentText(messName);
+            ui->spinMSGI2C->setValue(rate1);
+            ui->spinMSGUART1->setValue(rate2);
+            ui->spinMSGUART2->setValue(rate3);
+            ui->spinMSGUSB->setValue(rate4);
+            ui->spinMSGSPI->setValue(rate5);
+            if (messName == "SFRBX"){
+                ui->checkRecieverEph->setChecked((rate1 + rate2 + rate3 + rate4 + rate5) > 0);
+                ui->spinRecieverEph1->setValue(rate1);
+                ui->spinRecieverEph2->setValue(rate2);
+                ui->spinRecieverEph3->setValue(rate3);
+                ui->spinRecieverEph4->setValue(rate4);
+                ui->spinRecieverEph5->setValue(rate5);
+            }
+            if (messName == "RAWX"){
+                ui->checkRecieverRaw->setChecked((rate1 + rate2 + rate3 + rate4 + rate5) > 0);
+                ui->spinRecieverRaw1->setValue(rate1);
+                ui->spinRecieverRaw2->setValue(rate2);
+                ui->spinRecieverRaw3->setValue(rate3);
+                ui->spinRecieverRaw4->setValue(rate4);
+                ui->spinRecieverRaw5->setValue(rate5);
+            }
+            if (messName == "VELNED" || messName == "VELECEF"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0) velCheck = true;
+            }
+            if (messName == "VELNED"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
+                    ui->checkRecieverVelNED->setChecked(true);
+                    ui->spinRecieverVel1->setValue(rate1);
+                    ui->spinRecieverVel2->setValue(rate2);
+                    ui->spinRecieverVel3->setValue(rate3);
+                    ui->spinRecieverVel4->setValue(rate4);
+                    ui->spinRecieverVel5->setValue(rate5);
+                }
+                else {ui->checkRecieverVelNED->setChecked(false); velCheck = false;}
+            }
+            if (messName == "VELECEF"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
+                    ui->checkRecieverVelECEF->setChecked(true);
+                    ui->spinRecieverVel1->setValue(rate1);
+                    ui->spinRecieverVel2->setValue(rate2);
+                    ui->spinRecieverVel3->setValue(rate3);
+                    ui->spinRecieverVel4->setValue(rate4);
+                    ui->spinRecieverVel5->setValue(rate5);
+                }
+                else {ui->checkRecieverVelECEF->setChecked(false);
+                    if (!velCheck){
+                        ui->spinRecieverVel1->setValue(rate1);
+                        ui->spinRecieverVel2->setValue(rate2);
+                        ui->spinRecieverVel3->setValue(rate3);
+                        ui->spinRecieverVel4->setValue(rate4);
+                        ui->spinRecieverVel5->setValue(rate5);
+                    }
+                }
+                ui->checkRecieverVel->setChecked(velCheck);
+            }
+        }
+        else if (messClass == CFG::DAT::classID && messId == CFG::DAT::messageID){
+            CFG::DAT::GET *info = dynamic_cast<CFG::DAT::GET*>(decodedMessage);
+            U2 datumNum = info->datumNum;
+            U4 datumName1 = info->datumName1;
+            U2 datumName2 = info->datumName2;
+            QByteArray name;
+            QDataStream stream(&name, QIODevice::WriteOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            stream << datumName1 << datumName2;
+            qDebug() << name;
+            R8 majA = info->majA;
+            R8 flat = info->flat;
+            R4 dX = info->dX;
+            R4 dY = info->dY;
+            R4 dZ = info->dZ;
+            R4 rotX = info->rotX;
+            R4 rotY = info->rotY;
+            R4 rotZ = info->rotZ;
+            R4 scale = info->scale;
+            ui->labelDATName->setText(name);
+            ui->labelDATID->setText(QString::number(datumNum));
+            ui->labelDATMajA->setText(QString::number(majA,'f',4));
+            ui->labelDATFlatt->setText(QString::number(flat,'f',10));
+            ui->labelDATXShift->setText(QString::number(dX,'f',3));
+            ui->labelDATYShift->setText(QString::number(dY,'f',3));
+            ui->labelDATZShift->setText(QString::number(dZ,'f',3));
+            ui->labelDATXRot->setText(QString::number(rotX,'f',3));
+            ui->labelDATYRot->setText(QString::number(rotY,'f',3));
+            ui->labelDATZRot->setText(QString::number(rotZ,'f',3));
+            ui->labelDATScale->setText(QString::number(scale,'f',3));
+            ui->lineRecieverDatumId->setText(name);
+        }
+        else if (messClass == CFG::NAV5::classID && messId == CFG::NAV5::messageID){
             CFG::NAV5 *info = dynamic_cast<CFG::NAV5*>(decodedMessage);
             // X2 mask = info->mask;
             U1 dynModel = info->dynModel;
@@ -996,10 +1200,10 @@ void deviceConfigurationsDialog::parseMessage()
             int dynModeIndex =  dynModel == 0? 0: dynModel-1;
             int fixModeIndex = fixMode - 1;
             int UTCIndex =  utcStandard == 0? 0:
-                            utcStandard == 3? 1:
-                            utcStandard == 5? 2:
-                            utcStandard == 6? 3:
-                            utcStandard == 7? 4:0;
+                               utcStandard == 3? 1:
+                               utcStandard == 5? 2:
+                               utcStandard == 6? 3:
+                               utcStandard == 7? 4:0;
             ui->spinNAV5FixAlt->setValue((double)fixedAlt/100);
             ui->spinNAV5AltVar->setValue((double)fixedAltVar/10000);
             ui->spinNAV5MinElev->setValue(minElev);
@@ -1035,7 +1239,92 @@ void deviceConfigurationsDialog::parseMessage()
                 ui->comboRecieverMode->setCurrentText("Other");
             }
         }
-        else if (dynamic_cast<CFG::ITFM*>(decodedMessage)){
+        else if (messClass == CFG::PRT::classID && messId == CFG::PRT::messageID){
+            if (dynamic_cast<CFG::PRT::USB*>(decodedMessage)){
+                CFG::PRT::USB *info = dynamic_cast<CFG::PRT::USB*>(decodedMessage);
+                // U1 reserved1 = info->reserved1;
+                X2 txReady = info->txReady;
+                // U4 reserved2 = info->reserved2;
+                // U4 reserved3 = info->reserved3;
+                X2 inProtoMask = info->inProtoMask;
+                X2 outProtoMask = info->outProtoMask;
+                U4 reserved4 = info->reserved4;
+                bool en = getBit(txReady,0);
+                bool pol = getBit(txReady,1);
+                bool txTimeout = getBit(reserved4,17);
+                U1 pin = getBits(txReady,2,6);
+                U2 threshhold = getBits(txReady,7,15);
+                for(int i = 0; i<ui->comboPRTIn->count(); i++){
+                    if (ui->comboPRTIn->itemText(i).section(' ',0,0).toUInt() == inProtoMask){
+                        ui->comboPRTIn->setCurrentIndex(i);
+                        break;
+                    }
+                }
+                for(int i = 0; i<ui->comboPRTOut->count(); i++){
+                    if (ui->comboPRTOut->itemText(i).section(' ',0,0).toUInt() == outProtoMask){
+                        ui->comboPRTOut->setCurrentIndex(i);
+                        break;
+                    }
+                }
+                ui->checkTXEn->setChecked(en);
+                ui->checkTXPol->setChecked(pol);
+                ui->spinTXPin->setValue(pin);
+                ui->checkTXTimeout->setChecked(txTimeout);
+                ui->spinTXThreshhold->setValue(threshhold*8);
+            }
+            else if (dynamic_cast<CFG::PRT::UART*>(decodedMessage)){
+                CFG::PRT::UART *info = dynamic_cast<CFG::PRT::UART*>(decodedMessage);
+                // U1 portID = info->portID;
+                // U1 reserved1 = info->reserved1;
+                X2 txReady = info->txReady;
+                X4 mode = info->mode;
+                U4 baudRate = info->baudRate;
+                X2 inProtoMask = info->inProtoMask;
+                X2 outProtoMask = info->outProtoMask;
+                X2 flags = info->flags;
+                // U2 reserved2 = info->reserved2;
+                bool en = getBit(txReady,0);
+                bool pol = getBit(txReady,1);
+                bool txTimeout = getBit(flags,1);
+                U1 pin = getBits(txReady,2,6);
+                U2 threshhold = getBits(txReady,7,15);
+                for(int i = 0; i<ui->comboPRTIn->count(); i++){
+                    if (ui->comboPRTIn->itemText(i).section(' ',0,0).toUInt() == inProtoMask){
+                        ui->comboPRTIn->setCurrentIndex(i);
+                        break;
+                    }
+                }
+                for(int i = 0; i<ui->comboPRTOut->count(); i++){
+                    if (ui->comboPRTOut->itemText(i).section(' ',0,0).toUInt() == outProtoMask){
+                        ui->comboPRTOut->setCurrentIndex(i);
+                        break;
+                    }
+                }
+                ui->checkTXEn->setChecked(en);
+                ui->checkTXPol->setChecked(pol);
+                ui->spinTXPin->setValue(pin);
+                ui->checkTXTimeout->setChecked(txTimeout);
+                ui->spinTXThreshhold->setValue(threshhold*8);
+                U1 charLen = getBits(mode, 6, 7);
+                U1 parity = getBits(mode, 9, 11);
+                if(parity > 1) parity = 2;
+                U1 nStopBits = getBits(mode, 12, 13);
+                ui->comboUARTDataBits->setCurrentIndex(charLen);
+                ui->comboUARTParity->setCurrentIndex(parity);
+                ui->comboUARTStopBits->setCurrentIndex(nStopBits);
+                ui->comboUARTBaud->setCurrentText(QString::number(baudRate));
+            }
+        }
+        else if (messClass == CFG::RATE::classID && messId == CFG::RATE::messageID){
+            CFG::RATE *info = dynamic_cast<CFG::RATE*>(decodedMessage);
+            U2 measRate = info->measRate;
+            U2 navRate = info->navRate;
+            U2 timeRef = info->timeRef;
+            ui->spinRATEPer->setValue(measRate);
+            ui->spinRATE->setValue(navRate);
+            ui->comboRATE->setCurrentIndex(timeRef);
+        }
+        else if (messClass == CFG::ITFM::classID && messId == CFG::ITFM::messageID){
             CFG::ITFM *info = dynamic_cast<CFG::ITFM*>(decodedMessage);
             X4 config = info->config;
             X4 config2 = info->config2;
@@ -1049,433 +1338,33 @@ void deviceConfigurationsDialog::parseMessage()
             ui->comboITFMantType->setCurrentIndex(antSettings);
             ui->checkRecieverJamming->setChecked(en);
         }
-        else if (dynamic_cast<NAV::POSECEF*>(decodedMessage)){
-            NAV::POSECEF *info = dynamic_cast<NAV::POSECEF*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 ecefX = info->ecefX;
-            I4 ecefY = info->ecefY;
-            I4 ecefZ = info->ecefZ;
-            U4 pAcc = info->pAcc;
-            ui->labelPOSECEFITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelPOSECEFECEFX->setText(QString::number((double)ecefX/100, 'f', 2) + " м");
-            ui->labelPOSECEFECEFY->setText(QString::number((double)ecefY/100, 'f', 2) + " м");
-            ui->labelPOSECEFECEFZ->setText(QString::number((double)ecefZ/100, 'f', 2) + " м");
-            ui->labelPOSECEFPOS3D->setText(QString::number((double)pAcc/100, 'f', 2) + " m");
-        }
-        else if (dynamic_cast<NAV::CLOCK*>(decodedMessage)){
-            NAV::CLOCK *info = dynamic_cast<NAV::CLOCK*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 clkB = info->clkB;
-            I4 clkD = info->clkD;
-            U4 tAcc = info->tAcc;
-            U4 fAcc = info->fAcc;
-            ui->labelCLOCKITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelCLOCKB->setText(QString::number((double)clkB/1000, 'f', 3) + " us");
-            ui->labelCLOCKD->setText(QString::number((double)clkD/1000, 'f', 3) + " us/s");
-            ui->labelCLOCKT->setText(QString::number((double)tAcc/1000, 'f', 3) + " us");
-            ui->labelCLOCKF->setText(QString::number((double)fAcc/1000000, 'f', 6) + " ppm");
-        }
-        else if (dynamic_cast<NAV::DOP*>(decodedMessage)){
-            NAV::DOP *info = dynamic_cast<NAV::DOP*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            U2 gDOP = info->gDOP;
-            U2 pDOP = info->pDOP;
-            U2 tDOP = info->tDOP;
-            U2 vDOP = info->vDOP;
-            U2 hDOP = info->hDOP;
-            U2 nDOP = info->nDOP;
-            U2 eDOP = info->eDOP;
-            ui->labelDOPITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelDOPG->setText(QString::number((double)gDOP/100, 'f', 2));
-            ui->labelDOPP->setText(QString::number((double)pDOP/100, 'f', 2));
-            ui->labelDOPT->setText(QString::number((double)tDOP/100, 'f', 2));
-            ui->labelDOPV->setText(QString::number((double)vDOP/100, 'f', 2));
-            ui->labelDOPH->setText(QString::number((double)hDOP/100, 'f', 2));
-            ui->labelDOPN->setText(QString::number((double)nDOP/100, 'f', 2));
-            ui->labelDOPE->setText(QString::number((double)eDOP/100, 'f', 2));
-        }
-        else if (dynamic_cast<NAV::POSLLH*>(decodedMessage)){
-            NAV::POSLLH *info = dynamic_cast<NAV::POSLLH*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 lon = info->lon;
-            I4 lat = info->lat;
-            I4 height = info->height;
-            I4 hMSL = info->hMSL;
-            U4 hAcc = info->hAcc;
-            U4 vAcc = info->vAcc;
-            ui->labelPOSLLHITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelPOSLLHLon->setText(QString::number((double)lon/10000000, 'f', 7) + " degrees");
-            ui->labelPOSLLHLat->setText(QString::number((double)lat/10000000, 'f', 7) + " degrees");
-            ui->labelPOSLLHHeight->setText(QString::number((double)height/1000, 'f', 3) + " m");
-            ui->labelPOSLLHMSL->setText(QString::number((double)hMSL/1000, 'f', 3) + " m");
-            ui->labelPOSLLHH->setText(QString::number((double)hAcc/1000, 'f', 3) + " m");
-            ui->labelPOSLLHV->setText(QString::number((double)vAcc/1000, 'f', 3) + " m");
-        }
-        else if (dynamic_cast<NAV::RELPOSNED*>(decodedMessage)){
-            NAV::RELPOSNED *info = dynamic_cast<NAV::RELPOSNED*>(decodedMessage);
-            // U1 version = info->version;
-            // U1 reserved1 = info->reserved1;
-            U2 refStationId = info->refStationId;
-            U4 iTOW = info->iTOW;
-            I4 relPosN = info->relPosN;
-            I4 relPosE = info->relPosE;
-            I4 relPosD = info->relPosD;
-            I4 relPosLength = info->relPosLength;
-            I4 relPosHeading = info->relPosHeading;
-            // U1 reserved2 = info->reserved2;
-            // U1 reserved3 = info->reserved3;
-            // U1 reserved4 = info->reserved4;
-            // U1 reserved5 = info->reserved5;
-            I1 relPosHPN = info->relPosHPN;
-            I1 relPosHPE = info->relPosHPE;
-            I1 relPosHPD = info->relPosHPD;
-            I1 relPosHPLength = info->relPosHPLength;
-            // U4 accN = info->accN;
-            // U4 accE = info->accE;
-            // U4 accD = info->accD;
-            // U4 accLength = info->accLength;
-            // U4 accHeading = info->accHeading;
-            // U1 reserved6 = info->reserved6;
-            // U1 reserved7 = info->reserved7;
-            // U1 reserved8 = info->reserved8;
-            // U1 reserved9 = info->reserved9;
-            X4 flags = info->flags;
-            bool gnnsFixOk = getBit(flags, 0);
-            bool diffSoln = getBit(flags, 1);
-            bool relPosValid = getBit(flags,2);
-            int carSoln = (int)getBit(flags, 3) + ((int)getBit(flags, 4) << 1);
-            bool isMoving = getBit(flags, 5);
-            // bool refPosMiss = getBit(flags, 6);
-            // bool refObsMiss = getBit(flags, 7);
-            bool relPosHeadingValid = getBit(flags, 8);
-            bool relPosNormalized = getBit(flags, 9);
-            QString carSol = carSoln == 0? "no carrier phase range solution":
-                             carSoln == 1? "carrier phase range solution with doubleing ambiguities"
-                                          :"carrier phase range solution with fixed ambiguities";
-            ui->checkRELPOSNEDFIXok->setChecked(gnnsFixOk);
-            ui->checkRELPOSNEDDifSol->setChecked(diffSoln);
-            ui->checkRELPOSNEDIsMoving->setChecked(isMoving);
-            ui->checkRELPOSNEDNorm->setChecked(relPosNormalized);
-            ui->checkRELPOSNEDHeading->setChecked(relPosHeadingValid);
-            ui->checkRELPOSNEDPosVal->setChecked(relPosValid);
-            ui->labelRELPOSNEDStatus->setText(carSol);
-            ui->labelRELPOSNEDITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelRELPOSNEDD->setText(QString::number((double)relPosD/100, 'f', 2) + " m");
-            ui->labelRELPOSNEDN->setText(QString::number((double)relPosN/100, 'f', 2) + " m");
-            ui->labelRELPOSNEDE->setText(QString::number((double)relPosE/100, 'f', 2) + " m");
-            ui->labelRELPOSNEDHPD->setText(QString::number((double)relPosHPD/10000, 'f', 4) + " m");
-            ui->labelRELPOSNEDHPN->setText(QString::number((double)relPosHPN/10000, 'f', 4) + " m");
-            ui->labelRELPOSNEDHPE->setText(QString::number((double)relPosHPE/10000, 'f', 4) + " m");
-            ui->labelRELPOSNEDL->setText(QString::number((double)relPosLength/100, 'f', 2) + " m");
-            ui->labelRELPOSNEDH->setText(QString::number((double)relPosHeading/100000, 'f', 5) + " degrees");
-            ui->labelRELPOSNEDHPL->setText(QString::number((double)relPosHPLength/10000, 'f', 4) + " m");
-            ui->labelRELPOSNEDID->setText(QString::number(refStationId));
+        else{
+            Mess message = messagesMap[currentItemText];
+            uint8_t messageClass = message.id.left(2).toUInt(nullptr, 16);
+            uint8_t messageId = message.id.right(2).toUInt(nullptr, 16);
+            if (messageClass != messClass || messageId != messId) return;
+            QStringList fields = message.getSortedFieldKeys();
+            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneral->layout());
+            int row = 0;
+            int dataIndex = 0;
+            foreach (auto fieldName, fields) {
+                auto field = message.fields[fieldName];
+                if (field.full_name == "Reserved"){
+                    dataIndex++;
+                    continue;
+                }
+                QString type = field.type;
+                int size = field.size;
+                double scale = field.scale;
+                QByteArray fieldData = data.mid(field.offset,field.size);
+                double value = getFieldValue(fieldData, type, size, QDataStream::LittleEndian) * scale;
 
-        }
-        else if (dynamic_cast<NAV::SOL*>(decodedMessage)){
-            NAV::SOL *info = dynamic_cast<NAV::SOL*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            // I4 fTOW = info->fTOW;
-            I2 week = info->week;
-            U1 gpsFix = info->gpsFix;
-            X1 flags = info->flags;
-            I4 ecefX = info->ecefX;
-            I4 ecefY = info->ecefY;
-            I4 ecefZ = info->ecefZ;
-            U4 pAcc = info->pAcc;
-            I4 ecefVX = info->ecefVX;
-            I4 ecefVY = info->ecefVY;
-            I4 ecefVZ = info->ecefVZ;
-            U4 sAcc = info->sAcc;
-            U2 pDOP = info->pDOP;
-            // U1 reserved1 = info->reserved1;
-            U1 numSV = info->numSV;
-            // U4 reserved = info->reserved;
-            // qDebug() << iTOW << fTOW << week << gpsFix << flags << ecefX << ecefY << ecefZ << pAcc << ecefVX << ecefVY << ecefVZ << sAcc << pDOP << reserved1 << numSV << reserved;
-            QString fixType = gpsFix == 0? "No Fix":
-                              gpsFix == 1? "Dead Reckoning only":
-                              gpsFix == 2? "2D-Fix":
-                              gpsFix == 3? "3D-Fix":
-                              gpsFix == 4? "GPS + dead reckoning combined":
-                              gpsFix == 5? "Time only fix": "reserved";
-            QString GPSfixOK = getBit(flags,0)? "GPSfixOK ":"";
-            QString DiffSoln = getBit(flags,1)? "DiffSoln ":"";
-            QString WKNSET = getBit(flags,2)? "WKNSET ":"";
-            QString TOWSET = getBit(flags,3)? "TOWSET ":"";
-            QTableWidgetItem *item;
-            item = new QTableWidgetItem(QString::number((double)week) + ":" + QString::number((double)iTOW/1000, 'f', 3) + " s"); ui->tableSOL->setItem(0,1,item);
-            item = new QTableWidgetItem(fixType); ui->tableSOL->setItem(1,1,item);
-            item = new QTableWidgetItem(GPSfixOK + DiffSoln + WKNSET + TOWSET); ui->tableSOL->setItem(2,1,item);
-            item = new QTableWidgetItem("(" + QString::number((double)ecefX/100, 'f', 2) + "," + QString::number((double)ecefY/100, 'f', 2) + "," + QString::number((double)ecefZ/100, 'f', 2) + ")"); ui->tableSOL->setItem(3,1,item);
-            item = new QTableWidgetItem(QString::number((double)pAcc)); ui->tableSOL->setItem(4,1,item);
-            item = new QTableWidgetItem("(" + QString::number((double)ecefVX/100, 'f', 2) + "," + QString::number((double)ecefVY/100, 'f', 2) + "," + QString::number((double)ecefVZ/100, 'f', 2) + ")");  ui->tableSOL->setItem(5,1,item);
-            item = new QTableWidgetItem(QString::number((double)sAcc/100, 'f', 3) + " m/s") ;  ui->tableSOL->setItem(6,1,item);
-            item = new QTableWidgetItem(QString::number((double)pDOP/100));  ui->tableSOL->setItem(7,1,item);
-            item = new QTableWidgetItem(QString::number((double)numSV));  ui->tableSOL->setItem(8,1,item);
-            setupTableSize(ui->tableSOL);
-        }
-        else if (dynamic_cast<NAV::STATUS*>(decodedMessage)){
-            NAV::STATUS *info = dynamic_cast<NAV::STATUS*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            U1 gpsFix = info->gpsFix;
-            X1 flags = info->flags;
-            X1 fixStat = info->fixStat;
-            X1 flags2 = info->flags2;
-            U4 ttff = info->ttff;
-            U4 msss = info->msss;
-            ui->labelSTATUSITOW->setText(QString::number((double)iTOW/1000) + " s");
-            QString gpsFixstr = gpsFix == 0x00? "no fix":
-                                gpsFix == 0x01? "dead reckoning only":
-                                gpsFix == 0x02? "2D-fix":
-                                gpsFix == 0x03? "3D-fix":
-                                gpsFix == 0x04? "GPS + dead reckoning combined":
-                                gpsFix == 0x05? "Time only fix":
-                                                "reserved";
-            bool gpsFixOK = getBit(flags,0);
-            bool diffSoln = getBit(flags,1);
-            bool wknSet = getBit(flags,2);
-            bool towSet = getBit(flags,3);
-            bool diffCor = getBit(fixStat,0);
-            uint8_t mapMatching = (uint8_t)getBit(fixStat, 6) + ((uint8_t)getBit(fixStat, 7) << 1);
-            QString mapMatchingStr = mapMatching == 0x00? "none":
-                                     mapMatching == 0x01? "valid but not used":
-                                     mapMatching == 0x02? "valid and used":
-                                                          "valid and used, map matching data was applied";
-            uint8_t psmState = (uint8_t)getBit(flags2, 0) + ((uint8_t)getBit(flags2, 1) << 1);
-            QString psmStateStr = psmState == 0x00? "ACQUISITION":
-                                  psmState == 0x01? "TRACKING":
-                                  psmState == 0x02? "POWER OPTIMIZED TRACKING":
-                                                    "INACTIVE";
-            uint8_t spoofDetState = (uint8_t)getBit(flags2, 3) + ((uint8_t)getBit(flags2, 4) << 1);
-            QString spoofDetStateStr = spoofDetState == 0x00? "Unknown or deactivated":
-                                       spoofDetState == 0x01? "No spoofing indicated":
-                                       spoofDetState == 0x02? "Spoofing indicated":
-                                                              "Multiple spoofing indications";
-            QTableWidgetItem *item;
-            item = new QTableWidgetItem(gpsFixstr); ui->tableSTATUS->setItem(0,1,item);
-            item = new QTableWidgetItem(gpsFixOK); ui->tableSTATUS->setItem(1,1,item);
-            item = new QTableWidgetItem(diffSoln); ui->tableSTATUS->setItem(2,1,item);
-            item = new QTableWidgetItem(wknSet); ui->tableSTATUS->setItem(3,1,item);
-            item = new QTableWidgetItem(towSet); ui->tableSTATUS->setItem(4,1,item);
-            item = new QTableWidgetItem(diffCor); ui->tableSTATUS->setItem(5,1,item);
-            item = new QTableWidgetItem(mapMatchingStr); ui->tableSTATUS->setItem(6,1,item);
-            item = new QTableWidgetItem(QString::number((double)ttff/1000, 'f',3)); ui->tableSTATUS->setItem(7,1,item);
-            item = new QTableWidgetItem(QString::number((double)msss/1000, 'f',3)); ui->tableSTATUS->setItem(8,1,item);
-            item = new QTableWidgetItem(psmStateStr); ui->tableSTATUS->setItem(9,1,item);
-            item = new QTableWidgetItem(spoofDetStateStr); ui->tableSTATUS->setItem(10,1,item);
-            setupTableSize(ui->tableSTATUS);
-        }
-        else if (dynamic_cast<NAV::VELECEF*>(decodedMessage)){
-            NAV::VELECEF *info = dynamic_cast<NAV::VELECEF*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 ecefVX = info->ecefVX;
-            I4 ecefVY = info->ecefVY;
-            I4 ecefVZ = info->ecefVZ;
-            U4 sAcc = info->sAcc;
-            ui->labelVELECEFITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelVELECEFX->setText(QString::number((double)ecefVX/100, 'f', 2));
-            ui->labelVELECEFY->setText(QString::number((double)ecefVY/100, 'f', 2));
-            ui->labelVELECEFZ->setText(QString::number((double)ecefVZ/100, 'f', 2));
-            ui->labelVELECEFVel->setText(QString::number((double)sAcc/100, 'f', 2));
-        }
-        else if (dynamic_cast<NAV::VELNED*>(decodedMessage)){
-            NAV::VELNED *info = dynamic_cast<NAV::VELNED*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 velN = info->velN;
-            I4 velE = info->velE;
-            I4 velD = info->velD;
-            U4 speed = info->speed;
-            U4 gSpeed = info->gSpeed;
-            I4 heading = info->heading;
-            U4 sAcc = info->sAcc;
-            U4 cAcc = info->cAcc;
-            ui->labelVELNEDITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelVELNEDNorth->setText(QString::number((double)velN/100, 'f', 2) + " m/s");
-            ui->labelVELNEDEast->setText(QString::number((double)velE/100, 'f', 2) + " m/s");
-            ui->labelVELNEDDown->setText(QString::number((double)velD/100, 'f', 2) + " m/s");
-            ui->labelVELNEDNorth->setText(QString::number((double)velN/100, 'f', 2) + " m/s");
-            ui->labelVELNEDSpeed3D->setText(QString::number((double)speed/100, 'f', 2) + " m/s");
-            ui->labelVELNEDGroundSpeed->setText(QString::number((double)gSpeed/100, 'f', 2) + " m/s");
-            ui->labelVELNEDHeading->setText(QString::number((double)heading/100000, 'f', 2) + " degrees");
-            ui->labelVELNEDVel->setText(QString::number((double)sAcc/100, 'f', 2) + " m/s");
-            ui->labelVELNEDHead->setText(QString::number((double)cAcc/100000, 'f', 5) + " degrees");
-        }
-        else if (dynamic_cast<NAV::ORB*>(decodedMessage)){
-            NAV::ORB *info = dynamic_cast<NAV::ORB*>(decodedMessage);
-            // U4 iTOW = info->iTOW;
-            // U1 version = info->version;
-            // U1 numSv = info->numSv;
-            // U1 reserved1 = info->reserved1;
-            // U1 reserved2 = info->reserved2;
-            int i = 0;
-            ui->tableORB->clearContents();
-            ui->tableORB->setRowCount(0);
-            foreach (NAV::ORB::Repeated svData, info->repeatedList) {
-                // U1 gnssId = svData->gnssId;
-                U1 svId = svData.svId;
-                X1 svFlag = svData.svFlag;
-                X1 eph = svData.eph;
-                X1 alm = svData.alm;
-                X1 otherOrb = svData.otherOrb;
-                U1 health = (U1)getBits(svFlag,0,1);
-                U1 visibility = (U1)getBits(svFlag,2,3);
-                U1 ephUsability = (U1)getBits(eph,0,4);
-                U1 ephSource = (U1)getBits(eph,5,7);
-                U1 almUsability = (U1)getBits(alm,0,4);
-                U1 almSource = (U1)getBits(alm,5,7);
-                U1 anoAopUsability = (U1)getBits(otherOrb,0,4);
-                U1 type = (U1)getBits(otherOrb,5,7);
-                QString healthStr = health == 0x00? "unknown":
-                                    health == 0x01? "healthy":
-                                    health == 0x02? "not healty":"";
-                QString visibilityStr = visibility == 0x00? "unknown":
-                                        visibility == 0x01? "below horizon":
-                                        visibility == 0x02? "above horizon":
-                                        visibility == 0x03? "above elevation mask":"";
-                QString ephUsabilityStr = ephUsability == 31? "The usability period is unknown":
-                                          ephUsability == 30? "The usability period is more than 450 minutes":
-                                          ephUsability == 0? "Ephemeris can no longer be used":
-                                                             "The usability period is between " + QString::number((ephUsability-1)*15) + " and " + QString::number((ephUsability)*15) + " minutes";
-                QString ephSourceStr = ephSource == 0x00? "not available":
-                                       ephSource == 0x01? "GNSS transmission":
-                                       ephSource == 0x02? "external aiding":
-                                                          "other";
-                QString almUsabilityStr = almUsability == 31? "The usability period is unknown":
-                                          almUsability == 30? "The usability period is more than 30 days":
-                                          almUsability == 0?  "Almanac can no longer be used":
-                                                             "The usability period is between " + QString::number((almUsability-1)) + " and " + QString::number((almUsability)) + " days";
-                QString almSourceStr = almSource == 0x00? "not available":
-                                       almSource == 0x01? "GNSS transmission":
-                                       almSource == 0x02? "external aiding":
-                                                          "other";
-                QString anoAopUsabilityStr = anoAopUsability == 31? "The usability period is unknown":
-                                             anoAopUsability == 30? "The usability period is more than 30 days":
-                                             anoAopUsability == 0?  "Almanac can no longer be used":
-                                                                    "The usability period is between " + QString::number((anoAopUsability-1)) + " and " + QString::number((anoAopUsability)) + " days";
-                QString typeStr = type == 0x00? "not available":
-                                  type == 0x01? "GNSS transmission":
-                                  type == 0x02? "external aiding":
-                                                     "other";
-
-                ui->tableORB->insertRow(i);
-                QTableWidgetItem *item;
-                item = new QTableWidgetItem(svId); ui->tableORB->setItem(i,0,item);
-                item = new QTableWidgetItem(ephUsabilityStr + "\n" + ephSourceStr); ui->tableORB->setItem(i,1,item);
-                item = new QTableWidgetItem(almUsabilityStr + "\n" + almSourceStr); ui->tableORB->setItem(i,2,item);
-                item = new QTableWidgetItem(anoAopUsabilityStr + "\n" + typeStr); ui->tableORB->setItem(i,3,item);
-                item = new QTableWidgetItem(healthStr); ui->tableORB->setItem(i,4,item);
-                item = new QTableWidgetItem(visibilityStr); ui->tableORB->setItem(i,5,item);
-                i++;
+                QLabel* labelValue = qobject_cast<QLabel*>(layout->itemAtPosition(row,1)->widget());
+                QString valueStr = QString::number(value,'f',4);
+                labelValue->setText(valueStr);
+                dataIndex++;
+                row++;
             }
-            setupTableSize(ui->tableORB);
-        }
-        else if (dynamic_cast<NAV::DGPS*>(decodedMessage)){
-            ui->tableDGPS->clearContents();
-            ui->tableDGPS->setRowCount(0);
-            NAV::DGPS *info = dynamic_cast<NAV::DGPS*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            I4 age = info->age;
-            I2 baseId = info->baseId;
-            I2 baseHealth = info->baseHealth;
-            // U1 numCh = info->numCh;
-            U1 status = info->status;
-            // U1 reserved1 = info->reserved1;
-            // U1 reserved2 = info->reserved2;
-            ui->labelDGPSITOW->setText(QString::number((double)iTOW/1000, 'f', 3) + " s");
-            ui->labelDGPSAge->setText(QString::number((double)age/1000, 'f', 3) + " s");
-            ui->labelDGPSId->setText(QString::number(baseId));
-            ui->labelDGPSBaseHealth->setText(QString::number(baseHealth));
-            QString statusStr = status == 0x01? "PR+PRR correction": "none";
-            ui->labelDGPSStatus->setText(statusStr);
-            int i = 0;
-            foreach (NAV::DGPS::Repeated chData, info->repeatedList) {
-                U1 svId = chData.svId;
-                X1 flags = chData.flags;
-                U2 ageC = chData.ageC;
-                R4 prc = chData.prc;
-                R4 prrc = chData.prrc;
-                bool GPSUsed = getBit(flags,4);
-                U1 channel = getBits(flags,0,3);
-                ui->tableDGPS->insertRow(i);
-                QTableWidgetItem *item;
-                item = new QTableWidgetItem(svId); ui->tableDGPS->setItem(i,0,item);
-                item = new QTableWidgetItem(GPSUsed); ui->tableDGPS->setItem(i,1,item);
-                item = new QTableWidgetItem(channel); ui->tableDGPS->setItem(i,2,item);
-                item = new QTableWidgetItem(QString::number((double)ageC/1000, 'f', 3)); ui->tableDGPS->setItem(i,3,item);
-                item = new QTableWidgetItem(prc); ui->tableDGPS->setItem(i,4,item);
-                item = new QTableWidgetItem(prrc); ui->tableDGPS->setItem(i,5,item);
-                i++;
-            }
-            setupTableSize(ui->tableDGPS);
-        }
-        else if (dynamic_cast<NAV::SAT*>(decodedMessage)){
-            ui->tableSAT->clearContents();
-            ui->tableSAT->setRowCount(0);
-            NAV::SAT *info = dynamic_cast<NAV::SAT*>(decodedMessage);
-            U4 iTOW = info->iTOW;
-            // U1 version = info->version;
-            // U1 numSvs = info->numSvs;
-            // U1 reserved1 = info->reserved1;
-            // U1 reserved2 = info->reserved2;
-            ui->labelSATITOW->setText(QString::number((double)iTOW/1000, 'f', 3));
-            int i = 0;
-            foreach (NAV::SAT::Repeated chData, info->repeatedList) {
-                U1 gnssId = chData.gnssId;
-                U1 svId = chData.svId;
-                U1 cno = chData.cno;
-                I1 elev = chData.elev;
-                I2 azim = chData.azim;
-                I2 prRes = chData.prRes;
-                X4 flags = chData.flags;
-
-                U1 qualityInd = getBits(flags,0,2);
-                bool svUsed = getBit(flags,3);
-                U1 health = getBits(flags,4,5);
-                bool diffCor = getBit(flags,6);
-                bool smothed = getBit(flags,7);
-                U1 orbitSource = getBits(flags,8,10);
-                bool eph = getBit(flags,11);
-                bool alm = getBit(flags,12);
-                bool ano = getBit(flags,13);
-                bool aop = getBit(flags,14);
-                QString elevStr = abs(elev)<=90? QString::number(elev):"unknown";
-                QString azimStr = abs(elev)<=180? QString::number(azim):"unknown";
-                QString qualityIndStr =     qualityInd == 0? "no signal":
-                                            qualityInd == 1? "searching signal":
-                                            qualityInd == 2? "signal aquired":
-                                            qualityInd == 3? "signal detected but unusable":
-                                            qualityInd == 4? "code locked and time synchronized":
-                                            qualityInd == 5 || qualityInd == 6 || qualityInd == 7? "code and carrier locked and time synchronized": "unknown";
-                QString healthStr = health == 1? "healthy":
-                                    health == 2? "unhealthy": "unknown";
-                QString orbitSourceStr =    orbitSource == 0? "no orbit information":
-                                            orbitSource == 1? "ephemeris is used":
-                                            orbitSource == 2? "almanac is used":
-                                            orbitSource == 3? "AssistNow Offline orbit is used":
-                                            orbitSource == 4? "AssistNow Autonomous orbit is used":
-                                            orbitSource == 5 || orbitSource == 6 || orbitSource == 7? "other orbit information is used": "unknown";
-                ui->tableSAT->insertRow(i);
-                QTableWidgetItem *item;
-                item = new QTableWidgetItem(gnssId); ui->tableSAT->setItem(i,0,item);
-                item = new QTableWidgetItem(svId); ui->tableSAT->setItem(i,1,item);
-                item = new QTableWidgetItem(cno); ui->tableSAT->setItem(i,2,item);
-                item = new QTableWidgetItem(elevStr); ui->tableSAT->setItem(i,3,item);
-                item = new QTableWidgetItem(azimStr); ui->tableSAT->setItem(i,4,item);
-                item = new QTableWidgetItem(prRes); ui->tableSAT->setItem(i,5,item);
-                item = new QTableWidgetItem(qualityIndStr); ui->tableSAT->setItem(i,6,item);
-                item = new QTableWidgetItem(svUsed); ui->tableSAT->setItem(i,7,item);
-                item = new QTableWidgetItem(healthStr); ui->tableSAT->setItem(i,8,item);
-                item = new QTableWidgetItem(diffCor); ui->tableSAT->setItem(i,9,item);
-                item = new QTableWidgetItem(smothed); ui->tableSAT->setItem(i,10,item);
-                item = new QTableWidgetItem(orbitSourceStr); ui->tableSAT->setItem(i,11,item);
-                item = new QTableWidgetItem(eph); ui->tableSAT->setItem(i,12,item);
-                item = new QTableWidgetItem(alm); ui->tableSAT->setItem(i,13,item);
-                item = new QTableWidgetItem(ano); ui->tableSAT->setItem(i,14,item);
-                item = new QTableWidgetItem(aop); ui->tableSAT->setItem(i,15,item);
-                i++;
-            }
-            setupTableSize(ui->tableSAT);
-
         }
     }
     if (protocol == "Unicore"){
@@ -2337,6 +2226,10 @@ void deviceConfigurationsDialog::updateMessageSettings(QTreeWidgetItem* item, in
 {
     if (item->childCount()>0) return;
     QString text = item->text(column);
+    if (this->currentItemText == text) {
+        sendPoll();
+        return;
+    }
     this->currentItemText = text;
     if (currentItemText == "MASK"){
         QObjectList children = ui->frameMASK->children();

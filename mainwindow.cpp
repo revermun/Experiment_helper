@@ -247,6 +247,13 @@ void MainWindow::getMessagesConfig()
 
 MainWindow::~MainWindow()
 {
+    foreach (QString key, connectionsMap.keys()) {
+        QObject* connection = connectionsMap[key];
+        if (qobject_cast<QIODevice*>(connection)){
+            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+            ioCon->close();
+        }
+    }
     delete ui;
 }
 
@@ -474,7 +481,7 @@ void MainWindow::performAction(QAction *action)
             event.device                    = e.attribute("device");
             event.protocol                  = e.attribute("protocol");
             event.message                   = e.attribute("message");
-            event.messageId                 = e.attribute("messageId").toInt();
+            event.messageId                 = e.attribute("messageId");
             event.fieldName                 = e.attribute("fieldName");
             event.field                     = e.attribute("field").toInt();
             event.fieldType                 = e.attribute("fieldType");
@@ -488,7 +495,6 @@ void MainWindow::performAction(QAction *action)
             event.bitmapTriggers.bitValue   = e.attribute("bitValue").toInt();
             event.charTriggers.charValue    = e.attribute("charValue");
             event.status                    = e.attribute("status").toInt();
-
             if(!eventMap.contains(eventName)){
                 eventMap[eventName] = event;
             }
@@ -600,7 +606,7 @@ void MainWindow::performAction(QAction *action)
             QString device      = event.device;
             QString protocol    = event.protocol;
             QString message     = event.message;
-            QString messageId   = QString::number(event.messageId);
+            QString messageId   = event.messageId;
             QString fieldName   = event.fieldName;
             QString field       = QString::number(event.field);
             QString fieldType   = event.fieldType;
@@ -1082,10 +1088,22 @@ void MainWindow::startExperiment()
                 eventData* event = &eventMap[eventName];
                 event->status = INDEX_FLAGS_UNKNOWN;
                 QString eventDevice = event->device;
-                qDebug() << connDevice << eventDevice;
                 if (connDevice != eventDevice) continue;
                 if (event->protocol == "Ublox"){
-
+                    uint8_t messClass = messagesMap[event->message].id.left(2).toUInt(nullptr,16);
+                    uint8_t messId = messagesMap[event->message].id.right(2).toUInt(nullptr,16);
+                    U1 hdrdata[] = {0xb5, 0x62};
+                    QByteArray hdr(reinterpret_cast<char*>(hdrdata), sizeof(hdrdata));
+                    U1 endata[] = {CFG::MSG::classID, CFG::MSG::messageID, 0x08, 0x00};
+                    QByteArray en(reinterpret_cast<char*>(endata), sizeof(endata));
+                    U1 payloaddata[] = {messClass, messId, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00};
+                    QByteArray payload(reinterpret_cast<char*>(payloaddata), sizeof(payloaddata));
+                    QByteArray msg = hdr + en + payload;
+                    QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
+                    msg.append(checkSum);
+                    UbloxParser parser(connection);
+                    qDebug() << msg.toHex(' ');
+                    parser.sendMessage(msg);
                 }
                 else if (event->protocol == "Unicore"){
                     UnicoreParser parser(connection);
@@ -1128,72 +1146,94 @@ void MainWindow::parseMessage()
             }
         }
         if (buff->isEmpty()) continue;
+        QByteArray messData;
+        QString messId;
+        QString GNSSTime;
+        QDataStream::ByteOrder order;
         if (protocol == "Ublox"){
             UbloxParser parser(connection);
-            QMap<QString,QByteArray> mess = parser.parseMessage(buff);
-            if (mess.isEmpty()) continue;
-            Message* decodedMessage = parser.decode(mess);
+            UbloxMessage mess = parser.parseMessage(buff);
+            if (mess.data.isEmpty()) continue;
+            messData = mess.data;
+            messId = QString::number(mess.messClass, 16).rightJustified(2,'0') + QString::number(mess.messId, 16).rightJustified(2,'0');
+            order = QDataStream::LittleEndian;
         }
         else if (protocol == "Unicore"){
             UnicoreParser parser(connection);
             UnicoreMessage mess = parser.parseBinaryMessage(buff);
             if (mess.data.isEmpty()) continue;
-            foreach (QString eventName, eventMap.keys()) {
-                eventData *event = &eventMap[eventName];
-                if (event->device != connDevice) continue;
-                if (event->messageId != mess.binaryHeader.messageId) continue;
-                int offset = messagesMap[event->message].fields[event->fieldName].offset;
-                int size = messagesMap[event->message].fields[event->fieldName].size;
-                double scale = messagesMap[event->message].fields[event->fieldName].scale;
-                QByteArray data = mess.data.mid(offset,size);
-                QDataStream stream(data);
-                stream.setByteOrder(QDataStream::BigEndian);
-                bool check = false;
-                qDebug() << '\n';
-                qDebug() << ("event: " + event->name) << ("field: " + event->fieldName) << ("type: " + event->fieldType);
-                if (event->fieldType == "int" || event->fieldType == "uint" || event->fieldType == "float" || event->fieldType == "double"){
-                    int flags = (int)event->intTriggers.isEqual +
-                                ((int)event->intTriggers.isGreater << 1) +
-                                ((int)event->intTriggers.isLesser << 2);
-                    double thresh = event->intTriggers.threshhold / scale;
-                    if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "uint" && size == 2) check = compareValue<quint16>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "int" && size == 4) check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "uint" && size == 4) check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "int" && size == 8) check = compareValue<qint64>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "uint" && size == 8) check = compareValue<quint64>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "float") check = compareValue<float>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "double") check = compareValue<double>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "int") check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
-                    else if (event->fieldType == "uint") check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
-                    else {
-                        qWarning() << "Unsupported field type:" << event->fieldType;
+            messData = mess.data;
+            messId = QString::number(mess.binaryHeader.messageId);
+            GNSSTime = QString::number(mess.binaryHeader.ms);
+            order = QDataStream::BigEndian;
+        }
+        else continue;
+        foreach (QString eventName, eventMap.keys()) {
+            eventData *event = &eventMap[eventName];
+            if (event->device != connDevice) continue;
+            if (event->messageId != messId) continue;
+            int offset = messagesMap[event->message].fields[event->fieldName].offset;
+            int size = messagesMap[event->message].fields[event->fieldName].size;
+            double scale = messagesMap[event->message].fields[event->fieldName].scale;
+            QByteArray data = messData.mid(offset,size);
+            QDataStream stream(data);
+            stream.setByteOrder(order);
+            bool check = false;
+            qDebug() << '\n';
+            qDebug() << ("event: " + event->name) << ("field: " + event->fieldName) << ("type: " + event->fieldType);
+            if (event->fieldType == "int" || event->fieldType == "uint" || event->fieldType == "float" || event->fieldType == "double"){
+                int flags = (int)event->intTriggers.isEqual +
+                            ((int)event->intTriggers.isGreater << 1) +
+                            ((int)event->intTriggers.isLesser << 2);
+                double thresh = event->intTriggers.threshhold / scale;
+                if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "uint" && size == 2) check = compareValue<quint16>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "int" && size == 4) check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "uint" && size == 4) check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "int" && size == 8) check = compareValue<qint64>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "uint" && size == 8) check = compareValue<quint64>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "float") check = compareValue<float>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "double") check = compareValue<double>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "int") check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
+                else if (event->fieldType == "uint") check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
+                else {
+                    qWarning() << "Unsupported field type:" << event->fieldType;
+                }
+            }
+            else if (event->fieldType == "char"){
+                qDebug() << ("data: " + QString::fromLatin1(data)) << ("event value: " + event->charTriggers.charValue);
+                check = QString::fromLatin1(data) == event->charTriggers.charValue;
+            }
+            else if (event->fieldType == "bitmap"){
+                if (size == 1) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                else if (size == 2) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                else if (size == 4) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                else {
+                    qWarning() << "Unsupported size:" << event->fieldType;
+                }
+            }
+            if (check){
+                if (event->status != INDEX_FLAGS_TRUE){
+                    QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+                    event->status = INDEX_FLAGS_TRUE;
+                    if (protocol == "Ublox"){
+                        int offset = messagesMap[event->message].fields["itow"].offset;
+                        int size = messagesMap[event->message].fields["itow"].size;
+                        double scale = messagesMap[event->message].fields[event->fieldName].scale;
+                        QByteArray data = messData.mid(offset,size);
+                        QDataStream stream(data);
+                        stream.setByteOrder(order);
+                        uint32_t itow;
+                        stream >> itow;
+                        GNSSTime = QString::number((double)itow*scale,'f',0);
                     }
+                    addItemToLogTable(localTime, GNSSTime, event->text);
                 }
-                else if (event->fieldType == "char"){
-                    qDebug() << ("data: " + QString::fromLatin1(data)) << ("event value: " + event->charTriggers.charValue);
-                    check = QString::fromLatin1(data) == event->charTriggers.charValue;
-                }
-                else if (event->fieldType == "bitmap"){
-                    if (size == 1) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
-                    else if (size == 2) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
-                    else if (size == 4) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
-                    else {
-                        qWarning() << "Unsupported size:" << event->fieldType;
-                    }
-                }
-                if (check){
-                    if (event->status != INDEX_FLAGS_TRUE){
-                        QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
-                        event->status = INDEX_FLAGS_TRUE;
-                        addItemToLogTable(localTime, QString::number(mess.binaryHeader.ms), event->text);
-                    }
-                }
-                else{
-                    event->status = INDEX_FLAGS_FALSE;
-                }
+            }
+            else{
+                event->status = INDEX_FLAGS_FALSE;
             }
         }
     }

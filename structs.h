@@ -18,7 +18,7 @@ struct eventData{
     QString device;
     QString protocol;
     QString message;
-    int messageId;
+    QString messageId;
     QString fieldName;
     int field;
     QString fieldType;
