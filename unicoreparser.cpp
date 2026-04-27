@@ -326,7 +326,7 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
                             crclen == 2?  CRC.toUInt(nullptr,16) == calculateCommandChecksum(buffdata, MessageLength + 2):false;
             if (crcCheck){
                 res.isAscii = true;
-                res.isCommand = true;
+                res.isCommand = false;
                 res.header = header;
                 res.data = data;
                 res.crc = CRC;

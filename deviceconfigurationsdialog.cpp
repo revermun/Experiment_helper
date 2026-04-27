@@ -23,6 +23,32 @@
 /// |MODE ROVER/BASE/ROVER SURVEY/ROVER AUTOMOTIVE/UAV  |   COMMAND   |     +    |
 /// ------------------------------------------------------------------------------
 
+
+/// Особые сообщения
+/// Null поля до получения решения
+/// ADRDOP
+///
+/// Сообщения с повторяющимися полями
+/// OBSVM
+/// OBSVH
+/// OBSVMCMP
+/// OBSVHCMP
+/// OBSVBASE
+/// BESTSAT
+/// SATINFO
+/// SATELITE
+/// SATECEF
+
+/// Обязательные сообщения
+/// OBSVH           |-
+/// BASEINFO        |+
+/// AGRIC           |+
+/// BESTNAVXYZ      |+
+/// BESTSAT         |-
+/// ADRNAV          |+
+/// STADOP          |-
+/// SATSINFO        |-
+
 /// Общие настройки:
 /// Настройка     передача                                          чтение
 /// системы         MASK +                                              +
@@ -82,6 +108,7 @@
 /// full_name - в первый столбец лэйблов
 /// value - во второй столбец лэйблов, умножая на scale (в программе всегда double)
 /// units - в третий столбец лэйблов
+/// description - в описание сообщения
 
 deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
@@ -90,6 +117,7 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     ui->setupUi(this);
     this->devicesMap = devicesMap;
     this->connectionsMap = connectionsMap;
+    this->messagesMap = messagesMap;
     qDebug() << connectionsMap;
     foreach (QString key, connectionsMap.keys()) {
         ui->comboBoxDevice1->addItem(key);
@@ -160,10 +188,7 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     framesMap["CFG-CLOCK"] = ui->frameCLOCK;
     framesMap["CFG-RST"] = ui->frameRST;
     framesMap["CFG-ITFM"] = ui->frameITFM;
-    framesMap["BESTNAV"] = ui->frameBESTNAV;
     framesMap["OBSVM"] = ui->frameOBSVM;
-    framesMap["GPSEPH"] = ui->frameGPSEPH;
-    framesMap["UNIHEADING"] = ui->frameUNIHEADING;
     framesMap["MASK"] = ui->frameMASK;
     framesMap["CONFIG RTK"] = ui->frameCONFIGRTK;
     framesMap["CONFIG DGPS"] = ui->frameCONFIGDGPS;
@@ -361,6 +386,34 @@ void deviceConfigurationsDialog::deviceChangeEvent()
     QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
     this->protocol = protocol;
     ui->treeWidgetMessages->clear();
+
+    // !!! WORK UNDER PROGRESS !!!
+    QTreeWidgetItem* configMessagesItem = new QTreeWidgetItem();
+    configMessagesItem->setText(0,"Конфигурационные сообщения");
+    QTreeWidgetItem* navMessagesItem = new QTreeWidgetItem();
+    navMessagesItem->setText(0,"Навигационные сообщения");
+    foreach (auto key, messagesMap.keys()) {
+        Mess message = messagesMap[key];
+        if (message.protocol == protocol){
+            QTreeWidgetItem* messageItem = new QTreeWidgetItem();
+            messageItem->setText(0,message.name);
+            if (message.type == "nav") navMessagesItem->addChild(messageItem);
+            else if (message.type == "conf") configMessagesItem->addChild(messageItem);
+        }
+    }
+    QList<QTreeWidgetItem*> messageTypes = {configMessagesItem, navMessagesItem};
+    ui->treeWidgetMessages->insertTopLevelItems(0, messageTypes);
+    if (protocol == "Ublox"){
+        ui->labelVelUnits->setText("см/с");
+    }
+    else if (protocol == "Unicore"){
+        ui->labelVelUnits->setText("м/с");
+    }
+    ui->pushButtonSend->setEnabled(false);
+    return;
+    // !!! WORK UNDER PROGRESS !!!
+
+
     if (protocol == "Ublox"){
         QTreeWidgetItem* configMessagesItem = new QTreeWidgetItem();
         configMessagesItem->setText(0,"Конфигурационные сообщения");
@@ -536,6 +589,8 @@ void deviceConfigurationsDialog::showPortSettings(QString text){
     }
     else setChildrenHidden(ui->framePRTUART, false);
 }
+
+
 
 void deviceConfigurationsDialog::parseMessage()
 {
@@ -1425,7 +1480,7 @@ void deviceConfigurationsDialog::parseMessage()
     }
     if (protocol == "Unicore"){
         UnicoreParser parser(currentConnection);
-        UnicoreMessage mess = parser.parseMessage(&streamBuffer);
+        UnicoreMessage mess = parser.parseAsciiMessage(&streamBuffer);
         if (mess.data.isEmpty()) return;
         if (!mess.isAscii) return;
         if (mess.isCommand && mess.data.contains("command") && mess.data.contains("OK")){
@@ -1433,58 +1488,16 @@ void deviceConfigurationsDialog::parseMessage()
             ui->labelResponse->setText("Принято ответное сообщение!");
             ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
             this->newResponse = true;
+            return;
         }
         else if (mess.isCommand && mess.data.contains("command") && !mess.data.contains("OK")){
             qDebug() << "NOT OK: "  << mess.data;
             ui->labelResponse->setText("Сообщение отклонено!");
             ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
             this->newResponse = true;
+            return;
         }
-        if (mess.asciiHeader.messageName == "BESTNAVA"){
-            QList<QByteArray> fields = mess.data.split(',');
-            QList<QString> fieldsStr;
-            foreach (QByteArray field, fields) {
-                fieldsStr.append(QString::fromLatin1(field));
-            }
-            QList<QLabel*> labels = {ui->labelBESTNAVPsol, ui->labelBESTNAVPostype, ui->labelBESTNAVLat,
-                                       ui->labelBESTNAVLon, ui->labelBESTNAVHgt, ui->labelBESTNAVUnd,
-                                       ui->labelBESTNAVdatum, ui->labelBESTNAVlatsko, ui->labelBESTNAVlonsko,
-                                       ui->labelBESTNAVhgtsko, ui->labelBESTNAVbaseID, ui->labelBESTNAVdiffageP,
-                                       ui->labelBESTNAVsolage, ui->labelBESTNAVsvs, ui->labelBESTNAVsvsused,
-                                       nullptr,nullptr,nullptr,ui->labelBESTNAVextsolstat, ui->labelBESTNAVgalmask,
-                                       ui->labelBESTNAVgpsmask, ui->labelBESTNAVVsol, ui->labelBESTNAVveltype,
-                                       ui->labelBESTNAVlatency, ui->labelBESTNAVdiffageV, ui->labelBESTNAVhspeed,
-                                      ui->labelBESTNAVtrkgnd, ui->labelBESTNAVvspeed, ui->labelBESTNAVvspeedsko, ui->labelBESTNAVhspeedsko};
-            int index = -1;
-            foreach (auto field, fieldsStr) {
-                index++;
-                if (index >= labels.count()) break;
-                if (labels.at(index) == nullptr) continue;
-                labels.at(index)->setText(field);
-            }
-            ui->lineRecieverDatumId->setText(ui->labelBESTNAVdatum->text());
-        }
-        else if (mess.asciiHeader.messageName == "GPSEPHA"){
-            qDebug() << mess.data;
-            QList<QByteArray> fields = mess.data.split(',');
-            QList<QString> fieldsStr;
-            foreach (QByteArray field, fields) {
-                fieldsStr.append(QString::fromLatin1(field));
-            }
-            QList<QLabel*> labels;
-            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGPSEPH->layout());
-            for(int i = 0; i < layout->rowCount(); i++){
-                labels.append(qobject_cast<QLabel*>(layout->itemAtPosition(i,1)->widget()));
-            }
-            int index = -1;
-            foreach (auto field, fieldsStr) {
-                index++;
-                if (index >= labels.count()) break;
-                if (labels.at(index) == nullptr) continue;
-                labels.at(index)->setText(field);
-            }
-        }
-        else if (mess.asciiHeader.messageName == "OBSVMA"){
+        if (mess.asciiHeader.messageName == "OBSVMA"){
             qDebug() << mess.data;
             ui->tableOBSVM->clearContents();
             ui->tableOBSVM->setRowCount(0);
@@ -1509,25 +1522,32 @@ void deviceConfigurationsDialog::parseMessage()
             }
             setupTableSize(ui->tableOBSVM);
         }
-        else if (mess.asciiHeader.messageName == "UNIHEADINGA"){
-            qDebug() << mess.data;
-            QList<QByteArray> fields = mess.data.split(',');
-            QList<QString> fieldsStr;
-            foreach (QByteArray field, fields) {
-                fieldsStr.append(QString::fromLatin1(field));
-            }
-            QList<QLabel*> labels = {ui->labelUNIHEADINGsolstat, ui->labelUNIHEADINGpostype, ui->labelUNIHEADINGlen,
-                                     ui->labelUNIHEADINGheading, ui->labelUNIHEADINGpitch, nullptr, ui->labelUNIHEADINGheadingsko,
-                                       ui->labelUNIHEADINGpitchsko, ui->labelUNIHEADINGbaseID, ui->labelUNIHEADINGtracked, ui->labelUNIHEADINGused,
-                                       ui->labelUNIHEADINGabove, ui->labelUNIHEADINGl2above, nullptr, ui->labelUNIHEADINGextsolstat,
-                                      ui->labelUNIHEADINGgalmask, ui->labelUNIHEADINGgpsmask};
-            int index = -1;
-            foreach (auto field, fieldsStr) {
-                index++;
-                if (index >= labels.count()) break;
-                if (labels.at(index) == nullptr) continue;
-                labels.at(index)->setText(field);
-            }
+        else if (mess.asciiHeader.messageName.contains("DOP")){
+
+        }
+        else if (mess.asciiHeader.messageName == "OBSVHA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "OBSVMCMPA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "OBSVHCMPA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "OBSVBASEA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "BESTSATA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "SATSINFOA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "SATELLITEA"){
+
+        }
+        else if (mess.asciiHeader.messageName == "SATECEFA"){
+
         }
         else if (mess.isCommand && mess.data.split(',').at(1) == "MASK"){
             QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
@@ -1719,6 +1739,31 @@ void deviceConfigurationsDialog::parseMessage()
             ui->checkRecieverEph->setChecked(ephCheck);
             if (!ephCheck) ui->spinRecieverEph3->setValue(0);
         }
+        else if (mess.isAscii && !mess.isCommand){
+            Mess message = messagesMap[currentItemText];
+            QStringList fields = message.getSortedFieldKeys();
+            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneral->layout());
+            QList<QByteArray> data = mess.data.split(',');
+            QList<QString> dataStr;
+            foreach (QByteArray d, data) {
+                dataStr.append(QString::fromLatin1(d));
+            }
+            int row = 0;
+            int dataIndex = 0;
+            /// TODO :: Разобраться с Reserved полями
+            foreach (auto fieldName, fields) {
+                auto field = message.fields[fieldName];
+                if (field.full_name == "Reserved"){
+                    dataIndex++;
+                    continue;
+                }
+                QLabel* labelValue = qobject_cast<QLabel*>(layout->itemAtPosition(row,1)->widget());
+                QString valueStr = dataStr.at(dataIndex);
+                labelValue->setText(valueStr);
+                dataIndex++;
+                row++;
+            }
+        }
     }
 }
 
@@ -1787,8 +1832,7 @@ void deviceConfigurationsDialog::sendPoll()
     }
     else if (protocol == "Unicore"){
         UnicoreParser parser(currentConnection);
-        QList<QString> messages = {"BESTNAV", "GPSEPH", "OBSVM", "UNIHEADING"};
-        if (messages.contains(currentItemText)){
+        if (messagesMap[currentItemText].type == "nav"){
             parser.sendMessage(currentItemText + 'A');
         }
         else if (currentItemText.contains("CONFIG")){
@@ -2308,11 +2352,41 @@ void deviceConfigurationsDialog::updateMessageSettings(QTreeWidgetItem* item, in
             }
         }
     }
-    ui->labelMessageDescription->setText(messagesDescriptionsMap[text]);
-    setChildrenHidden(ui->scrollAreaMessageSettingsContents, true);
     QFrame *currentFrame;
+    QString description;
     currentFrame = framesMap[currentItemText];
-    if (!currentFrame) return;
+    if (!currentFrame) {
+        currentFrame = ui->frameGeneral;
+        description = messagesMap[text].description;
+        QStringList fields = messagesMap[text].getSortedFieldKeys();
+        QGridLayout* layout = qobject_cast<QGridLayout*>(currentFrame->layout());
+        QLayoutItem* item;
+        while ((item = layout->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                delete item->widget();
+            }
+            delete item;
+        }
+        int row = 0;
+        foreach (auto fieldName, fields) {
+            auto field = messagesMap[text].fields[fieldName];
+            if (field.full_name == "Reserved") continue;
+            QLabel* labelName = new QLabel(field.full_name, currentFrame);
+            QLabel* labelValue = new QLabel("", currentFrame);
+            labelValue->setAlignment(Qt::AlignRight);
+            QLabel* labelUnits = new QLabel(currentFrame);
+            if (!field.units.isEmpty()) labelUnits->setText('[' + field.units + ']');
+            layout->addWidget(labelName,row,0);
+            layout->addWidget(labelValue,row,1);
+            layout->addWidget(labelUnits,row,2);
+            row++;
+        }
+    }
+    else{
+        description = messagesDescriptionsMap[text];
+    }
+    ui->labelMessageDescription->setText(description);
+    setChildrenHidden(ui->scrollAreaMessageSettingsContents, true);
     setChildrenHidden(currentFrame,false);
     currentFrame->setHidden(false);
     sendPoll();

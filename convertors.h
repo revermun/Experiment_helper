@@ -83,4 +83,31 @@ inline bool compareBitmap(QDataStream& stream, int startBit, int endBit, unsigne
     return getBits(bits, startBit, endBit) == value;
 }
 
+template<typename T>
+inline T getValueFromQByteArray(QByteArray data){
+    T value;
+    QDataStream stream(data);
+    stream.setByteOrder(QDataStream::BigEndian);
+    stream >> value;
+    return value;
+}
+
+inline double getFieldValue(QByteArray data, QString type, int size){
+
+    double res;
+    if      (type == "int" && size == 1)  res = (double)getValueFromQByteArray<int8_t>(data);
+    else if (type == "uint" && size == 1) res = (double)getValueFromQByteArray<uint8_t>(data);
+    else if (type == "int" && size == 2)  res = (double)getValueFromQByteArray<int16_t>(data);
+    else if (type == "uint" && size == 2) res = (double)getValueFromQByteArray<uint16_t>(data);
+    else if (type == "int" && size == 4)  res = (double)getValueFromQByteArray<int32_t>(data);
+    else if (type == "uint" && size == 4) res = (double)getValueFromQByteArray<uint32_t>(data);
+    else if (type == "int" && size == 8)  res = (double)getValueFromQByteArray<int64_t> (data);
+    else if (type == "uint" && size == 8) res = (double)getValueFromQByteArray<int64_t>(data);
+    else if (type == "float") res = (double)getValueFromQByteArray<float>(data);
+    else if (type == "double") res = getValueFromQByteArray<double>(data);
+    else res = 0;
+    return res;
+}
+
+
 #endif // CONVERTORS_H

@@ -52,6 +52,7 @@ struct Mess{
         int index;
         QString type;
         int size;
+        int offset;
         int min_value;
         int max_value;
         QString units;

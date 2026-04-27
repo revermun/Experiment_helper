@@ -207,7 +207,7 @@ void MainWindow::getMessagesConfig()
         if(!e.isNull()) {
             QString messageName = e.tagName();
             Mess message;
-            message.name = messageName;
+            message.name = messageName.replace('_',' ');
             message.description = e.attribute("description");
             message.id = e.attribute("id");
             message.type = e.attribute("type");
@@ -225,6 +225,7 @@ void MainWindow::getMessagesConfig()
                     field.full_name = i.attribute("name");
                     field.type = i.attribute("type");
                     if (!i.attribute("size").isEmpty()) field.size = i.attribute("size").toInt();
+                    if (!i.attribute("offset").isEmpty()) field.offset = i.attribute("offset").toInt();
                     if (!i.attribute("min_value").isEmpty()) field.min_value = i.attribute("min_value").toInt();
                     if (!i.attribute("max_value").isEmpty()) field.max_value = i.attribute("max_value").toInt();
                     field.units = i.attribute("units");
@@ -1141,14 +1142,9 @@ void MainWindow::parseMessage()
                 eventData *event = &eventMap[eventName];
                 if (event->device != connDevice) continue;
                 if (event->messageId != mess.binaryHeader.messageId) continue;
-                QStringList fields = messagesMap[event->message].getSortedFieldKeys();
-                int offset = 0;
-                int i = 0;
-                while(i != event->field){
-                    offset += messagesMap[event->message].fields[fields.at(i)].size;
-                    i++;
-                }
+                int offset = messagesMap[event->message].fields[event->fieldName].offset;
                 int size = messagesMap[event->message].fields[event->fieldName].size;
+                double scale = messagesMap[event->message].fields[event->fieldName].scale;
                 QByteArray data = mess.data.mid(offset,size);
                 QDataStream stream(data);
                 stream.setByteOrder(QDataStream::BigEndian);
@@ -1159,7 +1155,7 @@ void MainWindow::parseMessage()
                     int flags = (int)event->intTriggers.isEqual +
                                 ((int)event->intTriggers.isGreater << 1) +
                                 ((int)event->intTriggers.isLesser << 2);
-                    int thresh = event->intTriggers.threshhold;
+                    double thresh = event->intTriggers.threshhold / scale;
                     if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags, event->fieldType);
                     else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags, event->fieldType);
                     else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags, event->fieldType);

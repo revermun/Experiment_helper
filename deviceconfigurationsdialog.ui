@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -1091,10 +1091,43 @@
                 <x>0</x>
                 <y>0</y>
                 <width>686</width>
-                <height>7622</height>
+                <height>7664</height>
                </rect>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0">
+              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0">
+               <item>
+                <widget class="QFrame" name="frameGeneral">
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_35">
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_306">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="label_307">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QLabel" name="label_308">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
                <item>
                 <widget class="QFrame" name="frameMSG">
                  <property name="frameShape">
@@ -8289,7 +8322,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>929</x>
-     <y>-6717</y>
+     <y>124</y>
     </hint>
     <hint type="destinationlabel">
      <x>783</x>
@@ -8304,8 +8337,8 @@ elevation mask angle</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>-3804</y>
+     <x>519</x>
+     <y>3037</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -8320,8 +8353,8 @@ elevation mask angle</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>-3777</y>
+     <x>519</x>
+     <y>3064</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -8336,8 +8369,8 @@ elevation mask angle</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>-3750</y>
+     <x>519</x>
+     <y>3091</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -8352,8 +8385,8 @@ elevation mask angle</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>-3723</y>
+     <x>519</x>
+     <y>3118</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -8368,8 +8401,8 @@ elevation mask angle</string>
    <slot>changeListsSelection()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>542</x>
-     <y>-3696</y>
+     <x>519</x>
+     <y>3145</y>
     </hint>
     <hint type="destinationlabel">
      <x>845</x>
@@ -8385,7 +8418,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>-3483</y>
+     <y>3358</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -8401,7 +8434,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>-3327</y>
+     <y>3514</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -8417,7 +8450,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>-2488</y>
+     <y>4353</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -8433,7 +8466,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>-2488</y>
+     <y>4353</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -8449,7 +8482,7 @@ elevation mask angle</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>-1693</y>
+     <y>5148</y>
     </hint>
     <hint type="destinationlabel">
      <x>963</x>
@@ -8544,8 +8577,8 @@ elevation mask angle</string>
    <slot>MASKcheckClickEvent(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>386</y>
+     <x>494</x>
+     <y>7225</y>
     </hint>
     <hint type="destinationlabel">
      <x>224</x>
@@ -8560,8 +8593,8 @@ elevation mask angle</string>
    <slot>MASKcheckClickEvent(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>417</y>
+     <x>494</x>
+     <y>7256</y>
     </hint>
     <hint type="destinationlabel">
      <x>224</x>
@@ -8576,8 +8609,8 @@ elevation mask angle</string>
    <slot>MASKcheckClickEvent(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>448</y>
+     <x>494</x>
+     <y>7287</y>
     </hint>
     <hint type="destinationlabel">
      <x>190</x>
@@ -8592,8 +8625,8 @@ elevation mask angle</string>
    <slot>MASKcheckClickEvent(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>479</y>
+     <x>494</x>
+     <y>7318</y>
     </hint>
     <hint type="destinationlabel">
      <x>208</x>
@@ -8608,8 +8641,8 @@ elevation mask angle</string>
    <slot>MASKcheckClickEvent(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>510</y>
+     <x>494</x>
+     <y>7349</y>
     </hint>
     <hint type="destinationlabel">
      <x>213</x>
@@ -8624,8 +8657,8 @@ elevation mask angle</string>
    <slot>comboCONFIGRTKchangeEvent(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>375</x>
-     <y>677</y>
+     <x>397</x>
+     <y>7494</y>
     </hint>
     <hint type="destinationlabel">
      <x>316</x>

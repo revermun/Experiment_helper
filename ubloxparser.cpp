@@ -108,6 +108,76 @@ QMap<QString,QByteArray> UbloxParser::parseMessage(QByteArray *buff)
     return map; // пустая карта
 }
 
+UbloxMessage UbloxParser::parseMessage(QByteArray *buff)
+{
+    UbloxMessage res;
+
+    int index = 0;
+    int size = buff->size();
+
+    while (index <= size - 8) { // Минимум 8 байт: 2(синхро) + 4(заг) + 2(CRC)
+        // Поиск синхро-байтов
+        if ((uint8_t)buff->at(index) != 0xb5) {
+            index++;
+            continue;
+        }
+
+        if ((uint8_t)buff->at(index + 1) != 0x62) {
+            index += 2;
+            continue;
+        }
+
+        // Читаем длину payload
+        uint16_t payloadLen = (uint8_t)buff->at(index + 4) | ((uint8_t)buff->at(index + 5) << 8);
+        int totalMsgLen = 2 + 4 + payloadLen + 2; // синхро(2) + заг(4) + payload + CRC(2)
+
+        // Проверяем, хватает ли данных
+        if (index + totalMsgLen > size) {
+            // Неполное сообщение - оставляем в буфере
+            break;
+        }
+
+        // Извлекаем компоненты сообщения
+        uint8_t byteClass = (uint8_t)buff->at(index + 2);
+        uint8_t byteID = (uint8_t)buff->at(index + 3);
+
+        QByteArray data;
+        if (payloadLen > 0) {
+            data = buff->mid(index + 6, payloadLen);
+        }
+
+        QByteArray checkSum = buff->mid(index + 6 + payloadLen, 2);
+        QByteArray msg = buff->mid(index + 2, 4 + payloadLen); // без синхро-байтов
+
+        // Проверка контрольной суммы
+        if (calcCheckSum(msg) == checkSum) {
+            // Валидное сообщение найдено
+            res.messId = byteID;
+            res.messClass = byteClass;
+            res.messLen = payloadLen;
+            res.header = buff->mid(index, 6);
+            res.data = data;
+            res.crc = checkSum;
+
+            // Удаляем обработанные данные из буфера (ВКЛЮЧАЯ текущее сообщение)
+            buff->remove(0, index + totalMsgLen);
+
+            return map;
+        }
+
+        // Если CRC не совпал, продолжаем поиск со следующего байта
+        index++;
+    }
+
+    // Если дошли сюда - валидное сообщение не найдено
+    // Но нужно удалить все байты до index (мусорные данные)
+    if (index > 0) {
+        buff->remove(0, index);
+    }
+
+    return map; // пустая карта
+}
+
 
 bool UbloxParser::sendMessage(QByteArray msg)
 {

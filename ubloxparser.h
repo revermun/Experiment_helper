@@ -48,17 +48,6 @@
 /// R8 - double
 /// CH - ascii char
 
-///parseMessage должен возвращать словарь содержащий всю информацию о сообщении
-/// обязательны поля class ID, далее по ним можно определять конкретные значения
-///sendMessage должен принимать название сообщения и его параметры, если нет параметров то это GET
-/// Если есть то это SET
-///
-/// Расшифрока сообщений: для приложения мы хотим считать конкретные сообщения.
-/// Скорее всего нужно в класс добавить по экземпляру каждой структуры и изменять их по необходимости(при выборе вкладки и нажатии на кнопку запроса)
-/// для того чтобы получить информацию нужно сначала отправить запрос (сообщение без payload) затем считывать сообщения до тех пор пока не найдется искомое
-/// В парсере достаточно реализовать для этого функцию отправки сообщения и в конфигурации устройств при нажатии на кнопку провести отправку запроса,
-/// затем в цикле парсить сообщения до тех пор пока не найдется искомое, считать его и изменить соответствующие поля
-///
 
 enum messageIndexes{
     INDEX_MSG_HDR1,
@@ -68,6 +57,15 @@ enum messageIndexes{
     INDEX_MSG_LEN1,
     INDEX_MSG_LEN2
 };
+/// TODO:: переделать парсер под структуру
+struct UbloxMessage{
+    uint8_t messId;
+    uint8_t messClass;
+    uint16_t messLen;
+    QByteArray header;
+    QByteArray data;
+    QByteArray crc;
+};
 
 
 class UbloxParser
@@ -76,6 +74,7 @@ public:
     UbloxParser(QObject *connection);
     ~UbloxParser();
     QMap<QString,QByteArray> parseMessage(QByteArray* buff);
+    UbloxMessage parseMessage(QByteArray *buff);
     bool sendMessage(QByteArray msg);
     static QByteArray calcCheckSum(QByteArray msg);
     static Message* decode(QMap<QString,QByteArray>);
