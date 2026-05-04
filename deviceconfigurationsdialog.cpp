@@ -48,14 +48,14 @@
 /// NAV-SAT
 
 /// Обязательные сообщения
-/// OBSVH           |-
+/// OBSVH           |+
 /// BASEINFO        |+
 /// AGRIC           |+
 /// BESTNAVXYZ      |+
-/// BESTSAT         |-
+/// BESTSAT         |+
 /// ADRNAV          |+
-/// STADOP          |-
-/// SATSINFO        |-
+/// STADOP          |+
+/// SATSINFO        |+
 
 /// Общие настройки:
 /// Настройка     передача                                          чтение
@@ -173,7 +173,7 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     messagesIDMapUBX["RAWX"] = QPair<uint8_t,uint8_t>(RXM::RAWX::classID, RXM::RAWX::messageID);
     messagesIDMapUBX["SFRBX"] = QPair<uint8_t,uint8_t>(RXM::SFRBX::classID, RXM::SFRBX::messageID);
 
-    framesMap["NAV-DGPS"] = ui->frameDGPS;
+    // framesMap["NAV-DGPS"] = ui->frameDGPS;
     framesMap["NAV-ORB"] = ui->frameORB;
     framesMap["NAV-RELPOSNED"] = ui->frameRELPOSNED;
     framesMap["NAV-SAT"] = ui->frameSAT;
@@ -189,46 +189,11 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QStrin
     framesMap["CFG-RATE"] = ui->frameRATE;
     framesMap["CFG-RST"] = ui->frameRST;
     framesMap["CFG-ITFM"] = ui->frameITFM;
-    framesMap["OBSVM"] = ui->frameOBSVM;
     framesMap["MASK"] = ui->frameMASK;
     framesMap["CONFIG RTK"] = ui->frameCONFIGRTK;
     framesMap["CONFIG DGPS"] = ui->frameCONFIGDGPS;
     framesMap["CONFIG ANTIJAM"] = ui->frameCONFIGANTIJAM;
     framesMap["MODE"] = ui->frameMODE;
-
-
-    messagesDescriptionsMap["NAV-CLOCK"]        = "Информация о состоянии часов приемника. Содержит данные о смещении времени и его точности.";
-    messagesDescriptionsMap["NAV-DGPS"]         = "Статус дифференциальной коррекции (DGPS). Показывает, какие поправки применяются к решению.";
-    messagesDescriptionsMap["NAV-DOP"]          = "Параметры геометрического фактора ухудшения точности (DOP). Оценка качества геометрии спутников.";
-    messagesDescriptionsMap["NAV-ORB"]          = "Информация об орбитальных параметрах спутников (элементах эфемерид и альманаха).";
-    messagesDescriptionsMap["NAV-POSECEF"]      = "Координаты местоположения в геоцентрической системе координат ECEF (Earth-Centered, Earth-Fixed).";
-    messagesDescriptionsMap["NAV-POSLLH"]       = "Геодезические координаты (широта, долгота, высота). Самое популярное сообщение для получения позиции.";
-    messagesDescriptionsMap["NAV-RELPOSNED"]    = "Относительное положение в локальной системе координат \"Север-Восток-Низ\" (NED). Используется в режимах RTK.";
-    messagesDescriptionsMap["NAV-SAT"]          = "Детальная информация по каждому отслеживаемому спутнику. Заменяет устаревшее NAV-SVINFO.";
-    messagesDescriptionsMap["NAV-SOL"]          = "Общее навигационное решение (положение, скорость, время и статус в одном сообщении).";
-    messagesDescriptionsMap["NAV-STATUS"]       = "Текущий статус навигационного решения.";
-    messagesDescriptionsMap["NAV-VELECEF"]      = "Вектор скорости в системе координат ECEF.";
-    messagesDescriptionsMap["NAV-VELNED"]       = "Вектор скорости в локальной системе координат \"Север-Восток-Низ\" (NED).";
-    messagesDescriptionsMap["CFG-DGNSS"]        = "Настройка параметров дифференциальной навигации (DGNSS).";
-    messagesDescriptionsMap["CFG-GNSS"]         = "Настройка используемых спутниковых систем (GPS, ГЛОНАСС, Galileo и др.).";
-    messagesDescriptionsMap["CFG-CFG"]          = "Управление конфигурацией (сохранение, загрузка, очистка).";
-    messagesDescriptionsMap["CFG-MSG"]          = "Настройка выдачи сообщений (включение/выключение и частота).";
-    messagesDescriptionsMap["CFG-DAT"]          = "Настройка геодезического датума для вывода координат.";
-    messagesDescriptionsMap["CFG-NAV5"]         = "Основные настройки навигационного движка (параметры 2D/3D решения).";
-    messagesDescriptionsMap["CFG-PRT"]          = "Настройка портов ввода/вывода (UART, USB, SPI).";
-    messagesDescriptionsMap["CFG-RATE"]         = "Настройка частоты навигационных решений (периода измерений).";
-    messagesDescriptionsMap["CFG-CLOCK"]        = "Управление состоянием опорного генератора.";
-    messagesDescriptionsMap["CFG-RST"]          = "Команда для сброса приемника (горячий, теплый, холодный старт).";
-    messagesDescriptionsMap["CFG-ITFM"]         = "Настройка системы обнаружения и подавления помех.";
-    messagesDescriptionsMap["BESTNAV"]          = "Содержит лучшее решение о местоположении, времени и скорости, включая данные о валидности и точности";
-    messagesDescriptionsMap["GPSEPH"]           = "Выводит эфемериды (орбитальные параметры) спутников GPS, используемые для вычисления их координат.";
-    messagesDescriptionsMap["OBSVM"]            = "Содержит сырые наблюдения (псевдодальности, фазы несущей, SNR).";
-    messagesDescriptionsMap["UNIHEADING"]       = "Вычисляет курс (угол направления) между двумя антеннами, подключенными к приемнику.";
-    messagesDescriptionsMap["MASK"]             = "Настраивает маски: маску возвышения спутника (угол над горизонтом), маску С/Ш (порог сигнала) и временную маску.";
-    messagesDescriptionsMap["CONFIG RTK"]       = "Настраивает режим RTK (Real-Time Kinematic): выбор базовой станции, режим фиксированного решения и т.д.";
-    messagesDescriptionsMap["CONFIG DGPS"]      = "Настраивает параметры дифференциальной коррекции (DGPS), включая источники коррекции и пороги.";
-    messagesDescriptionsMap["CONFIG ANTIJAM"]   = "Управляет настройками системы анти-джамминга (подавления помех).";
-    messagesDescriptionsMap["MODE"]             = "Переключает рабочий режим приемника (например, одиночный, RTK, статический).";
 
     QByteArray buffArray;
     buffArray.resize(2);
@@ -367,12 +332,8 @@ void deviceConfigurationsDialog::deviceChangeEvent()
     foreach (QString key, connectionsMap.keys()) {
         if (key == combo->currentText()) {
             currentConnection = connectionsMap[key];
-            // currentConnection->open(QSerialPort::ReadWrite);
         }
-        // else connectionsMap[key]->close();
     }
-
-    // connectionsMap[combo->currentText()]->open(QSerialPort::ReadWrite);
 
     QPair<QString,QList<QString>> deviceInfo = devicesMap[combo->currentText()];
     if (ui->comboBoxDevice1 == combo) ui->comboBoxDevice2->setCurrentText(ui->comboBoxDevice1->currentText());
@@ -388,7 +349,6 @@ void deviceConfigurationsDialog::deviceChangeEvent()
     this->protocol = protocol;
     ui->treeWidgetMessages->clear();
 
-    // !!! WORK UNDER PROGRESS !!!
     QTreeWidgetItem* configMessagesItem = new QTreeWidgetItem();
     configMessagesItem->setText(0,"Конфигурационные сообщения");
     QTreeWidgetItem* navMessagesItem = new QTreeWidgetItem();
@@ -411,106 +371,7 @@ void deviceConfigurationsDialog::deviceChangeEvent()
         ui->labelVelUnits->setText("м/с");
     }
     ui->pushButtonSend->setEnabled(false);
-    return;
-    // !!! WORK UNDER PROGRESS !!!
 
-
-    if (protocol == "Ublox"){
-        QTreeWidgetItem* configMessagesItem = new QTreeWidgetItem();
-        configMessagesItem->setText(0,"Конфигурационные сообщения");
-        QTreeWidgetItem* cfgDatItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgCfgItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgDgnssItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgGnssItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgMsgItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgNav5Item = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgPrtItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgRateItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgRstItem = new QTreeWidgetItem();
-        QTreeWidgetItem* cfgItfmItem = new QTreeWidgetItem();
-        cfgDatItem->setText(0,"CFG-DAT");
-        cfgCfgItem->setText(0,"CFG-CFG");
-        cfgDgnssItem->setText(0,"CFG-DGNSS");
-        cfgGnssItem->setText(0,"CFG-GNSS");
-        cfgMsgItem->setText(0,"CFG-MSG");
-        cfgNav5Item->setText(0,"CFG-NAV5");
-        cfgPrtItem->setText(0,"CFG-PRT");
-        cfgRateItem->setText(0,"CFG-RATE");
-        cfgRstItem->setText(0,"CFG-RST");
-        cfgItfmItem->setText(0,"CFG-ITFM");
-        QList<QTreeWidgetItem*> configMessages =  {cfgDatItem, cfgCfgItem, cfgDgnssItem, cfgGnssItem, cfgMsgItem, cfgNav5Item, cfgPrtItem, cfgRateItem, cfgRstItem, cfgItfmItem};
-        configMessagesItem->addChildren(configMessages);
-
-        QTreeWidgetItem* navMessagesItem = new QTreeWidgetItem();
-        navMessagesItem->setText(0,"Навигационные сообщения");
-        QTreeWidgetItem* navClockItem       = new QTreeWidgetItem();
-        QTreeWidgetItem* navDopItem         = new QTreeWidgetItem();
-        QTreeWidgetItem* navOrbItem         = new QTreeWidgetItem();
-        QTreeWidgetItem* navDgnssItem       = new QTreeWidgetItem();
-        QTreeWidgetItem* navPosecefItem     = new QTreeWidgetItem();
-        QTreeWidgetItem* navPosellhItem     = new QTreeWidgetItem();
-        QTreeWidgetItem* navRelposnedItem   = new QTreeWidgetItem();
-        QTreeWidgetItem* navSatItem         = new QTreeWidgetItem();
-        QTreeWidgetItem* navSolItem         = new QTreeWidgetItem();
-        QTreeWidgetItem* navStatusItem      = new QTreeWidgetItem();
-        QTreeWidgetItem* navVelecefItem     = new QTreeWidgetItem();
-        QTreeWidgetItem* navVelnedItem      = new QTreeWidgetItem();
-        navClockItem->setText(0,    "NAV-CLOCK");
-        navDopItem->setText(0,      "NAV-DOP");
-        navOrbItem->setText(0,      "NAV-ORB");
-        navDgnssItem->setText(0,    "NAV-DGPS");
-        navPosecefItem->setText(0,  "NAV-POSECEF");
-        navPosellhItem->setText(0,  "NAV-POSLLH");
-        navRelposnedItem->setText(0,"NAV-RELPOSNED");
-        navSatItem->setText(0,      "NAV-SAT");
-        navSolItem->setText(0,      "NAV-SOL");
-        navStatusItem->setText(0,   "NAV-STATUS");
-        navVelecefItem->setText(0,  "NAV-VELECEF");
-        navVelnedItem->setText(0,   "NAV-VELNED");
-
-        QList<QTreeWidgetItem*> navMessages =  {navClockItem, navDopItem, navOrbItem, navDgnssItem, navPosecefItem, navPosellhItem,
-                                                navRelposnedItem, navSatItem, navSolItem, navStatusItem, navVelecefItem, navVelnedItem};
-        navMessagesItem->addChildren(navMessages);
-
-        QList<QTreeWidgetItem*> messageTypes = {configMessagesItem, navMessagesItem};
-        ui->treeWidgetMessages->insertTopLevelItems(0, messageTypes);
-        ui->labelVelUnits->setText("см/с");
-    }
-    else if (protocol == "Unicore"){
-        QTreeWidgetItem* configMessagesItem = new QTreeWidgetItem();
-        configMessagesItem->setText(0,"Конфигурационные сообщения");
-        QTreeWidgetItem* MASKItem           = new QTreeWidgetItem();
-        QTreeWidgetItem* CONFIGRTKItem      = new QTreeWidgetItem();
-        QTreeWidgetItem* CONFIGDGNSSItem    = new QTreeWidgetItem();
-        QTreeWidgetItem* CONFIGANTIJAMItem  = new QTreeWidgetItem();
-        QTreeWidgetItem* MODEItem           = new QTreeWidgetItem();
-        MASKItem->setText(0,"MASK");
-        CONFIGRTKItem->setText(0,"CONFIG RTK");
-        CONFIGDGNSSItem->setText(0,"CONFIG DGPS");
-        CONFIGANTIJAMItem->setText(0,"CONFIG ANTIJAM");
-        MODEItem->setText(0,"MODE");
-        QList<QTreeWidgetItem*> configMessages =  {MASKItem, CONFIGRTKItem, CONFIGDGNSSItem, CONFIGANTIJAMItem, MODEItem};
-        configMessagesItem->addChildren(configMessages);
-
-        QTreeWidgetItem* navMessagesItem = new QTreeWidgetItem();
-        navMessagesItem->setText(0,"Навигационные сообщения");
-        QTreeWidgetItem* BESTNAVItem    = new QTreeWidgetItem();
-        QTreeWidgetItem* GPSEPHItem     = new QTreeWidgetItem();
-        QTreeWidgetItem* OBSVMItem      = new QTreeWidgetItem();
-        QTreeWidgetItem* UNIHEADINGItem = new QTreeWidgetItem();
-        BESTNAVItem->setText(0,    "BESTNAV");
-        GPSEPHItem->setText(0,     "GPSEPH");
-        OBSVMItem->setText(0,      "OBSVM");
-        UNIHEADINGItem->setText(0, "UNIHEADING");
-
-        QList<QTreeWidgetItem*> navMessages =  {BESTNAVItem, GPSEPHItem, OBSVMItem, UNIHEADINGItem};
-        navMessagesItem->addChildren(navMessages);
-
-        QList<QTreeWidgetItem*> messageTypes = {configMessagesItem, navMessagesItem};
-        ui->treeWidgetMessages->insertTopLevelItems(0, messageTypes);
-        ui->labelVelUnits->setText("м/с");
-    }
-    ui->pushButtonSend->setEnabled(false);
 }
 
 void deviceConfigurationsDialog::tabChangeEvent()
@@ -1344,7 +1205,7 @@ void deviceConfigurationsDialog::parseMessage()
             uint8_t messageId = message.id.right(2).toUInt(nullptr, 16);
             if (messageClass != messClass || messageId != messId) return;
             QStringList fields = message.getSortedFieldKeys();
-            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneral->layout());
+            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneralLabels->layout());
             int row = 0;
             int dataIndex = 0;
             foreach (auto fieldName, fields) {
@@ -1353,14 +1214,57 @@ void deviceConfigurationsDialog::parseMessage()
                     dataIndex++;
                     continue;
                 }
+                if (field.isRepeated){
+                    int tableRow = 0;
+                    QTableWidget* table = ui->tableGeneral;
+                    while(true){
+                        int column = 0;
+                        table->setRowCount(tableRow+1);
+                        for (int i = fields.indexOf(fieldName); i < fields.count(); i++){
+                            QString type = field.type;
+                            int size = field.size;
+                            double scale = field.scale;
+                            int offset = field.offset;
+                            if (size + offset > data.count()){ table->setRowCount(tableRow); setupTableSize(ui->tableGeneral); return;}
+                            QByteArray fieldData = data.mid(field.offset,field.size);
+                            QString valueStr;
+                            if (type == "bitmap"){
+                                valueStr = QString(fieldData.toHex());
+                            }
+                            else if (type == "char"){
+                                valueStr = QString::fromLatin1(fieldData);
+                            }
+                            else{
+                                double value = getFieldValue(fieldData, type, size, QDataStream::LittleEndian) * scale;
+                                valueStr = QString::number(value,'f',std::log(scale)/std::log(0.1));
+                            }
+                            QTableWidgetItem* item = new QTableWidgetItem(valueStr);
+                            table->setItem(tableRow,column,item);
+                            column++;
+                            dataIndex++;
+                        }
+                        tableRow++;
+                    }
+                }
                 QString type = field.type;
                 int size = field.size;
                 double scale = field.scale;
+                int offset = field.offset;
+                if (size + offset > data.count()) return;
+                if (row >= layout->rowCount()) return;
                 QByteArray fieldData = data.mid(field.offset,field.size);
-                double value = getFieldValue(fieldData, type, size, QDataStream::LittleEndian) * scale;
-
+                QString valueStr;
                 QLabel* labelValue = qobject_cast<QLabel*>(layout->itemAtPosition(row,1)->widget());
-                QString valueStr = QString::number(value,'f',4);
+                if (type == "bitmap"){
+                    valueStr = QString(fieldData.toHex());
+                }
+                else if (type == "char"){
+                    valueStr = QString::fromLatin1(fieldData);
+                }
+                else{
+                    double value = getFieldValue(fieldData, type, size, QDataStream::LittleEndian) * scale;
+                    valueStr = QString::number(value,'f',std::log(scale)/std::log(0.1));
+                }
                 labelValue->setText(valueStr);
                 dataIndex++;
                 row++;
@@ -1372,6 +1276,7 @@ void deviceConfigurationsDialog::parseMessage()
         UnicoreMessage mess = parser.parseAsciiMessage(&streamBuffer);
         if (mess.data.isEmpty()) return;
         if (!mess.isAscii) return;
+        if (mess.data.split(',').count() <= 1) return;
         if (mess.isCommand && mess.data.contains("command") && mess.data.contains("OK")){
             qDebug() << "OK";
             ui->labelResponse->setText("Принято ответное сообщение!");
@@ -1385,58 +1290,6 @@ void deviceConfigurationsDialog::parseMessage()
             ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
             this->newResponse = true;
             return;
-        }
-        if (mess.asciiHeader.messageName == "OBSVMA"){
-            qDebug() << mess.data;
-            ui->tableOBSVM->clearContents();
-            ui->tableOBSVM->setRowCount(0);
-            QList<QByteArray> fields = mess.data.split(',');
-            QList<QString> fieldsStr;
-            foreach (QByteArray field, fields) {
-                fieldsStr.append(QString::fromLatin1(field));
-            }
-            int index = 0;
-            QString num = fieldsStr.at(index);
-            ui->labelOBSVMnum->setText(num);
-            for(int i = 0; i < num.toUInt(); i++){
-                int row = i;
-                ui->tableOBSVM->insertRow(row);
-                for(int j = 0; j<11; j++){
-                    index++;
-                    if (j == 8) continue;
-                    int column = j;
-                    QTableWidgetItem *item = new QTableWidgetItem(fieldsStr.at(index));
-                    ui->tableOBSVM->setItem(row, column, item);
-                }
-            }
-            setupTableSize(ui->tableOBSVM);
-        }
-        else if (mess.asciiHeader.messageName.contains("DOP")){
-
-        }
-        else if (mess.asciiHeader.messageName == "OBSVHA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "OBSVMCMPA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "OBSVHCMPA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "OBSVBASEA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "BESTSATA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "SATSINFOA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "SATELLITEA"){
-
-        }
-        else if (mess.asciiHeader.messageName == "SATECEFA"){
-
         }
         else if (mess.isCommand && mess.data.split(',').at(1) == "MASK"){
             QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
@@ -1628,24 +1481,45 @@ void deviceConfigurationsDialog::parseMessage()
             ui->checkRecieverEph->setChecked(ephCheck);
             if (!ephCheck) ui->spinRecieverEph3->setValue(0);
         }
-        else if (mess.isAscii && !mess.isCommand){
+        else{
             Mess message = messagesMap[currentItemText];
             QStringList fields = message.getSortedFieldKeys();
-            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneral->layout());
+            QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneralLabels->layout());
             QList<QByteArray> data = mess.data.split(',');
+            qDebug() << data;
             QList<QString> dataStr;
             foreach (QByteArray d, data) {
                 dataStr.append(QString::fromLatin1(d));
             }
+            QString answerName = QString::fromLatin1(mess.header.split(',').at(0));
+            qDebug() << answerName << answerName.contains(message.name);
+            if (!answerName.contains(message.name)) return;
             int row = 0;
             int dataIndex = 0;
-            /// TODO :: Разобраться с Reserved полями
             foreach (auto fieldName, fields) {
                 auto field = message.fields[fieldName];
                 if (field.full_name == "Reserved"){
                     dataIndex++;
                     continue;
                 }
+                if (field.isRepeated){
+                    int tableRow = 0;
+                    QTableWidget* table = ui->tableGeneral;
+                    while(true){
+                        int column = 0;
+                        table->setRowCount(tableRow+1);
+                        for (int i = fields.indexOf(fieldName); i < fields.count(); i++){
+                            if (dataIndex >= dataStr.count()){table->setRowCount(tableRow); setupTableSize(ui->tableGeneral);  return;}
+                            QTableWidgetItem* item = new QTableWidgetItem(dataStr.at(dataIndex));
+                            table->setItem(tableRow,column,item);
+                            column++;
+                            dataIndex++;
+                        }
+                        tableRow++;
+                    }
+                }
+                if (dataIndex >= dataStr.count()) return;
+                if (row >= layout->rowCount()) return;
                 QLabel* labelValue = qobject_cast<QLabel*>(layout->itemAtPosition(row,1)->widget());
                 QString valueStr = dataStr.at(dataIndex);
                 labelValue->setText(valueStr);
@@ -2246,13 +2120,13 @@ void deviceConfigurationsDialog::updateMessageSettings(QTreeWidgetItem* item, in
         }
     }
     QFrame *currentFrame;
-    QString description;
+    QString description = messagesMap[text].description;;
     currentFrame = framesMap[currentItemText];
+    bool repeatedCheck = false;
     if (!currentFrame) {
         currentFrame = ui->frameGeneral;
-        description = messagesMap[text].description;
         QStringList fields = messagesMap[text].getSortedFieldKeys();
-        QGridLayout* layout = qobject_cast<QGridLayout*>(currentFrame->layout());
+        QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneralLabels->layout());
         QLayoutItem* item;
         while ((item = layout->takeAt(0)) != nullptr) {
             if (item->widget()) {
@@ -2261,26 +2135,39 @@ void deviceConfigurationsDialog::updateMessageSettings(QTreeWidgetItem* item, in
             delete item;
         }
         int row = 0;
+        int tableColumn = 0;
+        ui->tableGeneral->clearContents();
+        ui->tableGeneral->setRowCount(0);
+        ui->tableGeneral->setColumnCount(0);
         foreach (auto fieldName, fields) {
             auto field = messagesMap[text].fields[fieldName];
-            if (field.full_name == "Reserved") continue;
-            QLabel* labelName = new QLabel(field.full_name, currentFrame);
-            QLabel* labelValue = new QLabel("", currentFrame);
-            labelValue->setAlignment(Qt::AlignRight);
-            QLabel* labelUnits = new QLabel(currentFrame);
-            if (!field.units.isEmpty()) labelUnits->setText('[' + field.units + ']');
-            layout->addWidget(labelName,row,0);
-            layout->addWidget(labelValue,row,1);
-            layout->addWidget(labelUnits,row,2);
+            if (field.isRepeated){
+                repeatedCheck = true;
+                ui->tableGeneral->setColumnCount(tableColumn+1);
+                QString columnName = field.name;
+                QTableWidgetItem* item = new QTableWidgetItem(columnName);
+                ui->tableGeneral->setHorizontalHeaderItem(tableColumn,item);
+                tableColumn++;
+            }
+            else{
+                if (field.full_name == "Reserved") continue;
+                QLabel* labelName = new QLabel(field.full_name, currentFrame);
+                QLabel* labelValue = new QLabel("", currentFrame);
+                labelValue->setAlignment(Qt::AlignRight);
+                QLabel* labelUnits = new QLabel(currentFrame);
+                if (!field.units.isEmpty()) labelUnits->setText('[' + field.units + ']');
+
+                layout->addWidget(labelName,row,0);
+                layout->addWidget(labelValue,row,1);
+                layout->addWidget(labelUnits,row,2);
+            }
             row++;
         }
-    }
-    else{
-        description = messagesDescriptionsMap[text];
     }
     ui->labelMessageDescription->setText(description);
     setChildrenHidden(ui->scrollAreaMessageSettingsContents, true);
     setChildrenHidden(currentFrame,false);
+    if (currentFrame == ui->frameGeneral) ui->tableGeneral->setHidden(!repeatedCheck);
     currentFrame->setHidden(false);
     sendPoll();
 }

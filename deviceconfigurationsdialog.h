@@ -9,6 +9,7 @@
 #include <QTreeWidgetItem>
 #include <QTableWidget>
 #include <structs.h>
+#include <cmath>
 
 namespace Ui {
 class deviceConfigurationsDialog;
@@ -57,7 +58,6 @@ private:
     QMap<QByteArray,QString> messagesNamesMap;
     QMap<QString, QPair<uint8_t,uint8_t>> messagesIDMapUBX;
     QMap<QString, QFrame*> framesMap;
-    QMap<QString, QString> messagesDescriptionsMap;
     QObject* currentConnection = nullptr;
     QString currentItemText;
     QByteArray streamBuffer;

@@ -27,13 +27,15 @@
 /// max_value - число (для не int можно оставить пустым)
 /// units - единицы измерения (m/s, m, rad, deg, sm/s)
 /// scale - число на которое нужно умножить для получения действительного значения (10e-5,1,...)
-eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
     ui->setupUi(this);
+    isEdit = false;
     this->devicesMap = devicesMap;
     this->messagesMap = messagesMap;
+    this->eventMap = eventMap;
     QStringList devices = devicesMap.keys();
     ui->comboDevice->addItems(devices);
     ui->frameBitmap->setHidden(true);
@@ -41,13 +43,15 @@ eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> dev
     ui->frameInt->setHidden(true);
 }
 
-eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, eventData data, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, eventData data, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
     ui->setupUi(this);
+    isEdit = true;
     this->devicesMap = devicesMap;
     this->messagesMap = messagesMap;
+    this->eventMap = eventMap;
     QStringList devices = devicesMap.keys();
     ui->comboDevice->addItems(devices);
     ui->lineName->setText(data.name);
@@ -65,6 +69,7 @@ eventEditDialog::eventEditDialog(QMap<QString,QPair<QString,QList<QString>>> dev
         ui->spinEndBit->setValue(data.bitmapTriggers.endBit);
         ui->spinStartBit->setValue(data.bitmapTriggers.startBit);
         ui->spinValue->setValue(data.bitmapTriggers.bitValue);
+        ui->checkBitmapIsEqual->setChecked(data.bitmapTriggers.isEqual);
     }
     else if (data.fieldType == "char"){
         ui->lineValue->setText(data.charTriggers.charValue);
@@ -75,7 +80,88 @@ eventEditDialog::~eventEditDialog()
 {
     delete ui;
 }
+/// Пресеты:
+/// --------------------------------------------------------------------------------------------------------------------------------------------------------
+/// |       Название                    |   Сообщение (Unicore)  |  Поле (Unicore)  | флаги (Unicore) | Сообщение (Ublox) |  Поле (Ublox) |  флаги (Ublox) |
+/// --------------------------------------------------------------------------------------------------------------------------------------------------------
+/// |      Решение найдено              |          BESTNAV       |   p_sol_status   |      <>0        |     NAV-SOL       |    gpsFix     |      <>0       |
+/// |      Решение потеряно             |          BESTNAV       |   p_sol_status   |       =0        |     NAV-SOL       |    gpsFix     |      =0        |
+/// | Относительное решение найдено     |        UNIHEADING      |     sol_stat     |      <>0        |  NAV-RELPOSNED    |    relSol     |    [3:4]<>0    |
+/// | Относительное решение потеряно    |        UNIHEADING      |     sol_stat     |       =0        |  NAV-RELPOSNED    |    relSol     |    [3:4]=0     |
+/// --------------------------------------------------------------------------------------------------------------------------------------------------------
+void eventEditDialog::eventPresetChangeEvent(QString preset){
+    QString device = ui->comboDevice->currentText();
+    QString protocol = devicesMap[device].second.at(INDEX_GENERAL_PROTOCOL);
+    if (protocol == "Ublox"){
+        if (preset == "Решение найдено"){
+            ui->comboMessage->setCurrentText("NAV-SOL");
+            ui->comboMessageField->setCurrentIndex(3);
+            ui->checkLogIfEqual->setChecked(false);
+            ui->checkLogIfGreater->setChecked(true);
+            ui->checkLogIfLesser->setChecked(true);
+            ui->spinThreshhold->setValue(0);
+        }
+        else if (preset == "Решение потеряно"){
+            ui->comboMessage->setCurrentText("NAV-SOL");
+            ui->comboMessageField->setCurrentIndex(3);
+            ui->checkLogIfEqual->setChecked(true);
+            ui->checkLogIfGreater->setChecked(false);
+            ui->checkLogIfLesser->setChecked(false);
+            ui->spinThreshhold->setValue(0);
+        }
+        else if (preset == "Относительное решение найдено"){
+            ui->comboMessage->setCurrentText("NAV-RELPOSNED");
+            ui->comboMessageField->setCurrentIndex(20);
+            ui->spinStartBit->setValue(3);
+            ui->spinEndBit->setValue(4);
+            ui->spinValue->setValue(0);
+            ui->checkBitmapIsEqual->setChecked(true);
+        }
+        else if (preset == "Относительное решение потеряно"){
+            ui->comboMessage->setCurrentText("NAV-RELPOSNED");
+            ui->comboMessageField->setCurrentIndex(20);
+            ui->spinStartBit->setValue(3);
+            ui->spinEndBit->setValue(4);
+            ui->spinValue->setValue(0);
+            ui->checkBitmapIsEqual->setChecked(false);
+        }
+    }
+    else if (protocol == "Unicore"){
+        if (preset == "Решение найдено"){
+            ui->comboMessage->setCurrentText("BESTNAV");
+            ui->comboMessageField->setCurrentIndex(0);
+            ui->checkLogIfEqual->setChecked(false);
+            ui->checkLogIfGreater->setChecked(true);
+            ui->checkLogIfLesser->setChecked(true);
+            ui->spinThreshhold->setValue(0);
+        }
+        else if (preset == "Решение потеряно"){
+            ui->comboMessage->setCurrentText("BESTNAV");
+            ui->comboMessageField->setCurrentIndex(0);
+            ui->checkLogIfEqual->setChecked(true);
+            ui->checkLogIfGreater->setChecked(false);
+            ui->checkLogIfLesser->setChecked(false);
+            ui->spinThreshhold->setValue(0);
+        }
+        else if (preset == "Относительное решение найдено"){
+            ui->comboMessage->setCurrentText("UNIHEADING");
+            ui->comboMessageField->setCurrentIndex(0);
+            ui->checkLogIfEqual->setChecked(false);
+            ui->checkLogIfGreater->setChecked(true);
+            ui->checkLogIfLesser->setChecked(true);
+            ui->spinThreshhold->setValue(0);
+        }
+        else if (preset == "Относительное решение потеряно"){
+            ui->comboMessage->setCurrentText("UNIHEADING");
+            ui->comboMessageField->setCurrentIndex(0);
+            ui->checkLogIfEqual->setChecked(true);
+            ui->checkLogIfGreater->setChecked(false);
+            ui->checkLogIfLesser->setChecked(false);
+            ui->spinThreshhold->setValue(0);
+        }
 
+    }
+}
 
 void eventEditDialog::comboDeviceChangeEvent(QString device){
     QString protocol = devicesMap[device].second.at(INDEX_GENERAL_PROTOCOL);
@@ -92,7 +178,12 @@ void eventEditDialog::comboDeviceChangeEvent(QString device){
 void eventEditDialog::comboMessageChangeEvent(QString message)
 {
     ui->comboMessageField->clear();
-    ui->comboMessageField->addItems(messagesMap[message].getSortedFieldKeys());
+    QStringList fieldKeys = messagesMap[message].getSortedFieldKeys();
+    auto field = messagesMap[message].fields;
+    foreach (QString fieldKey, fieldKeys) {
+        if(!field[fieldKey].isRepeated) ui->comboMessageField->addItem(fieldKey);
+    }
+    // ui->comboMessageField->addItems(messagesMap[message].getSortedFieldKeys());
 }
 
 void eventEditDialog::comboFieldChangeEvent(QString field){
@@ -124,50 +215,52 @@ void eventEditDialog::checkFields()
         QMessageBox::warning(this, "Ошибка", "Выберите тип события");
         return;
     }
-    if (ui->comboEventType->currentText() == "Кастомное событие"){
-        if (ui->lineName->text().isEmpty()){
-            QMessageBox::warning(this, "Ошибка", "Введите название события");
-            return;
-        }
+    if (ui->lineName->text().isEmpty()){
+        QMessageBox::warning(this, "Ошибка", "Введите название события");
+        return;
+    }
+    if (!isEdit && eventMap->keys().contains(ui->lineName->text())){
+        QMessageBox::warning(this, "Ошибка", "Такое событие уже существует");
+        return;
     }
     this->accept();
 }
 
 eventData eventEditDialog::getEventData(){
     eventData data;
-    if (ui->comboEventType->currentText() == "Кастомное событие"){
-        data.name = ui->lineName->text();
-        data.device = ui->comboDevice->currentText();
-        data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
-        data.message = ui->comboMessage->currentText();
-        data.messageId = messagesMap[data.message].id;
-        data.fieldName = ui->comboMessageField->currentText();
-        data.field = messagesMap[data.message].fields[data.fieldName].index;
-        QString type = messagesMap[data.message].fields[data.fieldName].type;
-        data.fieldType = type;
-        data.text = ui->comboEventText->currentText();
-        if (type == "int" || type == "uint" || type == "float" || type == "double"){
-            eventData::IntTriggers triggers;
-            triggers.isEqual = ui->checkLogIfEqual->isChecked();
-            triggers.isGreater = ui->checkLogIfGreater->isChecked();
-            triggers.isLesser = ui->checkLogIfLesser->isChecked();
-            triggers.threshhold = ui->spinThreshhold->value();
-            data.intTriggers = triggers;
-        }
-        else if (type == "bitmap"){
-            eventData::BitmapTriggers triggers;
-            triggers.startBit = ui->spinStartBit->value();
-            triggers.endBit = ui->spinEndBit->value();
-            triggers.bitValue = ui->spinValue->value();
-            data.bitmapTriggers = triggers;
-        }
-        else if (type == "char"){
-            eventData::CharTriggers triggers;
-            triggers.charValue = ui->lineValue->text();
-            data.charTriggers = triggers;
-        }
-        data.status = INDEX_FLAGS_UNKNOWN;
+    data.name = ui->lineName->text();
+    data.device = ui->comboDevice->currentText();
+    data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
+    data.message = ui->comboMessage->currentText();
+    data.messageId = messagesMap[data.message].id;
+    data.fieldName = ui->comboMessageField->currentText();
+    data.field = messagesMap[data.message].fields[data.fieldName].index;
+    QString type = messagesMap[data.message].fields[data.fieldName].type;
+    data.fieldType = type;
+    if (type == "int" || type == "uint" || type == "float" || type == "double"){
+        eventData::IntTriggers triggers;
+        triggers.isEqual = ui->checkLogIfEqual->isChecked();
+        triggers.isGreater = ui->checkLogIfGreater->isChecked();
+        triggers.isLesser = ui->checkLogIfLesser->isChecked();
+        triggers.threshhold = ui->spinThreshhold->value();
+        data.intTriggers = triggers;
     }
+    else if (type == "bitmap"){
+        eventData::BitmapTriggers triggers;
+        triggers.startBit = ui->spinStartBit->value();
+        triggers.endBit = ui->spinEndBit->value();
+        triggers.bitValue = ui->spinValue->value();
+        triggers.isEqual = ui->checkBitmapIsEqual->isChecked();
+        data.bitmapTriggers = triggers;
+    }
+    else if (type == "char"){
+        eventData::CharTriggers triggers;
+        triggers.charValue = ui->lineValue->text();
+        data.charTriggers = triggers;
+    }
+    if (ui->comboEventText->currentText() == "Стандартное сообщение") data.setStandartText();
+    else data.text = ui->comboEventText->currentText();
+    data.status = INDEX_FLAGS_UNKNOWN;
     return data;
 
 }

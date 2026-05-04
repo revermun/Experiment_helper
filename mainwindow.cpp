@@ -219,21 +219,40 @@ void MainWindow::getMessagesConfig()
                 QDomElement i = fieldXml.toElement();
                 if(!i.isNull()) {
                     QString fieldName = i.tagName();
+
                     Mess::Field field;
+
                     field.name = fieldName;
                     field.index = index;
                     field.full_name = i.attribute("name");
                     field.type = i.attribute("type");
-                    if (!i.attribute("size").isEmpty()) field.size = i.attribute("size").toInt();
-                    if (!i.attribute("offset").isEmpty()) field.offset = i.attribute("offset").toInt();
-                    if (!i.attribute("min_value").isEmpty()) field.min_value = i.attribute("min_value").toInt();
-                    if (!i.attribute("max_value").isEmpty()) field.max_value = i.attribute("max_value").toInt();
-                    field.units = i.attribute("units");
-                    if (!i.attribute("scale").isEmpty()) {
-                        double doubleScale = i.attribute("scale").toDouble();
-                        field.scale = doubleScale;
-                    }
-                    fields[fieldName] = field;
+                    field.isRepeated = i.attribute("repeated").toInt();
+                    field.size = 0;
+                    field.offset = 0;
+                    field.min_value = 0;
+                    field.max_value = 0;
+                    field.units = QString();
+                    field.scale = 1.0;
+
+                    QString sizeAttr = i.attribute("size");
+                    if (!sizeAttr.isEmpty()) field.size = sizeAttr.toInt();
+
+                    QString offsetAttr = i.attribute("offset");
+                    if (!offsetAttr.isEmpty()) field.offset = offsetAttr.toInt();
+
+                    QString minAttr = i.attribute("min_value");
+                    if (!minAttr.isEmpty()) field.min_value = minAttr.toInt();
+
+                    QString maxAttr = i.attribute("max_value");
+                    if (!maxAttr.isEmpty()) field.max_value = maxAttr.toInt();
+
+                    QString unitsAttr = i.attribute("units");
+                    if (!unitsAttr.isEmpty()) field.units = unitsAttr;
+
+                    QString scaleAttr = i.attribute("scale");
+                    if (!scaleAttr.isEmpty()) field.scale = scaleAttr.toDouble();
+
+                    fields.insert(fieldName, field);
                     index++;
                 }
                 fieldXml = fieldXml.nextSibling();
@@ -493,6 +512,7 @@ void MainWindow::performAction(QAction *action)
             event.bitmapTriggers.startBit   = e.attribute("startBit").toInt();
             event.bitmapTriggers.endBit     = e.attribute("endBit").toInt();
             event.bitmapTriggers.bitValue   = e.attribute("bitValue").toInt();
+            event.bitmapTriggers.isEqual    = e.attribute("bitIsEqual").toInt();
             event.charTriggers.charValue    = e.attribute("charValue");
             event.status                    = e.attribute("status").toInt();
             if(!eventMap.contains(eventName)){
@@ -618,6 +638,7 @@ void MainWindow::performAction(QAction *action)
             QString startBit    = QString::number(event.bitmapTriggers.startBit);
             QString endBit      = QString::number(event.bitmapTriggers.endBit);
             QString bitValue    = QString::number(event.bitmapTriggers.bitValue);
+            QString bitIsEqual  = QString::number(event.bitmapTriggers.isEqual);
             QString charValue   = event.charTriggers.charValue;
             QString status      = QString::number(event.status);
             QDomElement eventXml = eventDoc.createElement(eventName.replace(' ','_'));
@@ -637,6 +658,7 @@ void MainWindow::performAction(QAction *action)
             eventXml.setAttribute("startBit", startBit);
             eventXml.setAttribute("endBit", endBit);
             eventXml.setAttribute("bitValue", bitValue);
+            eventXml.setAttribute("bitIsEqual", bitIsEqual);
             eventXml.setAttribute("charValue", charValue);
             eventXml.setAttribute("status", status);
             eventRootElement.appendChild(eventXml);
@@ -741,38 +763,6 @@ void MainWindow::editConnection()
         devicesMap[deviceName] = protocolPair;
     }
 }
-/*
-Есть несколько устройств с разными способами подключения к компу. При добавлении их в программе, инфа о них должна храниться в оперативке и конфиге.
-То есть нужно при нажатии на ок в окне добавления получить всю информацию о новом подключении, добавить её в соответствующий массив и в файл.
-Если устройства с таким названием раньше не было, то нужно создать новый экземпляр в массиве и файле, а если было, то изменить существующий.
-предполагаю что лучше всего будет использовать словари, т.к. названия подключений и устройств предполагаются уникальными для каждого устройства
-[имя устройсва; [имя типа подключения; {параметры}]
-хотим получить параметры конкретного подключения у ус-ва: обращаемся по ключу устройства -> получаем пару из названия протокола и параметров
-инфу о которых можно получить через enum соответствущего подключения
-QMap<QString,QPair<QString,QList<QString>>>
- ^      ^            ^          ^
-список ус-во      протокол    параметры
-Проблема: как работать с двумерным QMap?
-Добавление в корень : insert(QString,Qmap<QString,QString>)
-Добавление в ветку : m["key"].insert("key","value")
-Изменение в ветке : m["key"]["key"] = "value"
-Удаление элемента : m.remove["key"]      m["key"].remove("key")
-Конфиг:
-<Connections>
-    <DeviceID>
-        <Serial
-            device_type="Приемник"
-            transfer_protocol="Ublox"
-            baudrate="4800"
-            data_bits="7"
-            TCP_port_number="5000"
-            parity="Четное"
-            stop_bits="1"
-            TCP_connections_number="5"
-            />
-    </DeviceID>
-</Connections>
-*/
 
 
 void MainWindow::openConnectionSettings()
@@ -1172,9 +1162,10 @@ void MainWindow::parseMessage()
             eventData *event = &eventMap[eventName];
             if (event->device != connDevice) continue;
             if (event->messageId != messId) continue;
-            int offset = messagesMap[event->message].fields[event->fieldName].offset;
-            int size = messagesMap[event->message].fields[event->fieldName].size;
-            double scale = messagesMap[event->message].fields[event->fieldName].scale;
+            Mess::Field field = messagesMap[event->message].fields[event->fieldName];
+            int offset = field.offset;
+            int size = field.size;
+            double scale = field.scale;
             QByteArray data = messData.mid(offset,size);
             QDataStream stream(data);
             stream.setByteOrder(order);
@@ -1208,11 +1199,12 @@ void MainWindow::parseMessage()
             }
             else if (event->fieldType == "bitmap"){
                 if (size == 1) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
-                else if (size == 2) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
-                else if (size == 4) check = compareBitmap<uint8_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                else if (size == 2) check = compareBitmap<uint16_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
+                else if (size == 4) check = compareBitmap<uint32_t>(stream, event->bitmapTriggers.startBit, event->bitmapTriggers.endBit, event->bitmapTriggers.bitValue);
                 else {
                     qWarning() << "Unsupported size:" << event->fieldType;
                 }
+                if (!event->bitmapTriggers.isEqual) check = !check;
             }
             if (check){
                 if (event->status != INDEX_FLAGS_TRUE){

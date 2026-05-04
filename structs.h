@@ -33,11 +33,50 @@ struct eventData{
         int startBit;
         int endBit;
         uint bitValue;
+        bool isEqual;
     }bitmapTriggers;
     struct CharTriggers{
         QString charValue;
     }charTriggers;
     int status;
+
+    void setStandartText(){
+        if (fieldType == "int" || fieldType == "uint" || fieldType == "float" || fieldType == "double"){
+            int flags = (int)intTriggers.isEqual +
+                        ((int)intTriggers.isGreater << 1) +
+                        ((int)intTriggers.isLesser << 2);
+            QString compType;
+            switch (flags) {
+            case 1: compType = "равенства";
+            case 2: compType = "превышения";
+            case 3: compType = "превышения или равенства";
+            case 4: compType = "понижения";
+            case 5: compType = "понижения или равенства";
+            case 6: compType = "неравенства";
+            default: compType = "";
+            }
+            text = QString("Событие %1 пар-ра %2 значения %3")
+                             .arg(compType)
+                             .arg(fieldName)
+                             .arg(intTriggers.threshhold);
+        }
+        else if (fieldType == "bitmap"){
+            QString compType;
+            if (bitmapTriggers.isEqual) compType = "равенства";
+            else compType = "неравенства";
+            text = QString("Событие %1 бит [%2:%3] параметра %4 значению %5")
+                             .arg(compType)
+                             .arg(bitmapTriggers.startBit)
+                             .arg(bitmapTriggers.endBit)
+                             .arg(fieldName)
+                             .arg(bitmapTriggers.bitValue);
+        }
+        else if (fieldType == "char"){
+            text = QString("Событие равенства параметра %1 значению %2")
+                             .arg(fieldName)
+                             .arg(charTriggers.charValue);
+        }
+    }
 };
 
 struct Mess{
@@ -51,6 +90,7 @@ struct Mess{
         QString full_name;
         int index;
         QString type;
+        bool isRepeated;
         int size;
         int offset;
         int min_value;
@@ -59,6 +99,7 @@ struct Mess{
         double scale;
     };
     QMap<QString,Field> fields;
+
 
     QStringList getSortedFieldKeys() const {
         QList<QPair<int, QString>> indexedKeys;

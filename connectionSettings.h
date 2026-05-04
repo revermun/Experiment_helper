@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QPair>
 #include <QList>
+#include <QSerialPortInfo>
 
 #include "enums.h"
 

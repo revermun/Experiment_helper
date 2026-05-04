@@ -26,7 +26,7 @@ ConnectionSettings::ConnectionSettings(QPair<QString,QList<QString>> deviceInfo,
     ui->lineEditName->setEnabled(false);
     changeSettings(protocolName);
     if (protocolName == "Serial"){
-        ui->lineSerialPort->setText(parameters.at(INDEX_SERIAL_PORT));
+        ui->comboSerialPort->setCurrentText(parameters.at(INDEX_SERIAL_PORT));
         ui->comboSerialBaud->setCurrentText(parameters.at(INDEX_SERIAL_BAUDRATE));
         ui->comboDataBits->setCurrentText(parameters.at(INDEX_SERIAL_DATA_BITS));
         ui->comboParity->setCurrentText(parameters.at(INDEX_SERIAL_PARITY));
@@ -96,6 +96,11 @@ void ConnectionSettings::changeSettings(QString connectionType)
     if (connectionType == "Serial"){
         setChildrenHidden(ui->frameSerial,false);
         ui->frameSerial->setHidden(false);
+        ui->comboSerialPort->clear();
+        const auto serialPortInfos = QSerialPortInfo::availablePorts();
+        for (const QSerialPortInfo &portInfo : serialPortInfos) {
+            ui->comboSerialPort->addItem(portInfo.portName());
+        }
     }
     else if (connectionType == "CAN"){
         setChildrenHidden(ui->frameCAN,false);
@@ -168,7 +173,7 @@ void ConnectionSettings::saveSettings()
     info.append(device);
     info.append(protocol);
     if (connectionType == "Serial"){
-        QString port = ui->lineSerialPort->text();
+        QString port = ui->comboSerialPort->currentText();
         QString baudrate = ui->comboSerialBaud->currentText();
         QString dataBits = ui->comboDataBits->currentText();
         QString TCPNumber = ui->lineSerialTCPport->text();

@@ -81,7 +81,6 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
     UnicoreMessage res;
     int size = buff->size();
     if (!buff || buff->isEmpty()) return res;
-    /// Для бинарных сообщений crc считается для заголовка и тела
     while (size > 24) {
         if ((uint8_t)buff->at(0) == '#'){
             if (buff->left(11) == "#UNILOGLIST"){
@@ -120,13 +119,23 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
                 buff->remove(0, pos);
                 return res;
             }
-            int astericsPos = buff->lastIndexOf('*');
-            int dotcommaPos = buff->indexOf(';',0);
-            if (astericsPos == -1 || (astericsPos >= 0 && astericsPos >= (buff->count() - 8))
-                || (dotcommaPos > astericsPos) || (buff->indexOf('\n') - buff->indexOf('\r') != 1)) {buff->remove(0,1); continue;}
+            int hashtagPos = buff->indexOf('#',1);
+            int dotcommaPos = buff->indexOf(';');
+            int astericsPos = buff->indexOf('*');
+            if (dotcommaPos == -1) {buff->remove(0,1); continue;}
+            if ((hashtagPos != -1) && (hashtagPos < dotcommaPos)) {buff->remove(0,1); continue;}
+            if (astericsPos == -1) break;
+            int slashRPos = buff->indexOf('\r');
+            int slashNPos = buff->indexOf('\n');
+            int crclen = buff->indexOf('\r') - buff->indexOf('*') - 1;
+            bool crcLenCheck = crclen == 2 || crclen == 8;
+            bool separatorCheck = dotcommaPos < astericsPos && astericsPos < slashRPos && slashRPos < slashNPos;
+            bool slashRSlashNCheck = (buff->indexOf('\n') - buff->indexOf('\r')) == 1;
+            // qDebug() << dotcommaPos << astericsPos << slashRPos << slashNPos << separatorCheck << slashRSlashNCheck;
+            if (slashRPos == -1 || slashNPos == -1 || !separatorCheck || !slashRSlashNCheck || !crcLenCheck) {buff->remove(0,1); continue;}
+            qDebug() << *buff;
             QByteArray header;
             int pos = 1;
-            if (dotcommaPos == -1) {buff->remove(0,1); continue;}
             do{
                 header.append((uint8_t)buff->at(pos));
                 pos++;
@@ -139,9 +148,9 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
             } while ((uint8_t)buff->at(pos) != '*');
             int MessageLength = data.count() + header.count();
             QByteArray CRC;
-            int crclen = buff->indexOf('\r') - buff->indexOf('*') - 1;
-            qDebug() << buff->indexOf('\r') << buff->indexOf('*') << crclen;
-            if (crclen != 2 && crclen != 8) {buff->remove(0,1); continue;}
+            // int crclen = buff->indexOf('\r') - buff->indexOf('*') - 1;
+            // qDebug() << buff->indexOf('\r') << buff->indexOf('*') << crclen;
+            // if (crclen != 2 && crclen != 8) {buff->remove(0,1); continue;}
             for(int i = 0; i<crclen; i++){
                 pos++;
                 CRC.append((uint8_t)buff->at(pos));
@@ -176,8 +185,16 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
             buff->remove(0, pos);
         }
         else if ((uint8_t)buff->at(0) == '$'){
+            int dollarPos = buff->indexOf('$',1);
+            int dotdotPos = buff->indexOf(':');
             int astericsPos = buff->lastIndexOf('*');
-            if (astericsPos == -1 || (astericsPos >= 0 && astericsPos >= (buff->count() - 2)))  {buff->remove(0,1); continue;}
+            if (astericsPos == -1) break;
+            if ((dollarPos != -1) && (dollarPos < dotdotPos)) {buff->remove(0,1); continue;}
+            int slashRPos = buff->indexOf('\r');
+            int slashNPos = buff->indexOf('\n');
+            bool slashRSlashNCheck = (slashNPos - slashRPos) == 1;
+            if (astericsPos == -1 || (astericsPos >= 0 && astericsPos >= (buff->count() - 2)) || !slashRSlashNCheck)  {buff->remove(0,1); continue;}
+            qDebug() << *buff;
             int pos = 1;
             QByteArray data;
             do{
@@ -387,12 +404,26 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
 
 bool UnicoreParser::sendMessage(QString msg)
 {
+    msg+= "\r\n";
+    QByteArray msgData = msg.toLatin1();
     if (qobject_cast<QSerialPort*>(connection)){
         QSerialPort* serialCon = qobject_cast<QSerialPort*>(connection);
-        msg+= "\r\n";
-        serialCon->write(msg.toLatin1());
+        serialCon->write(msgData);
         bool res = serialCon->flush();
         if (!res) qDebug() << "send failed!";
+        return res;
+    }
+    else if (qobject_cast<QTcpSocket*>(connection)){
+        QTcpSocket* tcpCon = qobject_cast<QTcpSocket*>(connection);
+        tcpCon->write(msgData);
+        bool res = tcpCon->flush();
+        if (!res) qDebug() << "send failed!";
+        return res;
+    }
+    else if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        bool res = ioCon->write(msgData);
+        qDebug() << ioCon->write(msgData);
         return res;
     }
     else{
