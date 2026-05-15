@@ -376,12 +376,28 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
                 QString device = Mount["Name"]? Mount["Name"].as<QString>() : "";
                 if (device.isEmpty()) continue;
                 QGroupBox* parametersGroup = createParametersGroup(device,false);
+                ExperimentGroupBoxParametersInfo* info = new ExperimentGroupBoxParametersInfo;
+                info->boresightCheck = false;
+                info->leverarmCheck = false;
+                info->positionCheck = false;
+                info->deviceName = device;
+                info->group = parametersGroup;
                 if (Mount["Parameters"]){
                     YAML::Node Parameters = Mount["Parameters"];
                     for (const auto& Parameter : Parameters) {
                         QString parameterName = Parameter.first.as<QString>();
                         QGroupBox* parameterGroup = addParameter(parameterName,parametersGroup);
                         int index = 0;
+                        QList<QPair<bool*, QString>> parametersKeysList = {
+                            qMakePair(&info->positionCheck, QString("Позиция")),
+                            qMakePair(&info->boresightCheck, QString("Ошибка угла наведения")),
+                            qMakePair(&info->leverarmCheck, QString("Lever arm"))
+                        };
+                        foreach (auto pair, parametersKeysList) {
+                            if (pair.second == parameterName) {
+                                *pair.first = true;
+                            }
+                        }
                         for (const auto& Field : Parameter.second) {
                             int value = Field.second.as<int>();
                             QGridLayout* layout = qobject_cast<QGridLayout*>(parameterGroup->layout());
@@ -393,7 +409,10 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
                         }
                     }
                 }
-                ui->areaDeviceParameters->addGroup(parametersGroup);
+                int index = ui->areaDeviceParameters->addGroup(parametersGroup);
+                info->row = index/2;
+                info->column = index%2;
+                groupBoxParametersMap[device] = *info;
             }
         }
     }
