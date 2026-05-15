@@ -61,7 +61,7 @@ private:
     QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
     QMap<QString,QByteArray*> bufferMap;
-    QMap<QString,eventData> eventMap;
+    QMap<QString,EventData> eventMap;
     QMap<QString,Mess> messagesMap;
 
     //работа с файлами

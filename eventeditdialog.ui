@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>eventEditDialog</class>
  <widget class="QDialog" name="eventEditDialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Настройка события</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0">
    <item row="0" column="0">

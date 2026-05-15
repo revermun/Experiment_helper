@@ -2,7 +2,7 @@
 #include "ui_eventsettingsdialog.h"
 #include "eventeditdialog.h"
 
-eventSettingsDialog::eventSettingsDialog(QMap<QString,eventData>* eventMap,QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+eventSettingsDialog::eventSettingsDialog(QMap<QString,EventData>* eventMap,QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventSettingsDialog)
 {
@@ -11,7 +11,7 @@ eventSettingsDialog::eventSettingsDialog(QMap<QString,eventData>* eventMap,QMap<
     this->devicesMap = devicesMap;
     this->messagesMap = messagesMap;
     foreach (QString key, eventMap->keys()) {
-        eventData data = eventMap->value(key);
+        EventData data = eventMap->value(key);
         QVariant name =      QVariant(data.name);
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);
@@ -47,7 +47,7 @@ void eventSettingsDialog::addEvent()
 {
     eventEditDialog eED = eventEditDialog(eventMap, devicesMap, messagesMap, this);
     if (eED.exec() == QDialog::Accepted){
-        eventData data = eED.getEventData();
+        EventData data = eED.getEventData();
         QVariant name =      QVariant(data.name);
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);
@@ -83,7 +83,7 @@ void eventSettingsDialog::editEvent()
     }
     QListWidgetItem* item = ui->listEvents->currentItem();
     QList<QVariant> variantList = item->data(Qt::UserRole).toList();
-    eventData dataOld;
+    EventData dataOld;
     dataOld.name = variantList.at(0).toString();
     dataOld.device = variantList.at(1).toString();
     dataOld.protocol = variantList.at(2).toString();
@@ -104,7 +104,7 @@ void eventSettingsDialog::editEvent()
     dataOld.charTriggers.charValue = variantList.at(17).toString();
     eventEditDialog eED = eventEditDialog(eventMap, devicesMap, messagesMap, dataOld, this);
     if (eED.exec() == QDialog::Accepted){
-        eventData data = eED.getEventData();
+        EventData data = eED.getEventData();
         QVariant name =      QVariant(data.name);
         QVariant device =    QVariant(data.device);
         QVariant protocol =  QVariant(data.protocol);

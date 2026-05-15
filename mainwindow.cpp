@@ -495,7 +495,7 @@ void MainWindow::performAction(QAction *action)
         while(!eventXml.isNull()) {
             QDomElement e = eventXml.toElement();
             QString eventName = e.tagName().replace('_',' ');
-            eventData event;
+            EventData event;
             event.name                      = e.attribute("name");
             event.device                    = e.attribute("device");
             event.protocol                  = e.attribute("protocol");
@@ -621,7 +621,7 @@ void MainWindow::performAction(QAction *action)
         connFile.close();
         for (const auto &key: eventMap.keys()) {
             QString eventName = key;
-            eventData event = eventMap.value(key);
+            EventData event = eventMap.value(key);
             QString name        = event.name;
             QString device      = event.device;
             QString protocol    = event.protocol;
@@ -674,7 +674,7 @@ void MainWindow::performAction(QAction *action)
         eventFile.close();
     }
     else if (action->text() == "Конфигурация эксперимента"){
-        experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(this);
+        experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(experimentDirectory,this);
         experimentDialog.exec();
     }
     else if (action->text() == "Конфигурация устройств"){
@@ -1075,7 +1075,7 @@ void MainWindow::startExperiment()
                 }
             }
             foreach (QString eventName, eventMap.keys()) {
-                eventData* event = &eventMap[eventName];
+                EventData* event = &eventMap[eventName];
                 event->status = INDEX_FLAGS_UNKNOWN;
                 QString eventDevice = event->device;
                 if (connDevice != eventDevice) continue;
@@ -1159,7 +1159,7 @@ void MainWindow::parseMessage()
         }
         else continue;
         foreach (QString eventName, eventMap.keys()) {
-            eventData *event = &eventMap[eventName];
+            EventData *event = &eventMap[eventName];
             if (event->device != connDevice) continue;
             if (event->messageId != messId) continue;
             Mess::Field field = messagesMap[event->message].fields[event->fieldName];

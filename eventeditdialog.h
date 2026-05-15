@@ -17,13 +17,13 @@ class eventEditDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap,
+    explicit eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap,
                              QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
-    explicit eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap,
-                             QMap<QString,Mess> messagesMap, eventData data, QWidget *parent = nullptr);
+    explicit eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap,
+                             QMap<QString,Mess> messagesMap, EventData data, QWidget *parent = nullptr);
     ~eventEditDialog();
 
-    eventData getEventData();
+    EventData getEventData();
 
 public slots:
     void comboDeviceChangeEvent(QString device);
@@ -37,7 +37,7 @@ private:
     Ui::eventEditDialog *ui;
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
     QMap<QString,Mess> messagesMap;
-    QMap<QString,eventData>* eventMap;
+    QMap<QString,EventData>* eventMap;
 };
 
 #endif // EVENTEDITDIALOG_H

@@ -27,7 +27,7 @@
 /// max_value - число (для не int можно оставить пустым)
 /// units - единицы измерения (m/s, m, rad, deg, sm/s)
 /// scale - число на которое нужно умножить для получения действительного значения (10e-5,1,...)
-eventEditDialog::eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
@@ -43,7 +43,7 @@ eventEditDialog::eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString
     ui->frameInt->setHidden(true);
 }
 
-eventEditDialog::eventEditDialog(QMap<QString,eventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, eventData data, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, EventData data, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
@@ -226,8 +226,8 @@ void eventEditDialog::checkFields()
     this->accept();
 }
 
-eventData eventEditDialog::getEventData(){
-    eventData data;
+EventData eventEditDialog::getEventData(){
+    EventData data;
     data.name = ui->lineName->text();
     data.device = ui->comboDevice->currentText();
     data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
@@ -238,7 +238,7 @@ eventData eventEditDialog::getEventData(){
     QString type = messagesMap[data.message].fields[data.fieldName].type;
     data.fieldType = type;
     if (type == "int" || type == "uint" || type == "float" || type == "double"){
-        eventData::IntTriggers triggers;
+        EventData::IntTriggers triggers;
         triggers.isEqual = ui->checkLogIfEqual->isChecked();
         triggers.isGreater = ui->checkLogIfGreater->isChecked();
         triggers.isLesser = ui->checkLogIfLesser->isChecked();
@@ -246,7 +246,7 @@ eventData eventEditDialog::getEventData(){
         data.intTriggers = triggers;
     }
     else if (type == "bitmap"){
-        eventData::BitmapTriggers triggers;
+        EventData::BitmapTriggers triggers;
         triggers.startBit = ui->spinStartBit->value();
         triggers.endBit = ui->spinEndBit->value();
         triggers.bitValue = ui->spinValue->value();
@@ -254,7 +254,7 @@ eventData eventEditDialog::getEventData(){
         data.bitmapTriggers = triggers;
     }
     else if (type == "char"){
-        eventData::CharTriggers triggers;
+        EventData::CharTriggers triggers;
         triggers.charValue = ui->lineValue->text();
         data.charTriggers = triggers;
     }

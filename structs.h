@@ -4,6 +4,7 @@
 #include <QString>
 #include <QMap>
 #include <QDebug>
+#include <QGroupBox>
 
 struct tableConnectionsFields{
     QString ID;
@@ -13,7 +14,7 @@ struct tableConnectionsFields{
     int data;
 };
 
-struct eventData{
+struct EventData{
     QString name;
     QString device;
     QString protocol;
@@ -119,6 +120,65 @@ struct Mess{
         }
         return result;
     }
+};
+
+struct ExperimentDeviceInfo
+{
+    QString id;
+    QString model;
+    QString type;
+    QStringList outputs;
+    struct IMUInfo{
+        double instabBias;
+        double randomWalk;
+        double initialError;
+    }imuInfo;
+    struct CameraInfo{
+        int fps;
+        int width;
+        int heigt;
+    }cameraInfo;
+    struct AntennaInfo{
+        QString confFileDirectory;
+    }antennaInfo;
+};
+
+struct ExperimentConnectionInfo
+{
+    QString device1;
+    QString device2;
+    QString port1;
+    QString port2;
+    QString connectionType;
+    struct SerialInfo{
+        int baudrate;
+        QString parity;
+        int dataBits;
+        int stopBits;
+    }serialInfo;
+    struct CANInfo{
+        int baudrate;
+    }canInfo;
+    struct CoaxialCableInfo{
+        QString length;
+        QString material;
+        int dataLoss;
+    }coaxCableInfo;
+    struct TCPInfo{
+        QString adress;
+        QString port;
+    }tcpInfo;
+};
+
+struct ExperimentGroupBoxParametersInfo
+{
+    QString deviceName;
+    QGroupBox *group;
+    int row;
+    int column;
+    bool positionCheck;
+    bool boresightCheck;
+    bool leverarmCheck;
 };
 
 #endif // STRUCTS_H

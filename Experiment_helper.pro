@@ -10,6 +10,15 @@ CONFIG += c++17
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+DEFINES += YAML_CPP_STATIC_DEFINE
+INCLUDEPATH += "C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/include"
+
+LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Debug"
+LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Release"
+
+LIBS += -lyaml-cppd
+LIBS += -lyaml-cpp
+
 SOURCES += \
     connectionSettings.cpp \
     dataandgraphsdialog.cpp \
@@ -33,6 +42,7 @@ HEADERS += \
     eventeditdialog.h \
     eventsettingsdialog.h \
     experimentconfigurationdialog.h \
+    groupboxareawidget.h \
     mainwindow.h \
     notesdialog.h \
     qchecklist.h \
