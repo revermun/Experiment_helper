@@ -11,6 +11,33 @@
 #include "unicoreparser.h"
 #include "convertors.h"
 
+
+/// TODO: разветвление потока
+/// Задача:
+/// Нужно добавить возможность ретранслировать данные из подключенного Serial потра
+/// на несколько TCP соединений без влияния на работу приложения.
+/// Идея:
+/// С Serial порта мы читаем ТОЛЬКО в главном окне, сохраняем данные в контейнер newData
+/// Далее этот контейнер передается нуждающимся объектам и сущностям
+/// Как реализовывать:
+/// Добавляем функцию readPorts для MainWindow.
+/// В ней читаются порты и новая информация добавляется в мапу буферов,
+/// отправляется сигнал newData, также при получении новой инфы загораются
+/// на определенное время ячейки данных в таблице.
+/// В конфигурации устройств и других окнах добавляется ссылка на MainWindow, поле buf
+/// а также слот getNewData, привязанный к сигналу newData, добавляющий инфу в buf
+/// то есть что-то на подобие: connect(mainWindow, SIGNAL(newData), this, SLOT(getNewData))
+/// У tcp моста в функции start остается только адрес сервера,
+/// также метод sendData и поле buff которое заполняется от этого метода.
+/// onSerialReadyRead отпраляет buff в сокеты и очищается
+/// Во всех функциях parseMessage ведется работа с buff.
+///
+/// План:
+/// 1. Передалать проект под задумку выше
+/// 2. Добавить в проект TCP мост
+/// 3. Протестировать разветвление
+
+
 /// Мысли по поводу принципа работы приложения
 /// Чтение с портов:
 /// Чтение с портов происходит только в одном месте*, а в остальные окна отправляется уже обработанная информация
@@ -18,7 +45,7 @@
 /// При запуске какого либо из окон передаем ему также ссылку на этот массив, с ним же и работаем
 ///
 /// *В конфигурацию устройств пользователь не должен заходить посередине захода, следовательно там можно читать с порта
-/// *Во вкладке териминала нужно предупеждать о завершении захода
+/// *Во вкладке терминала нужно предупеждать о завершении захода
 
 /// Мысли по поводу правок:
 /// 1. Надо реализовать подключение по TCP. Выполнено, мыслей нет
@@ -40,35 +67,12 @@
 /// Для нахождения событий полей флагов в Unicore придется работать с двоичным протоколом,
 /// а это значит что нужно расшифровывать сообщения и для него под свои нужды
 
-/// Задачи:
-/// 1. Добавить для U-blox функцию, расшифровывающую сообщение в строку
-/// 2. Изменить интерфейс окна настройки событий
-/// 3. Разработать логику кастомных событий
-///
-/// План:
-/// 1. Реализовать для Unicore
-/// 2. Добавить для U-blox функцию
-/// 3. Реализовать для U-blox
-///
-/// Соотнесение индекса поля со строкой:
-/// у Unicore всё просто - нужно данные разделить по запятой, а затем соотносить по списку
-/// у U-blox очень сложно - как вариант можно добавить функцию, которая преобразует данные в строку, подобную Unicore сообщению,
-/// а дальше также.
-/// 3. Работа по протоколу. Сделано, мыслей нет
-/// 6. “Конфигурация устройств”, “Основные настройки”.
-/// Откуда я должен достать ограничения антенны? У антены есть только путь к файлу, какая инфа хранится в нем?
-/// Как это реализовывать? Может проще отправить пользователя в работу по протоколу?
-/// Чем имеющаяся реализация хуже? Она же имеет тот же самый функционал, за исключением непонятного чекбокса антенны
-/// 8. Добавление устройств по файлу. В целом легко, можно добавить кнопку "добавить из файла", а дальше тот же самый
-/// функционал, что у действия "загрузить"
 
 
 /// При изменении/удалении чего либо имеющего свой файл нужно "на ходу" изменить этот файл !!!! надо уточнить !!!!
 /// TODO: Загрузка эксперимента
 ///
 /// TODO: Сохранение эксперимента
-///
-/// TODO: Логика событий
 ///
 /// TODO: Разобраться с функционалом окна “Действия при старте/остановке захода”
 /// Скорее всего после нажатия на "готово" в папку "Lap_presets" сохраняются пары Устройство - конфиг
@@ -181,6 +185,9 @@ MainWindow::MainWindow(QWidget *parent)
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
     timer->start(1);
+
+    QLabel* versionLabel = new QLabel(tr("Версия ПО: ") + this->version);
+    statusBar()->addWidget(versionLabel);
 }
 
 void MainWindow::getMessagesConfig()
@@ -281,57 +288,36 @@ void MainWindow::addItemToConnectionsTable(QString protocol, QList<QString> para
     int rowCount = ui->tableWidgetConnections->rowCount();
     ui->tableWidgetConnections->setRowCount(rowCount+1);
     QString deviceName = parameters.at(INDEX_SERIAL_ID);
+    TableConnectionsFields fields;
+    fields.row = rowCount;
+    fields.ID = new QTableWidgetItem(deviceName);
+    fields.connectionType = new QTableWidgetItem(protocol);
+    fields.TCPPort = new QTableWidgetItem();
+    fields.onOff = new QTableWidgetItem;
+    fields.data = new QTableWidgetItem;
+    fields.ID->setText(deviceName);
+    fields.connectionType->setText(protocol);
     if (protocol == "Serial"){
-        QString transferProtocol =  parameters.at(INDEX_GENERAL_PROTOCOL);
-        QString deviceType =        parameters.at(INDEX_GENERAL_DEVICE_TYPE);
-        QString port =              parameters.at(INDEX_SERIAL_PORT);
-        QString baudrate =          parameters.at(INDEX_SERIAL_BAUDRATE);
-        QString dataBits =          parameters.at(INDEX_SERIAL_DATA_BITS);
         QString TCPPort =           parameters.at(INDEX_SERIAL_TCP_PORT);
-        QString parity =            parameters.at(INDEX_SERIAL_PARITY);
-        QString stopBits =          parameters.at(INDEX_SERIAL_STOP_BITS);
-        QString TCPCount =          parameters.at(INDEX_SERIAL_TCP_COUNT);
 
-        QTableWidgetItem *idItem = new QTableWidgetItem(deviceName);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_ID,idItem);
-        QTableWidgetItem *typeItem = new QTableWidgetItem(protocol);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TYPE,typeItem);
-        QTableWidgetItem *portItem = new QTableWidgetItem(TCPPort);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TCP_PORT,portItem);
+        fields.TCPPort->setText(TCPPort);
     }
     else if (protocol == "CAN"){
-        QString transferProtocol =  parameters.at(INDEX_GENERAL_PROTOCOL);
-        QString deviceType =        parameters.at(INDEX_GENERAL_DEVICE_TYPE);
-        QString baudrate =           parameters.at(INDEX_CAN_BAUDRATE);
-        QString CANType =           parameters.at(INDEX_CAN_TYPE);
-
-        QTableWidgetItem *idItem = new QTableWidgetItem(deviceName);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_ID,idItem);
-        QTableWidgetItem *typeItem = new QTableWidgetItem(protocol);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TYPE,typeItem);
+        // ничего
     }
     else if (protocol == "TCP"){
-        QString transferProtocol =  parameters.at(INDEX_GENERAL_PROTOCOL);
-        QString deviceType =        parameters.at(INDEX_GENERAL_DEVICE_TYPE);
-        QString clientServer =      parameters.at(INDEX_TCP_CLIENT_SERVER);
         QString port =              parameters.at(INDEX_TCP_PORT);
-        QString adress =            parameters.at(INDEX_TCP_ADRESS);
 
-        QTableWidgetItem *idItem = new QTableWidgetItem(deviceName);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_ID,idItem);
-        QTableWidgetItem *typeItem = new QTableWidgetItem(protocol);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TYPE,typeItem);
-        QTableWidgetItem *portItem = new QTableWidgetItem(port);
-        ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TCP_PORT,portItem);
+        fields.TCPPort->setText(port);
     }
-
-    QTableWidgetItem *onnOffItem = new QTableWidgetItem;
-    onnOffItem->setBackground(QBrush(QColor(255,0,0)));
-    ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
-    QTableWidgetItem *dataItem = new QTableWidgetItem;
-    dataItem->setBackground(QBrush(QColor(0,100,0)));
-    ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_DATA, dataItem);
-
+    ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_ID,fields.ID);
+    ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TYPE,fields.connectionType);
+    ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TCP_PORT,fields.TCPPort);
+    fields.onOff->setBackground(QBrush(QColor(255,0,0)));
+    ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_ON_OFF, fields.onOff);
+    fields.data->setBackground(QBrush(QColor(0,100,0)));
+    ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_DATA, fields.data);
+    tableFieldsMap[deviceName] = fields;
     setupTableSize(ui->tableWidgetConnections);
 }
 
@@ -682,8 +668,10 @@ void MainWindow::performAction(QAction *action)
             QMessageBox::warning(this, "Ошибка", "Нельзя конфигурировать устройства во время захода!\nЗавершите заход!");
             return;
         }
+        canRead = false;
         deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap, connectionsMap, messagesMap, this);
         experimentDialog.exec();
+        canRead = true;
     }
 }
 
@@ -693,10 +681,16 @@ void MainWindow::deleteConnection()
         QMessageBox::warning(this, "Ошибка", "Устройство не выбрано!");
         return;
     }
+    int row = ui->tableWidgetConnections->currentRow();
     QString deviceName = ui->tableWidgetConnections->item(ui->tableWidgetConnections->currentRow(), 0)->text();
     if (connectionsMap.contains(deviceName)){
         QMessageBox::warning(this, "Ошибка", "Отключите устройство перед удалением!");
         return;
+    }
+    tableFieldsMap.remove(deviceName);
+    foreach (auto key, tableFieldsMap.keys()) {
+        TableConnectionsFields *fields = &tableFieldsMap[key];
+        if (fields->row > row) fields->row -= 1;
     }
     devicesMap.remove(deviceName);
     ui->tableWidgetConnections->removeRow(ui->tableWidgetConnections->currentRow());
@@ -739,6 +733,7 @@ void MainWindow::editConnection()
             parameters << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
 
             QTableWidgetItem *portItem = new QTableWidgetItem(TCPPort);
+            tableFieldsMap[deviceName].TCPPort = portItem;
             ui->tableWidgetConnections->setItem(ui->tableWidgetConnections->currentRow(), INDEX_CONN_TABLE_TCP_PORT, portItem);
         }
         else if(protocolName == "CAN"){
@@ -755,6 +750,7 @@ void MainWindow::editConnection()
 
             parameters << clientServer << port << adress;
             QTableWidgetItem *portItem = new QTableWidgetItem(port);
+            tableFieldsMap[deviceName].TCPPort = portItem;
             ui->tableWidgetConnections->setItem(ui->tableWidgetConnections->currentRow(), INDEX_CONN_TABLE_TCP_PORT, portItem);
         }
         QPair<QString,QList<QString>> protocolPair;
@@ -892,9 +888,8 @@ void MainWindow::connectDevice()
         return;
     }
     QString protocolName = ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_TYPE)->text();
-    QTableWidgetItem *onnOffItem = new QTableWidgetItem;
+    QTableWidgetItem *onnOffItem = tableFieldsMap[deviceName].onOff;
     onnOffItem->setBackground(QBrush(QColor(255,255,0)));
-    ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     if (protocolName == "Serial"){
         QString port;
         int baudrate;
@@ -952,13 +947,11 @@ void MainWindow::connectDevice()
         // пробуем подключится
         if (!connection->open(QIODevice::ReadWrite)) {
             onnOffItem->setBackground(QBrush(QColor(255,0,0)));
-            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
             QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
             return;
         }
         else{
             onnOffItem->setBackground(QBrush(QColor(0,255,0)));
-            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
             connectionsMap.insert(deviceName, connection);
             QByteArray* buffer = new QByteArray();
             bufferMap.insert(deviceName, buffer);
@@ -973,7 +966,6 @@ void MainWindow::connectDevice()
         // Подключаем сигналы
         connect(connection, &QTcpSocket::connected, this, [connection, onnOffItem, this, row, deviceName]() {
             onnOffItem->setBackground(QBrush(QColor(0,255,0)));
-            this->ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
             this->connectionsMap.insert(deviceName, connection);
             QByteArray* buffer = new QByteArray();
             this->bufferMap.insert(deviceName, buffer);
@@ -981,8 +973,6 @@ void MainWindow::connectDevice()
 
         connect(connection, &QTcpSocket::disconnected, this, [connection, onnOffItem, this, row]() {
             onnOffItem->setBackground(QBrush(QColor(255,0,0)));
-            ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
-            // QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
             return;
         });
 
@@ -1000,11 +990,10 @@ void MainWindow::disconnectDevice()
 
     int row = ui->tableWidgetConnections->currentRow();
     QString deviceName = ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_ID)->text();
-    QTableWidgetItem *onnOffItem = new QTableWidgetItem;
+    QTableWidgetItem *onnOffItem = tableFieldsMap[deviceName].onOff;
     if (!connectionsMap.contains(deviceName)){
         QMessageBox::warning(this, "Ошибка", "Это устройство не подключено!");
         onnOffItem->setBackground(QBrush(QColor(255,0,0)));
-        ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
         connectionsMap.remove(ui->tableWidgetConnections->item(row,INDEX_CONN_TABLE_ID)->text());
         return;
     }
@@ -1014,7 +1003,6 @@ void MainWindow::disconnectDevice()
         ioCon->close();
     }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
-    ui->tableWidgetConnections->setItem(row, INDEX_CONN_TABLE_ON_OFF, onnOffItem);
     delete bufferMap[deviceName];
     bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
@@ -1116,30 +1104,38 @@ void MainWindow::startExperiment()
 
 void MainWindow::parseMessage()
 {
-    if (!isLap) return;
-    QTime currTime = QTime::currentTime();
-    int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
-    int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
-    int diffSeconds = currSeconds - startSeconds;
-    ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
+    if (!canRead) return;
+    if (isLap){
+        QTime currTime = QTime::currentTime();
+        int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
+        int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
+        int diffSeconds = currSeconds - startSeconds;
+        ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
+    }
     foreach (QString connDevice, connectionsMap.keys()) {
         QObject* connection = connectionsMap[connDevice];
         QByteArray *buff = bufferMap[connDevice];
-        QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
-        QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
         if (connection == nullptr) continue;
         if (qobject_cast<QIODevice*>(connection)){
             QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
-            if (!ioCon->isOpen()) return;
+            if (!ioCon->isOpen()) continue;
+            QTableWidgetItem *dataItem = tableFieldsMap[connDevice].data;
             if(ioCon->waitForReadyRead(1)){
                 buff->append(ioCon->readAll());
+                dataItem->setBackground(QBrush(QColor(0,255,0)));
+            }
+            else{
+                dataItem->setBackground(QBrush(QColor(0,100,0)));
             }
         }
+        if (!isLap) continue;
         if (buff->isEmpty()) continue;
         QByteArray messData;
         QString messId;
         QString GNSSTime;
         QDataStream::ByteOrder order;
+        QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
+        QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
         if (protocol == "Ublox"){
             UbloxParser parser(connection);
             UbloxMessage mess = parser.parseMessage(buff);

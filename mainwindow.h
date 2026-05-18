@@ -58,6 +58,8 @@ private:
 
     //контейнеры
     QMap<QString,QPair<QString,QList<QString>>> devicesMap;
+
+    QMap<QString,TableConnectionsFields> tableFieldsMap;
     QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
     QMap<QString,QByteArray*> bufferMap;
@@ -72,6 +74,7 @@ private:
     QString experimentDirectory;
 
     //флаги
+    bool canRead = 1;
     bool isLap = 0;
     int lapNumber = 0;
     bool eventSettingsSolFound = 0;
@@ -80,6 +83,7 @@ private:
     bool eventSettingsRelSolLost = 0;
 
     QTime lapTime;
+    QString version = "0.1.0";
 
 };
 #endif // MAINWINDOW_H

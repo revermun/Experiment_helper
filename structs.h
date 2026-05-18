@@ -5,13 +5,15 @@
 #include <QMap>
 #include <QDebug>
 #include <QGroupBox>
+#include <QTableWidget>
 
-struct tableConnectionsFields{
-    QString ID;
-    QString connectionType;
-    QString TCPPort;
-    int onOff;
-    int data;
+struct TableConnectionsFields{
+    QTableWidgetItem* ID;
+    QTableWidgetItem* connectionType;
+    QTableWidgetItem* TCPPort;
+    QTableWidgetItem* onOff;
+    QTableWidgetItem* data;
+    int row;
 };
 
 struct EventData{

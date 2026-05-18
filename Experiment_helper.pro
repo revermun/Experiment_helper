@@ -13,11 +13,19 @@ CONFIG += c++17
 DEFINES += YAML_CPP_STATIC_DEFINE
 INCLUDEPATH += "C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/include"
 
-LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Debug"
-LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Release"
+# Условное подключение библиотек в зависимости от конфигурации
+CONFIG(debug, debug|release) {
+    # Debug конфигурация
+    LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Debug"
+    LIBS += -lyaml-cppd
+    message("Building in DEBUG mode with yaml-cppd.lib")
+} else {
+    # Release конфигурация
+    LIBS += -L"C:/Users/rever/Documents/cpp-libs/yaml-cpp-master/build-static-x86/Release"
+    LIBS += -lyaml-cpp
+    message("Building in RELEASE mode with yaml-cpp.lib")
+}
 
-LIBS += -lyaml-cppd
-LIBS += -lyaml-cpp
 
 SOURCES += \
     connectionSettings.cpp \
