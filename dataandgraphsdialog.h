@@ -11,6 +11,8 @@
 #include <QTimer>
 #include <QMessageBox>
 
+#include "structs.h"
+
 /// TODO: когда будет реализовано подлючение организовать реализацию графиков
 namespace Ui {
 class dataAndGraphsDialog;
@@ -21,7 +23,7 @@ class dataAndGraphsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent = nullptr);
+    explicit dataAndGraphsDialog(QMap<QString,DeviceInfo>devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent = nullptr);
     ~dataAndGraphsDialog();
 
 public slots:
@@ -41,7 +43,7 @@ private:
     void removeItem(QGroupBox* itemToRemove);
     void rearrangeGrid();
 
-    QMap<QString,QPair<QString,QList<QString>>> devicesMap;
+    QMap<QString,DeviceInfo> devicesMap;
     QMap<QString, QObject*> connectionsMap;
     QVector<QPair<QGroupBox*, QPair<int, int>>> groupBoxVector;
     Ui::dataAndGraphsDialog *ui;

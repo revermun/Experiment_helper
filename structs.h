@@ -7,6 +7,36 @@
 #include <QGroupBox>
 #include <QTableWidget>
 
+struct DeviceInfo{
+    QString ID;
+    QString deviceType;
+    QString protocol;
+    QString connType;
+    struct SerialInfo{
+        QString port;
+        int baudrate;
+        int dataBits;
+        QString parity;
+        int stopBits;
+        QString tcpPort;
+        int tcpCount;
+    }serialInfo;
+    struct CANInfo{
+        int baudrate;
+        QString type;
+    }canInfo;
+    struct TCPInfo{
+        QString clientServer;
+        QString adress;
+        QString port;
+    }tcpInfo;
+};
+
+struct NewData{
+    DeviceInfo deviceInfo;
+    QByteArray buff;
+};
+
 struct TableConnectionsFields{
     QTableWidgetItem* ID;
     QTableWidgetItem* connectionType;

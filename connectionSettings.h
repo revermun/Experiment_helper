@@ -12,7 +12,7 @@
 #include <QSerialPortInfo>
 
 #include "enums.h"
-
+#include "structs.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class ConnectionSettings; }
@@ -24,11 +24,11 @@ class ConnectionSettings : public QDialog
 
 public:
     ConnectionSettings(QWidget *parent = nullptr);
-    ConnectionSettings(QPair<QString,QList<QString>> deviceInfo, QWidget *parent = nullptr);
+    ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent = nullptr);
     ~ConnectionSettings();
 
 
-    QPair<QString,QList<QString>> getSettings();
+    DeviceInfo getSettings();
 
 public slots:
     void changeProtocolComboBox(QString device);
@@ -40,6 +40,6 @@ public slots:
 private:
     void setChildrenHidden(QObject* parent, bool isHidden);
     Ui::ConnectionSettings *ui;
-    QPair<QString,QList<QString>> settings;
+    DeviceInfo settings;
 };
 #endif // CONNECTIONSETTINGS_H

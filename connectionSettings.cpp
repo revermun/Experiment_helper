@@ -9,39 +9,38 @@ ConnectionSettings::ConnectionSettings(QWidget *parent)
     setChildrenHidden(ui->groupBoxSettings,true);
 }
 
-ConnectionSettings::ConnectionSettings(QPair<QString,QList<QString>> deviceInfo, QWidget *parent)
+ConnectionSettings::ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ConnectionSettings)
 {
     ui->setupUi(this);
-    QString protocolName = deviceInfo.first;
-    QList<QString> parameters = deviceInfo.second;
-    ui->lineEditName->setText(parameters.at(INDEX_GENERAL_ID));
-    ui->comboBoxConnectionType->setCurrentText(protocolName);
-    ui->comboBoxDevice->setCurrentText(parameters.at(INDEX_GENERAL_DEVICE_TYPE));
-    ui->comboBoxProtocol->setCurrentText(parameters.at(INDEX_GENERAL_PROTOCOL));
+    QString connectionType = deviceInfo.connType;
+    ui->lineEditName->setText(deviceInfo.ID);
+    ui->comboBoxConnectionType->setCurrentText(connectionType);
+    ui->comboBoxDevice->setCurrentText(deviceInfo.deviceType);
+    ui->comboBoxProtocol->setCurrentText(deviceInfo.protocol);
     ui->comboBoxConnectionType->setEnabled(false);
     ui->comboBoxDevice->setEnabled(false);
     ui->comboBoxProtocol->setEnabled(false);
     ui->lineEditName->setEnabled(false);
-    changeSettings(protocolName);
-    if (protocolName == "Serial"){
-        ui->comboSerialPort->setCurrentText(parameters.at(INDEX_SERIAL_PORT));
-        ui->comboSerialBaud->setCurrentText(parameters.at(INDEX_SERIAL_BAUDRATE));
-        ui->comboDataBits->setCurrentText(parameters.at(INDEX_SERIAL_DATA_BITS));
-        ui->comboParity->setCurrentText(parameters.at(INDEX_SERIAL_PARITY));
-        ui->comboStopBits->setCurrentText(parameters.at(INDEX_SERIAL_STOP_BITS));
-        ui->comboSerialConnNum->setCurrentText(parameters.at(INDEX_SERIAL_TCP_COUNT));
-        ui->lineSerialTCPport->setText(parameters.at(INDEX_SERIAL_TCP_PORT));
+    changeSettings(connectionType);
+    if (connectionType == "Serial"){
+        ui->comboSerialPort->setCurrentText     (deviceInfo.serialInfo.port);
+        ui->comboSerialBaud->setCurrentText     (QString::number(deviceInfo.serialInfo.baudrate));
+        ui->comboDataBits->setCurrentText       (QString::number(deviceInfo.serialInfo.dataBits));
+        ui->comboParity->setCurrentText         (deviceInfo.serialInfo.parity);
+        ui->comboStopBits->setCurrentText       (QString::number(deviceInfo.serialInfo.stopBits));
+        ui->comboSerialConnNum->setCurrentText  (QString::number(deviceInfo.serialInfo.tcpCount));
+        ui->lineSerialTCPport->setText          (deviceInfo.serialInfo.tcpPort);
     }
-    else if (protocolName == "TCP"){
-        ui->comboTCPclientServer->setCurrentText(parameters.at(INDEX_TCP_CLIENT_SERVER));
-        ui->lineTCPport->setText(parameters.at(INDEX_TCP_PORT));
-        ui->lineTCPaddr->setText(parameters.at(INDEX_TCP_ADRESS));
+    else if (connectionType == "TCP"){
+        ui->comboTCPclientServer->setCurrentText(deviceInfo.tcpInfo.clientServer);
+        ui->lineTCPport->setText                (deviceInfo.tcpInfo.port);
+        ui->lineTCPaddr->setText                (deviceInfo.tcpInfo.adress);
     }
-    else if (protocolName == "CAN"){
-        ui->comboCANtype->setCurrentText(parameters.at(INDEX_CAN_TYPE));
-        ui->comboCANBaud->setCurrentText(parameters.at(INDEX_CAN_BAUDRATE));
+    else if (connectionType == "CAN"){
+        ui->comboCANtype->setCurrentText        (deviceInfo.canInfo.type);
+        ui->comboCANBaud->setCurrentText        (QString::number(deviceInfo.canInfo.baudrate));
     }
 
 }
@@ -154,61 +153,53 @@ void ConnectionSettings::checkFields(){
     }
 }
 
-QPair<QString,QList<QString>> ConnectionSettings::getSettings()
+DeviceInfo ConnectionSettings::getSettings()
 {
     return this->settings;
 }
 
 void ConnectionSettings::saveSettings()
 {
-    settings.first.clear();
-    settings.second.clear();
-    QString connectionType = ui->comboBoxConnectionType->currentText();
-    qDebug() << connectionType;
-    QList<QString> info;
+    DeviceInfo deviceInfo;
     QString id = ui->lineEditName->text();
     QString device = ui->comboBoxDevice->currentText();
     QString protocol = ui->comboBoxProtocol->currentText();
-    info.append(id);
-    info.append(device);
-    info.append(protocol);
+    QString connectionType = ui->comboBoxConnectionType->currentText();
+    deviceInfo.ID = id;
+    deviceInfo.deviceType = device;
+    deviceInfo.protocol = protocol;
+    deviceInfo.connType = connectionType;
     if (connectionType == "Serial"){
         QString port = ui->comboSerialPort->currentText();
         QString baudrate = ui->comboSerialBaud->currentText();
         QString dataBits = ui->comboDataBits->currentText();
-        QString TCPNumber = ui->lineSerialTCPport->text();
         QString parity = ui->comboParity->currentText();
         QString stopBits = ui->comboStopBits->currentText();
-        QString TCPConnectionCount = ui->comboSerialConnNum->currentText();
-        info.append(port);
-        info.append(baudrate);
-        info.append(dataBits);
-        info.append(TCPNumber);
-        info.append(parity);
-        info.append(stopBits);
-        info.append(TCPConnectionCount);
+        QString tcpPort = ui->lineSerialTCPport->text();
+        QString tcpCount = ui->comboSerialConnNum->currentText();
+        deviceInfo.serialInfo.port = port;
+        deviceInfo.serialInfo.baudrate = baudrate.toInt();
+        deviceInfo.serialInfo.dataBits = dataBits.toInt();
+        deviceInfo.serialInfo.parity = parity;
+        deviceInfo.serialInfo.stopBits = stopBits.toInt();
+        deviceInfo.serialInfo.tcpCount = tcpCount.toInt();
+        deviceInfo.serialInfo.tcpPort = tcpPort;
     }
     else if (connectionType == "CAN"){
         QString baudrate = ui->comboCANBaud->currentText();
-        QString CANType = ui->comboCANtype->currentText();
-        info.append(baudrate);
-        info.append(CANType);
+        QString type = ui->comboCANtype->currentText();
+        deviceInfo.canInfo.baudrate = baudrate.toInt();
+        deviceInfo.canInfo.type = type;
     }
     else if (connectionType == "TCP"){
         QString clientServer = ui->comboTCPclientServer->currentText();
         QString port = ui->lineTCPport->text();
         QString adress = ui->lineTCPaddr->text();
-        info.append(clientServer);
-        info.append(port);
-        info.append(adress);
-    }
-    else{
-        settings.first.clear();
-        settings.second.clear();
-        return;
+        deviceInfo.tcpInfo.clientServer = clientServer;
+        deviceInfo.tcpInfo.port = port;
+        deviceInfo.tcpInfo.adress = adress;
     }
 
-    settings.first = connectionType;
-    settings.second = info;
+    this->settings = deviceInfo;
 }
 

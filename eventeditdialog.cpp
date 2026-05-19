@@ -27,7 +27,7 @@
 /// max_value - число (для не int можно оставить пустым)
 /// units - единицы измерения (m/s, m, rad, deg, sm/s)
 /// scale - число на которое нужно умножить для получения действительного значения (10e-5,1,...)
-eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,DeviceInfo> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
@@ -43,7 +43,7 @@ eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString
     ui->frameInt->setHidden(true);
 }
 
-eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, EventData data, QWidget *parent)
+eventEditDialog::eventEditDialog(QMap<QString,EventData>* eventMap, QMap<QString,DeviceInfo> devicesMap, QMap<QString,Mess> messagesMap, EventData data, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventEditDialog)
 {
@@ -91,7 +91,7 @@ eventEditDialog::~eventEditDialog()
 /// --------------------------------------------------------------------------------------------------------------------------------------------------------
 void eventEditDialog::eventPresetChangeEvent(QString preset){
     QString device = ui->comboDevice->currentText();
-    QString protocol = devicesMap[device].second.at(INDEX_GENERAL_PROTOCOL);
+    QString protocol = devicesMap[device].protocol;
     if (protocol == "Ublox"){
         if (preset == "Решение найдено"){
             ui->comboMessage->setCurrentText("NAV-SOL");
@@ -164,7 +164,7 @@ void eventEditDialog::eventPresetChangeEvent(QString preset){
 }
 
 void eventEditDialog::comboDeviceChangeEvent(QString device){
-    QString protocol = devicesMap[device].second.at(INDEX_GENERAL_PROTOCOL);
+    QString protocol = devicesMap[device].protocol;
     QStringList messages;
     foreach (QString mess, messagesMap.keys()) {
         if (messagesMap[mess].protocol == protocol){
@@ -230,7 +230,7 @@ EventData eventEditDialog::getEventData(){
     EventData data;
     data.name = ui->lineName->text();
     data.device = ui->comboDevice->currentText();
-    data.protocol = devicesMap[data.device].second.at(INDEX_GENERAL_PROTOCOL);
+    data.protocol = devicesMap[data.device].protocol;
     data.message = ui->comboMessage->currentText();
     data.messageId = messagesMap[data.message].id;
     data.fieldName = ui->comboMessageField->currentText();

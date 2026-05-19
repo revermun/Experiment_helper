@@ -45,26 +45,30 @@ public slots:
     void sendUserEvent();
     void addConnectionFromFile();
     void clearLogTable();
+    void readPorts();
+
+signals:
+    void newData();
 
 private:
     void getMessagesConfig();
 
     void fillConnectionsTable();
-    void addItemToConnectionsTable(QString protocol, QList<QString> parameters);
+    void addItemToConnectionsTable(DeviceInfo info);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
     void setupTableSize(QTableWidget* table);
     void addItemToLogTable(QString localTime, QString GNSSTime, QString event);
     Ui::MainWindow *ui;
 
     //контейнеры
-    QMap<QString,QPair<QString,QList<QString>>> devicesMap;
-
+    QMap<QString,DeviceInfo> devicesMap;
     QMap<QString,TableConnectionsFields> tableFieldsMap;
     QMap<QString, QObject*> connectionsMap;
     QList<QList<QString>> notesList;
     QMap<QString,QByteArray*> bufferMap;
     QMap<QString,EventData> eventMap;
     QMap<QString,Mess> messagesMap;
+    QMap<QString,NewData> newDataMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;

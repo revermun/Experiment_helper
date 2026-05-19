@@ -118,7 +118,7 @@
 /// units - в третий столбец лэйблов
 /// description - в описание сообщения
 
-deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::deviceConfigurationsDialog)
 {
@@ -335,17 +335,17 @@ void deviceConfigurationsDialog::deviceChangeEvent()
         }
     }
 
-    QPair<QString,QList<QString>> deviceInfo = devicesMap[combo->currentText()];
+    DeviceInfo deviceInfo = devicesMap[combo->currentText()];
     if (ui->comboBoxDevice1 == combo) ui->comboBoxDevice2->setCurrentText(ui->comboBoxDevice1->currentText());
     else ui->comboBoxDevice1->setCurrentText(ui->comboBoxDevice2->currentText());
-    QString type = deviceInfo.second.at(INDEX_GENERAL_DEVICE_TYPE);
+    QString type = deviceInfo.deviceType;
     ui->labelType->setText("Тип: " + type);
     QList<QWidget*> tab2Widgets = {ui->pushButtonLoadConfig, ui->pushButtonSaveConfig, ui->pushButtonSet,
                                     ui->pushButtonPoll,  ui->pushButtonSaveInDevice};
     foreach (QWidget* widget, tab2Widgets) {
         widget->setEnabled(true);
     }
-    QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+    QString protocol = deviceInfo.protocol;
     this->protocol = protocol;
     ui->treeWidgetMessages->clear();
 
@@ -2178,8 +2178,8 @@ void deviceConfigurationsDialog::updateSettings()
     if (combo->currentIndex() == -1){
         return;
     }
-    QPair<QString,QList<QString>> deviceInfo = devicesMap[combo->currentText()];
-    QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+    DeviceInfo deviceInfo = devicesMap[combo->currentText()];
+    QString protocol = deviceInfo.protocol;
     if (protocol == "Ublox"){
         UbloxParser parser(currentConnection);
         parser.sendMessage(UbloxParser::createPollMessage(CFG::DAT::classID, CFG::DAT::messageID));

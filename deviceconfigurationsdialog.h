@@ -20,7 +20,7 @@ class deviceConfigurationsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit deviceConfigurationsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
+    explicit deviceConfigurationsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
     ~deviceConfigurationsDialog();
 
 public slots:
@@ -53,7 +53,7 @@ private:
     void setChildrenEnabled(QObject* parent, bool isEnabled);
     void sendMSGPoll(uint8_t classID, uint8_t messageID);
     QMap<QString,Mess> messagesMap;
-    QMap<QString,QPair<QString,QList<QString>>> devicesMap;
+    QMap<QString,DeviceInfo> devicesMap;
     QMap<QString, QObject*> connectionsMap;
     QMap<QByteArray,QString> messagesNamesMap;
     QMap<QString, QPair<uint8_t,uint8_t>> messagesIDMapUBX;

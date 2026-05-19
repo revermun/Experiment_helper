@@ -2,7 +2,7 @@
 #include "ui_dataandgraphsdialog.h"
 #include "enums.h"
 
-dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,QPair<QString,QList<QString>>> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
+dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::dataAndGraphsDialog)
 {
@@ -290,7 +290,7 @@ void dataAndGraphsDialog::changeDataComboBox(QComboBox* combo)
     if (deviceID.isEmpty()){
         return;
     }
-    QString device = devicesMap[deviceID].second[INDEX_GENERAL_DEVICE_TYPE];
+    QString device = devicesMap[deviceID].deviceType;
     if (device == "Приемник"){
         /// TOASK: спросить конкретные названия данных
         combo->addItem("Координаты позиции");

@@ -2,7 +2,7 @@
 #include "ui_eventsettingsdialog.h"
 #include "eventeditdialog.h"
 
-eventSettingsDialog::eventSettingsDialog(QMap<QString,EventData>* eventMap,QMap<QString,QPair<QString,QList<QString>>> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+eventSettingsDialog::eventSettingsDialog(QMap<QString,EventData>* eventMap,QMap<QString,DeviceInfo> devicesMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::eventSettingsDialog)
 {

@@ -20,13 +20,13 @@
 /// С Serial порта мы читаем ТОЛЬКО в главном окне, сохраняем данные в контейнер newData
 /// Далее этот контейнер передается нуждающимся объектам и сущностям
 /// Как реализовывать:
-/// Добавляем функцию readPorts для MainWindow.
-/// В ней читаются порты и новая информация добавляется в мапу буферов,
+/// Добавляем слот readPorts и массив структур newData содержащая инфу об источнике и QByteArray newData  для MainWindow.
+/// В нем читаются порты и новая информация добавляется в мапу буферов,
 /// отправляется сигнал newData, также при получении новой инфы загораются
 /// на определенное время ячейки данных в таблице.
-/// В конфигурации устройств и других окнах добавляется ссылка на MainWindow, поле buf
-/// а также слот getNewData, привязанный к сигналу newData, добавляющий инфу в buf
-/// то есть что-то на подобие: connect(mainWindow, SIGNAL(newData), this, SLOT(getNewData))
+/// В конфигурации устройств и других окнах добавляется ссылка на MainWindow, поле buff
+/// а также слот getNewData, привязанный к сигналу newData, в котором читается новая структура,
+/// добавляющий инфу в buf то есть что-то на подобие: connect(mainWindow, SIGNAL(newData), this, SLOT(getNewData))
 /// У tcp моста в функции start остается только адрес сервера,
 /// также метод sendData и поле buff которое заполняется от этого метода.
 /// onSerialReadyRead отпраляет buff в сокеты и очищается
@@ -36,6 +36,7 @@
 /// 1. Передалать проект под задумку выше
 /// 2. Добавить в проект TCP мост
 /// 3. Протестировать разветвление
+///
 
 
 /// Мысли по поводу принципа работы приложения
@@ -283,30 +284,31 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::addItemToConnectionsTable(QString protocol, QList<QString> parameters)
+void MainWindow::addItemToConnectionsTable(DeviceInfo info)
 {
     int rowCount = ui->tableWidgetConnections->rowCount();
     ui->tableWidgetConnections->setRowCount(rowCount+1);
-    QString deviceName = parameters.at(INDEX_SERIAL_ID);
+    QString deviceName = info.ID;
+    QString connType = info.connType;
     TableConnectionsFields fields;
     fields.row = rowCount;
     fields.ID = new QTableWidgetItem(deviceName);
-    fields.connectionType = new QTableWidgetItem(protocol);
+    fields.connectionType = new QTableWidgetItem(connType);
     fields.TCPPort = new QTableWidgetItem();
     fields.onOff = new QTableWidgetItem;
     fields.data = new QTableWidgetItem;
     fields.ID->setText(deviceName);
-    fields.connectionType->setText(protocol);
-    if (protocol == "Serial"){
-        QString TCPPort =           parameters.at(INDEX_SERIAL_TCP_PORT);
+    fields.connectionType->setText(connType);
+    if (connType == "Serial"){
+        QString TCPPort =  info.serialInfo.tcpPort;
 
         fields.TCPPort->setText(TCPPort);
     }
-    else if (protocol == "CAN"){
+    else if (connType == "CAN"){
         // ничего
     }
-    else if (protocol == "TCP"){
-        QString port =              parameters.at(INDEX_TCP_PORT);
+    else if (connType == "TCP"){
+        QString port =  info.tcpInfo.port;
 
         fields.TCPPort->setText(port);
     }
@@ -326,11 +328,8 @@ void MainWindow::fillConnectionsTable()
     ui->tableWidgetConnections->clearContents();
     ui->tableWidgetConnections->setRowCount(0);
     for (const auto &key: devicesMap.keys()) {
-        QString deviceName = key;
-        QPair<QString,QList<QString>> settings = devicesMap.value(key);
-        QString protocolName = settings.first;
-        QList<QString> parameters = settings.second;
-        addItemToConnectionsTable(protocolName,settings.second);
+        DeviceInfo info = devicesMap.value(key);
+        addItemToConnectionsTable(info);
     }
 }
 
@@ -349,47 +348,51 @@ void MainWindow::addConnectionFromFile()
     QDomElement docElem = doc.documentElement();
     QDomNode deviceXml = docElem.firstChild();
     while(!deviceXml.isNull()) {
+        DeviceInfo info;
         QDomElement e = deviceXml.toElement();
         QString deviceName = e.tagName();
         QDomElement parametersXml = deviceXml.firstChild().toElement();
-        QString protocolName = parametersXml.tagName();
-        QList<QString> parameters;
-        if (protocolName == "Serial"){
-            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-            QString deviceType =        parametersXml.attribute("device_type");
+        QString connType = parametersXml.tagName();
+        QString transferProtocol =  parametersXml.attribute("transfer_protocol");
+        QString deviceType =        parametersXml.attribute("device_type");
+        info.ID = deviceName;
+        info.connType = connType;
+        info.protocol = transferProtocol;
+        info.deviceType = deviceType;
+        if (connType == "Serial"){
             QString port =              parametersXml.attribute("Serial_port");
             QString baudrate =          parametersXml.attribute("baudrate");
             QString dataBits =          parametersXml.attribute("data_bits");
-            QString TCPPort =           parametersXml.attribute("TCP_port_number");
+            QString tcpPort =           parametersXml.attribute("TCP_port_number");
             QString parity =            parametersXml.attribute("parity");
             QString stopBits =          parametersXml.attribute("stop_bits");
-            QString TCPCount =          parametersXml.attribute("TCP_connections_number");
-
-            parameters << deviceName << deviceType << transferProtocol << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
-
+            QString tcpCount =          parametersXml.attribute("TCP_connections_number");
+            info.serialInfo.port = port;
+            info.serialInfo.baudrate = baudrate.toInt();
+            info.serialInfo.dataBits = dataBits.toInt();
+            info.serialInfo.parity = parity;
+            info.serialInfo.stopBits = stopBits.toInt();
+            info.serialInfo.tcpCount = tcpCount.toInt();
+            info.serialInfo.tcpPort = tcpPort;
         }
-        else if (protocolName == "CAN"){
-            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-            QString deviceType =        parametersXml.attribute("device_type");
+        else if (connType == "CAN"){
             QString baudrate =           parametersXml.attribute("baudrate");
-            QString CANType =           parametersXml.attribute("CAN_type");
+            QString type =           parametersXml.attribute("CAN_type");
 
-            parameters << deviceName << deviceType << transferProtocol  << baudrate << CANType;
+            info.canInfo.baudrate = baudrate.toInt();
+            info.canInfo.type = type;
         }
-        else if (protocolName == "TCP"){
-            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-            QString deviceType =        parametersXml.attribute("device_type");
+        else if (connType == "TCP"){
             QString clientServer =      parametersXml.attribute("source");
             QString port =              parametersXml.attribute("port_number");
             QString adress =            parametersXml.attribute("adress");
-
-            parameters << deviceName << deviceType << transferProtocol  << clientServer << port << adress;
+            info.tcpInfo.clientServer = clientServer;
+            info.tcpInfo.port = port;
+            info.tcpInfo.adress = adress;
         }
-        QPair<QString,QList<QString>> protocolPair;
-        protocolPair.first = protocolName;
-        protocolPair.second = parameters;
+
         if(!devicesMap.contains(deviceName)){
-            devicesMap.insert(deviceName,protocolPair);
+            devicesMap[deviceName] = info;
         }
         deviceXml = deviceXml.nextSibling();
     }
@@ -422,47 +425,51 @@ void MainWindow::performAction(QAction *action)
         QDomElement docElem = doc.documentElement();
         QDomNode deviceXml = docElem.firstChild();
         while(!deviceXml.isNull()) {
+            DeviceInfo info;
             QDomElement e = deviceXml.toElement();
             QString deviceName = e.tagName();
             QDomElement parametersXml = deviceXml.firstChild().toElement();
-            QString protocolName = parametersXml.tagName();
-            QList<QString> parameters;
-            if (protocolName == "Serial"){
-                QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-                QString deviceType =        parametersXml.attribute("device_type");
+            QString connType = parametersXml.tagName();
+            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
+            QString deviceType =        parametersXml.attribute("device_type");
+            info.ID = deviceName;
+            info.connType = connType;
+            info.protocol = transferProtocol;
+            info.deviceType = deviceType;
+            if (connType == "Serial"){
                 QString port =              parametersXml.attribute("Serial_port");
                 QString baudrate =          parametersXml.attribute("baudrate");
                 QString dataBits =          parametersXml.attribute("data_bits");
-                QString TCPPort =           parametersXml.attribute("TCP_port_number");
+                QString tcpPort =           parametersXml.attribute("TCP_port_number");
                 QString parity =            parametersXml.attribute("parity");
                 QString stopBits =          parametersXml.attribute("stop_bits");
-                QString TCPCount =          parametersXml.attribute("TCP_connections_number");
-
-                parameters << deviceName << deviceType << transferProtocol << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
-
+                QString tcpCount =          parametersXml.attribute("TCP_connections_number");
+                info.serialInfo.port = port;
+                info.serialInfo.baudrate = baudrate.toInt();
+                info.serialInfo.dataBits = dataBits.toInt();
+                info.serialInfo.parity = parity;
+                info.serialInfo.stopBits = stopBits.toInt();
+                info.serialInfo.tcpCount = tcpCount.toInt();
+                info.serialInfo.tcpPort = tcpPort;
             }
-            else if (protocolName == "CAN"){
-                QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-                QString deviceType =        parametersXml.attribute("device_type");
+            else if (connType == "CAN"){
                 QString baudrate =           parametersXml.attribute("baudrate");
-                QString CANType =           parametersXml.attribute("CAN_type");
+                QString type =           parametersXml.attribute("CAN_type");
 
-                parameters << deviceName << deviceType << transferProtocol  << baudrate << CANType;
+                info.canInfo.baudrate = baudrate.toInt();
+                info.canInfo.type = type;
             }
-            else if (protocolName == "TCP"){
-                QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-                QString deviceType =        parametersXml.attribute("device_type");
+            else if (connType == "TCP"){
                 QString clientServer =      parametersXml.attribute("source");
                 QString port =              parametersXml.attribute("port_number");
                 QString adress =            parametersXml.attribute("adress");
-
-                parameters << deviceName << deviceType << transferProtocol  << clientServer << port << adress;
+                info.tcpInfo.clientServer = clientServer;
+                info.tcpInfo.port = port;
+                info.tcpInfo.adress = adress;
             }
-            QPair<QString,QList<QString>> protocolPair;
-            protocolPair.first = protocolName;
-            protocolPair.second = parameters;
+
             if(!devicesMap.contains(deviceName)){
-                devicesMap.insert(deviceName,protocolPair);
+                devicesMap[deviceName] = info;
             }
             deviceXml = deviceXml.nextSibling();
         }
@@ -533,23 +540,23 @@ void MainWindow::performAction(QAction *action)
         //Сохранение файла подключений
         for (const auto &key: devicesMap.keys()) {
             QString deviceName = key;
-            QPair<QString,QList<QString>> settings = devicesMap.value(key);
-            QString protocolName = settings.first;
-            if (protocolName == "Serial"){
-                QString transferProtocol =  settings.second.at(INDEX_GENERAL_PROTOCOL);
-                QString deviceType =        settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-                QString port =              settings.second.at(INDEX_SERIAL_PORT);
-                QString baudrate =          settings.second.at(INDEX_SERIAL_BAUDRATE);
-                QString dataBits =          settings.second.at(INDEX_SERIAL_DATA_BITS);
-                QString TCPPort =           settings.second.at(INDEX_SERIAL_TCP_PORT);
-                QString parity =            settings.second.at(INDEX_SERIAL_PARITY);
-                QString stopBits =          settings.second.at(INDEX_SERIAL_STOP_BITS);
-                QString TCPCount =          settings.second.at(INDEX_SERIAL_TCP_COUNT);
+            DeviceInfo info = devicesMap.value(key);
+            QString connType = info.connType;
+            QString transferProtocol = info.protocol;
+            QString deviceType = info.deviceType;
+            if (connType == "Serial"){
+                QString port =              (info.serialInfo.port);
+                QString baudrate =          (QString::number(info.serialInfo.baudrate));
+                QString dataBits =          (QString::number(info.serialInfo.dataBits));
+                QString parity =            (info.serialInfo.parity);
+                QString stopBits =          (QString::number(info.serialInfo.stopBits));
+                QString TCPCount =          (QString::number(info.serialInfo.tcpCount));
+                QString TCPPort =           (info.serialInfo.tcpPort);
 
                 QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
+                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("Serial_port", port);
@@ -561,33 +568,29 @@ void MainWindow::performAction(QAction *action)
                 protocolXml.setAttribute("TCP_connections_number", TCPCount);
                 deviceXml.appendChild(protocolXml);
             }
-            else if (protocolName == "CAN"){
-                QString transferProtocol =  settings.second.at(INDEX_GENERAL_PROTOCOL);
-                QString deviceType =        settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-                QString baudrate =           settings.second.at(INDEX_CAN_BAUDRATE);
-                QString CANType =           settings.second.at(INDEX_CAN_TYPE);
+            else if (connType == "CAN"){
+                QString CANType =           (QString::number(info.canInfo.baudrate));
+                QString baudrate =          (info.canInfo.type);
 
                 QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
+                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("baudrate", baudrate);
                 protocolXml.setAttribute("CAN_type", CANType);
                 deviceXml.appendChild(protocolXml);
             }
-            else if (protocolName == "TCP"){
-                QString transferProtocol =  settings.second.at(INDEX_GENERAL_PROTOCOL);
-                QString deviceType =        settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-                QString clientServer =      settings.second.at(INDEX_TCP_CLIENT_SERVER);
-                QString port =              settings.second.at(INDEX_TCP_PORT);
-                QString adress =            settings.second.at(INDEX_TCP_ADRESS);
+            else if (connType == "TCP"){
+                QString clientServer =      (info.tcpInfo.clientServer);
+                QString port =              (info.tcpInfo.port);
+                QString adress =            (info.tcpInfo.adress);
 
                 QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
 
-                QDomElement protocolXml = connectionsDoc.createElement(protocolName.replace(' ','_'));
+                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
                 protocolXml.setAttribute("device_type", deviceType);
                 protocolXml.setAttribute("transfer_protocol", transferProtocol);
                 protocolXml.setAttribute("source", clientServer);
@@ -710,53 +713,12 @@ void MainWindow::editConnection()
         return;
     }
 
-    QPair<QString,QList<QString>> deviceInfo = devicesMap[deviceName];
+    DeviceInfo deviceInfo = devicesMap[deviceName];
     ConnectionSettings cs(deviceInfo, this);
     if (cs.exec() == QDialog::Accepted){
-        QPair<QString,QList<QString>> settings = cs.getSettings();
-        QString deviceName = settings.second.at(INDEX_GENERAL_ID);
-        QString protocolName = settings.first;
-        QList<QString> parameters;
-        QString transferProtocol = settings.second.at(INDEX_GENERAL_PROTOCOL);
-        QString deviceType = settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-        parameters << deviceName << deviceType << transferProtocol;
-
-        if(protocolName == "Serial"){
-            QString port =      settings.second.at(INDEX_SERIAL_PORT);
-            QString baudrate =  settings.second.at(INDEX_SERIAL_BAUDRATE);
-            QString dataBits =  settings.second.at(INDEX_SERIAL_DATA_BITS);
-            QString TCPPort =   settings.second.at(INDEX_SERIAL_TCP_PORT);
-            QString parity =    settings.second.at(INDEX_SERIAL_PARITY);
-            QString stopBits =  settings.second.at(INDEX_SERIAL_STOP_BITS);
-            QString TCPCount =  settings.second.at(INDEX_SERIAL_TCP_COUNT);
-
-            parameters << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
-
-            QTableWidgetItem *portItem = new QTableWidgetItem(TCPPort);
-            tableFieldsMap[deviceName].TCPPort = portItem;
-            ui->tableWidgetConnections->setItem(ui->tableWidgetConnections->currentRow(), INDEX_CONN_TABLE_TCP_PORT, portItem);
-        }
-        else if(protocolName == "CAN"){
-            QString baudrate = settings.second.at(INDEX_CAN_BAUDRATE);
-            QString CANType = settings.second.at(INDEX_CAN_TYPE);
-
-            parameters << baudrate << CANType;
-
-        }
-        else if(protocolName == "TCP"){
-            QString clientServer =  settings.second.at(INDEX_TCP_CLIENT_SERVER);
-            QString port =          settings.second.at(INDEX_TCP_PORT);
-            QString adress =        settings.second.at(INDEX_TCP_ADRESS);
-
-            parameters << clientServer << port << adress;
-            QTableWidgetItem *portItem = new QTableWidgetItem(port);
-            tableFieldsMap[deviceName].TCPPort = portItem;
-            ui->tableWidgetConnections->setItem(ui->tableWidgetConnections->currentRow(), INDEX_CONN_TABLE_TCP_PORT, portItem);
-        }
-        QPair<QString,QList<QString>> protocolPair;
-        protocolPair.first = protocolName;
-        protocolPair.second = parameters;
-        devicesMap[deviceName] = protocolPair;
+        DeviceInfo info = cs.getSettings();
+        QString deviceName = info.ID;
+        devicesMap[deviceName] = info;
     }
 }
 
@@ -765,53 +727,16 @@ void MainWindow::openConnectionSettings()
 {
     ConnectionSettings cs(this);
     if (cs.exec() == QDialog::Accepted){
-        QPair<QString,QList<QString>> settings = cs.getSettings();
-        QString deviceName = settings.second.at(INDEX_GENERAL_ID);
-        if(devicesMap.contains(settings.second.at(INDEX_GENERAL_ID))){
+        DeviceInfo info = cs.getSettings();
+        QString deviceName = info.ID;
+        if(devicesMap.contains(deviceName)){
             QMessageBox::warning(this, "Ошибка", "Устройство с таким ID уже добавлено!\nУдалите или измените имеющееся если хотите добавить это");
             return;
         }
-        QString protocolName = settings.first;
-        QList<QString> parameters;
-        QString transferProtocol = settings.second.at(INDEX_GENERAL_PROTOCOL);
-        QString deviceType = settings.second.at(INDEX_GENERAL_DEVICE_TYPE);
-        parameters << deviceName << deviceType << transferProtocol;
-
-        if(protocolName == "Serial"){
-            QString port =      settings.second.at(INDEX_SERIAL_PORT);
-            QString baudrate =  settings.second.at(INDEX_SERIAL_BAUDRATE);
-            QString dataBits =  settings.second.at(INDEX_SERIAL_DATA_BITS);
-            QString TCPPort =   settings.second.at(INDEX_SERIAL_TCP_PORT);
-            QString parity =    settings.second.at(INDEX_SERIAL_PARITY);
-            QString stopBits =  settings.second.at(INDEX_SERIAL_STOP_BITS);
-            QString TCPCount =  settings.second.at(INDEX_SERIAL_TCP_COUNT);
-
-            parameters << port << baudrate << dataBits << TCPPort << parity << stopBits << TCPCount;
-
-        }
-        else if(protocolName == "CAN"){
-            QString baudrate = settings.second.at(INDEX_CAN_BAUDRATE);
-            QString CANType = settings.second.at(INDEX_CAN_TYPE);
-
-            parameters << baudrate << CANType;
-
-        }
-        else if(protocolName == "TCP"){
-            QString clientServer =  settings.second.at(INDEX_TCP_CLIENT_SERVER);
-            QString port =          settings.second.at(INDEX_TCP_PORT);
-            QString adress =        settings.second.at(INDEX_TCP_ADRESS);
-
-            parameters << clientServer << port << adress;
-
-        }
-        QPair<QString,QList<QString>> protocolPair;
-        protocolPair.first = protocolName;
-        protocolPair.second = parameters;
         if(!devicesMap.contains(deviceName)){
-            devicesMap.insert(deviceName,protocolPair);
+            devicesMap.insert(deviceName,info);
         }
-
-        addItemToConnectionsTable(protocolName, settings.second);
+        addItemToConnectionsTable(info);
     }
 }
 
@@ -893,9 +818,11 @@ void MainWindow::connectDevice()
     if (protocolName == "Serial"){
         QString port;
         int baudrate;
+        int dataBits;
+        int stopBits;
         QSerialPort* connection = new QSerialPort(this);
         QSerialPort::Parity parity = QSerialPort::NoParity;
-        QString parityStr = devicesMap[deviceName].second.at(INDEX_SERIAL_PARITY);
+        QString parityStr = devicesMap[deviceName].serialInfo.parity;
         if (parityStr == "Нет"){
             parity = QSerialPort::NoParity;
         }
@@ -905,7 +832,7 @@ void MainWindow::connectDevice()
         if (parityStr == "Нечетное"){
             parity = QSerialPort::OddParity;
         }
-        int dataBits = devicesMap[deviceName].second.at(INDEX_SERIAL_DATA_BITS).toInt();
+        dataBits = devicesMap[deviceName].serialInfo.dataBits;
         QSerialPort::DataBits databitsEnum;
         switch (dataBits) {
         case 5:
@@ -924,7 +851,7 @@ void MainWindow::connectDevice()
             databitsEnum = QSerialPort::Data8;
             break;
         }
-        int stopBits = devicesMap[deviceName].second.at(INDEX_SERIAL_STOP_BITS).toInt();
+        stopBits = devicesMap[deviceName].serialInfo.stopBits;
         QSerialPort::StopBits stopBitsEnum;
         switch (stopBits) {
         case 1:
@@ -940,8 +867,8 @@ void MainWindow::connectDevice()
         connection->setDataBits(databitsEnum);
         connection->setStopBits(stopBitsEnum);
         connection->setParity(parity);
-        port = devicesMap[deviceName].second.at(INDEX_SERIAL_PORT);
-        baudrate = devicesMap[deviceName].second.at(INDEX_SERIAL_BAUDRATE).toInt();
+        port = devicesMap[deviceName].serialInfo.port;
+        baudrate = devicesMap[deviceName].serialInfo.baudrate;
         connection->setPortName(port);
         connection->setBaudRate(baudrate);
         // пробуем подключится
@@ -960,8 +887,8 @@ void MainWindow::connectDevice()
     }
     else if (protocolName == "TCP"){
         QTcpSocket* connection = new QTcpSocket(this);
-        QString port = devicesMap[deviceName].second.at(INDEX_TCP_PORT);
-        QString address = devicesMap[deviceName].second.at(INDEX_TCP_ADRESS);
+        QString port = devicesMap[deviceName].tcpInfo.port;
+        QString address = devicesMap[deviceName].tcpInfo.adress;
 
         // Подключаем сигналы
         connect(connection, &QTcpSocket::connected, this, [connection, onnOffItem, this, row, deviceName]() {
@@ -1053,8 +980,8 @@ void MainWindow::startExperiment()
         foreach (QString connDevice, connectionsMap.keys()) {
             QObject* connection = connectionsMap[connDevice];
             QByteArray buff = *bufferMap[connDevice];
-            QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
-            QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+            DeviceInfo deviceInfo = devicesMap[connDevice];
+            QString protocol = deviceInfo.protocol;
             if (qobject_cast<QIODevice*>(connection)){
                 QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
                 if (!ioCon->isOpen()) continue;
@@ -1102,6 +1029,29 @@ void MainWindow::startExperiment()
     }
 }
 
+void MainWindow::readPorts(){
+    foreach (QString connDevice, connectionsMap.keys()) {
+        QObject* connection = connectionsMap[connDevice];
+        QByteArray buff;
+        if (connection == nullptr) continue;
+        if (qobject_cast<QIODevice*>(connection)){
+            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+            if (!ioCon->isOpen()) continue;
+
+            QTableWidgetItem *dataItem = tableFieldsMap[connDevice].data;
+            if(ioCon->waitForReadyRead(1)){
+                buff.append(ioCon->readAll());
+                // dataItem->setBackground(QBrush(QColor(0,255,0)));
+                // indicateNewData(dataItem);
+            }
+            else{
+                // dataItem->setBackground(QBrush(QColor(0,100,0)));
+            }
+        }
+
+    }
+}
+
 void MainWindow::parseMessage()
 {
     if (!canRead) return;
@@ -1134,8 +1084,8 @@ void MainWindow::parseMessage()
         QString messId;
         QString GNSSTime;
         QDataStream::ByteOrder order;
-        QPair<QString,QList<QString>> deviceInfo = devicesMap[connDevice];
-        QString protocol = deviceInfo.second.at(INDEX_GENERAL_PROTOCOL);
+        DeviceInfo deviceInfo = devicesMap[connDevice];
+        QString protocol = deviceInfo.protocol;
         if (protocol == "Ublox"){
             UbloxParser parser(connection);
             UbloxMessage mess = parser.parseMessage(buff);
