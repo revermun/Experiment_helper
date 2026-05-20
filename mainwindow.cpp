@@ -408,10 +408,6 @@ void MainWindow::addConnectionFromFile()
 
         if(!devicesMap.contains(deviceName)){
             devicesMap[deviceName] = info;
-            if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
-                SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
-                bridgeMap.insert(deviceName,bridge);
-            }
         }
         deviceXml = deviceXml.nextSibling();
     }
@@ -489,8 +485,6 @@ void MainWindow::performAction(QAction *action)
 
             if(!devicesMap.contains(deviceName)){
                 devicesMap[deviceName] = info;
-                SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
-                bridgeMap.insert(deviceName,bridge);
             }
             deviceXml = deviceXml.nextSibling();
         }
@@ -737,11 +731,8 @@ void MainWindow::editConnection()
         DeviceInfo info = cs.getSettings();
         QString deviceName = info.ID;
         devicesMap[deviceName] = info;
-        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
-            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
-            bridgeMap.insert(deviceName,bridge);
-        }
     }
+    fillConnectionsTable();
 }
 
 
@@ -757,10 +748,6 @@ void MainWindow::openConnectionSettings()
         }
         devicesMap.insert(deviceName,info);
         addItemToConnectionsTable(info);
-        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
-            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
-            bridgeMap.insert(deviceName,bridge);
-        }
     }
 }
 
@@ -905,7 +892,8 @@ void MainWindow::connectDevice()
         connectionsMap.insert(deviceName, connection);
         DeviceInfo info = devicesMap[deviceName];
         if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
-            SerialToTcpBridge* bridge = bridgeMap[deviceName];
+            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+            bridgeMap.insert(deviceName,bridge);
             connect(bridge, SIGNAL(newConnectionCount()), this, SLOT(onNewBridgeConnection()));
             bridge->start();
         }
@@ -961,6 +949,7 @@ void MainWindow::disconnectDevice()
     if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.tcpCount > 0){
         SerialToTcpBridge* bridge = bridgeMap[deviceName];
         bridge->stop();
+        bridgeMap.remove(deviceName);
     }
     bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
