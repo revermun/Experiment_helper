@@ -184,8 +184,11 @@ MainWindow::MainWindow(QWidget *parent)
     getMessagesConfig();
 
     QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(readPorts()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(indicateData()));
     connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
     timer->start(1);
+
 
     QLabel* versionLabel = new QLabel(tr("Версия ПО: ") + this->version);
     statusBar()->addWidget(versionLabel);
@@ -300,9 +303,9 @@ void MainWindow::addItemToConnectionsTable(DeviceInfo info)
     fields.ID->setText(deviceName);
     fields.connectionType->setText(connType);
     if (connType == "Serial"){
-        QString TCPPort =  info.serialInfo.tcpPort;
-
-        fields.TCPPort->setText(TCPPort);
+        QString TCPPort = info.serialInfo.tcpPort;
+        QString string = QString("%1 (%2 из %3)").arg(TCPPort).arg(0).arg(QString::number(info.serialInfo.tcpCount));
+        fields.TCPPort->setText(string);
     }
     else if (connType == "CAN"){
         // ничего
@@ -321,6 +324,18 @@ void MainWindow::addItemToConnectionsTable(DeviceInfo info)
     ui->tableWidgetConnections->setItem(rowCount, INDEX_CONN_TABLE_DATA, fields.data);
     tableFieldsMap[deviceName] = fields;
     setupTableSize(ui->tableWidgetConnections);
+}
+
+void MainWindow::onNewBridgeConnection(){
+    SerialToTcpBridge* bridge = qobject_cast<SerialToTcpBridge*>(sender());
+    foreach (QString key, bridgeMap.keys()) {
+        if (bridge == bridgeMap[key]){
+            DeviceInfo info = devicesMap[key];
+            QString string = QString("%1 (%2 из %3)").arg(info.serialInfo.tcpPort).arg(bridge->getConCount()).arg(QString::number(info.serialInfo.tcpCount));
+            tableFieldsMap[key].TCPPort->setText(string);
+            return;
+        }
+    }
 }
 
 void MainWindow::fillConnectionsTable()
@@ -393,6 +408,10 @@ void MainWindow::addConnectionFromFile()
 
         if(!devicesMap.contains(deviceName)){
             devicesMap[deviceName] = info;
+            if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
+                SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+                bridgeMap.insert(deviceName,bridge);
+            }
         }
         deviceXml = deviceXml.nextSibling();
     }
@@ -470,6 +489,8 @@ void MainWindow::performAction(QAction *action)
 
             if(!devicesMap.contains(deviceName)){
                 devicesMap[deviceName] = info;
+                SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+                bridgeMap.insert(deviceName,bridge);
             }
             deviceXml = deviceXml.nextSibling();
         }
@@ -667,14 +688,8 @@ void MainWindow::performAction(QAction *action)
         experimentDialog.exec();
     }
     else if (action->text() == "Конфигурация устройств"){
-        if(isLap){
-            QMessageBox::warning(this, "Ошибка", "Нельзя конфигурировать устройства во время захода!\nЗавершите заход!");
-            return;
-        }
-        canRead = false;
         deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap, connectionsMap, messagesMap, this);
         experimentDialog.exec();
-        canRead = true;
     }
 }
 
@@ -695,7 +710,10 @@ void MainWindow::deleteConnection()
         TableConnectionsFields *fields = &tableFieldsMap[key];
         if (fields->row > row) fields->row -= 1;
     }
+    if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.tcpCount > 0) bridgeMap.remove(deviceName);
     devicesMap.remove(deviceName);
+    bufferMap.remove(deviceName);
+    newDataMap.remove(deviceName);
     ui->tableWidgetConnections->removeRow(ui->tableWidgetConnections->currentRow());
     setupTableSize(ui->tableWidgetConnections);
 }
@@ -719,6 +737,10 @@ void MainWindow::editConnection()
         DeviceInfo info = cs.getSettings();
         QString deviceName = info.ID;
         devicesMap[deviceName] = info;
+        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
+            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+            bridgeMap.insert(deviceName,bridge);
+        }
     }
 }
 
@@ -733,10 +755,12 @@ void MainWindow::openConnectionSettings()
             QMessageBox::warning(this, "Ошибка", "Устройство с таким ID уже добавлено!\nУдалите или измените имеющееся если хотите добавить это");
             return;
         }
-        if(!devicesMap.contains(deviceName)){
-            devicesMap.insert(deviceName,info);
-        }
+        devicesMap.insert(deviceName,info);
         addItemToConnectionsTable(info);
+        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
+            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+            bridgeMap.insert(deviceName,bridge);
+        }
     }
 }
 
@@ -877,13 +901,16 @@ void MainWindow::connectDevice()
             QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
             return;
         }
-        else{
-            onnOffItem->setBackground(QBrush(QColor(0,255,0)));
-            connectionsMap.insert(deviceName, connection);
-            QByteArray* buffer = new QByteArray();
-            bufferMap.insert(deviceName, buffer);
-
+        onnOffItem->setBackground(QBrush(QColor(0,255,0)));
+        connectionsMap.insert(deviceName, connection);
+        DeviceInfo info = devicesMap[deviceName];
+        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
+            SerialToTcpBridge* bridge = bridgeMap[deviceName];
+            connect(bridge, SIGNAL(newConnectionCount()), this, SLOT(onNewBridgeConnection()));
+            bridge->start();
         }
+        QByteArray* buffer = new QByteArray();
+        bufferMap.insert(deviceName, buffer);
     }
     else if (protocolName == "TCP"){
         QTcpSocket* connection = new QTcpSocket(this);
@@ -931,6 +958,10 @@ void MainWindow::disconnectDevice()
     }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     delete bufferMap[deviceName];
+    if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.tcpCount > 0){
+        SerialToTcpBridge* bridge = bridgeMap[deviceName];
+        bridge->stop();
+    }
     bufferMap.remove(deviceName);
     connectionsMap.remove(deviceName);
 }
@@ -979,15 +1010,9 @@ void MainWindow::startExperiment()
         addItemToLogTable(localTime, "", event);
         foreach (QString connDevice, connectionsMap.keys()) {
             QObject* connection = connectionsMap[connDevice];
-            QByteArray buff = *bufferMap[connDevice];
-            DeviceInfo deviceInfo = devicesMap[connDevice];
-            QString protocol = deviceInfo.protocol;
             if (qobject_cast<QIODevice*>(connection)){
                 QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
                 if (!ioCon->isOpen()) continue;
-                if(ioCon->waitForReadyRead(1)){
-                    buff.append(ioCon->readAll());
-                }
             }
             foreach (QString eventName, eventMap.keys()) {
                 EventData* event = &eventMap[eventName];
@@ -1029,7 +1054,22 @@ void MainWindow::startExperiment()
     }
 }
 
-void MainWindow::readPorts(){
+void MainWindow::indicateData()
+{
+    foreach (QString device, tableFieldsMap.keys()) {
+        TableConnectionsFields *fields = &tableFieldsMap[device];
+        QTableWidgetItem* dataItem = fields->data;
+        if (fields->dataTimer == 0) {
+            dataItem->setBackground(QBrush(QColor(0,100,0)));
+            continue;
+        }
+        fields->dataTimer -= 1;
+        dataItem->setBackground(QBrush(QColor(0,255,0)));
+    }
+}
+
+void MainWindow::readPorts()
+{
     foreach (QString connDevice, connectionsMap.keys()) {
         QObject* connection = connectionsMap[connDevice];
         QByteArray buff;
@@ -1038,46 +1078,42 @@ void MainWindow::readPorts(){
             QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
             if (!ioCon->isOpen()) continue;
 
-            QTableWidgetItem *dataItem = tableFieldsMap[connDevice].data;
             if(ioCon->waitForReadyRead(1)){
                 buff.append(ioCon->readAll());
-                // dataItem->setBackground(QBrush(QColor(0,255,0)));
-                // indicateNewData(dataItem);
-            }
-            else{
-                // dataItem->setBackground(QBrush(QColor(0,100,0)));
+                tableFieldsMap[connDevice].dataTimer = 10;
             }
         }
-
+        if (buff.isEmpty()) return;
+        NewData data;
+        data.deviceInfo = devicesMap[connDevice];
+        data.buff = buff;
+        newDataMap[connDevice] = data;
+        if (data.deviceInfo.connType == "Serial" && data.deviceInfo.serialInfo.tcpCount > 0){
+            SerialToTcpBridge* bridge = bridgeMap[connDevice];
+            bridge->write(buff);
+        }
+        bufferMap[connDevice]->append(buff);
+        emit newData(connDevice);
     }
+}
+
+QMap<QString,NewData> MainWindow::getNewData(){
+    return newDataMap;
 }
 
 void MainWindow::parseMessage()
 {
-    if (!canRead) return;
-    if (isLap){
-        QTime currTime = QTime::currentTime();
-        int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
-        int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
-        int diffSeconds = currSeconds - startSeconds;
-        ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
-    }
+    if (!isLap) return;
+    QTime currTime = QTime::currentTime();
+    int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
+    int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
+    int diffSeconds = currSeconds - startSeconds;
+    ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
+
     foreach (QString connDevice, connectionsMap.keys()) {
         QObject* connection = connectionsMap[connDevice];
         QByteArray *buff = bufferMap[connDevice];
         if (connection == nullptr) continue;
-        if (qobject_cast<QIODevice*>(connection)){
-            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
-            if (!ioCon->isOpen()) continue;
-            QTableWidgetItem *dataItem = tableFieldsMap[connDevice].data;
-            if(ioCon->waitForReadyRead(1)){
-                buff->append(ioCon->readAll());
-                dataItem->setBackground(QBrush(QColor(0,255,0)));
-            }
-            else{
-                dataItem->setBackground(QBrush(QColor(0,100,0)));
-            }
-        }
         if (!isLap) continue;
         if (buff->isEmpty()) continue;
         QByteArray messData;

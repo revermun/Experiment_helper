@@ -54,6 +54,7 @@ HEADERS += \
     mainwindow.h \
     notesdialog.h \
     qchecklist.h \
+    serialtotcpbridge.h \
     startstopactionsdialog.h \
     structs.h \
     ublox.h \

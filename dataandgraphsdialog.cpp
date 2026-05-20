@@ -1,6 +1,7 @@
 #include "dataandgraphsdialog.h"
 #include "ui_dataandgraphsdialog.h"
 #include "enums.h"
+#include "mainwindow.h"
 
 dataAndGraphsDialog::dataAndGraphsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QWidget *parent)
     : QDialog(parent)

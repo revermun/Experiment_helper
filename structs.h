@@ -43,7 +43,9 @@ struct TableConnectionsFields{
     QTableWidgetItem* TCPPort;
     QTableWidgetItem* onOff;
     QTableWidgetItem* data;
+    int dataTimer;
     int row;
+    TableConnectionsFields() : dataTimer(0) {}
 };
 
 struct EventData{

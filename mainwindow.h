@@ -15,6 +15,7 @@
 
 #include "enums.h"
 #include "structs.h"
+#include "serialtotcpbridge.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,6 +29,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    QMap<QString,NewData> getNewData();
 
 public slots:
     void openConnectionSettings();
@@ -46,13 +49,14 @@ public slots:
     void addConnectionFromFile();
     void clearLogTable();
     void readPorts();
+    void indicateData();
+    void onNewBridgeConnection();
 
 signals:
-    void newData();
+    void newData(QString name);
 
 private:
     void getMessagesConfig();
-
     void fillConnectionsTable();
     void addItemToConnectionsTable(DeviceInfo info);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
@@ -61,14 +65,16 @@ private:
     Ui::MainWindow *ui;
 
     //контейнеры
+    QList<QList<QString>> notesList;
+    QMap<QString,Mess> messagesMap;
+    QMap<QString,EventData> eventMap;
+
     QMap<QString,DeviceInfo> devicesMap;
     QMap<QString,TableConnectionsFields> tableFieldsMap;
     QMap<QString, QObject*> connectionsMap;
-    QList<QList<QString>> notesList;
     QMap<QString,QByteArray*> bufferMap;
-    QMap<QString,EventData> eventMap;
-    QMap<QString,Mess> messagesMap;
     QMap<QString,NewData> newDataMap;
+    QMap<QString,SerialToTcpBridge*> bridgeMap;
 
     //работа с файлами
     QDomDocument connectionsDoc;
@@ -78,7 +84,6 @@ private:
     QString experimentDirectory;
 
     //флаги
-    bool canRead = 1;
     bool isLap = 0;
     int lapNumber = 0;
     bool eventSettingsSolFound = 0;
@@ -87,7 +92,7 @@ private:
     bool eventSettingsRelSolLost = 0;
 
     QTime lapTime;
-    QString version = "0.1.0";
+    QString version = "0.2.0";
 
 };
 #endif // MAINWINDOW_H

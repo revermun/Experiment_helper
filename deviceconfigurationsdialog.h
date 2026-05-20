@@ -11,6 +11,7 @@
 #include <structs.h>
 #include <cmath>
 
+
 namespace Ui {
 class deviceConfigurationsDialog;
 }
@@ -46,6 +47,7 @@ public slots:
     void enableEphFrame(bool state);
     void MASKcheckClickEvent(bool state);
     void comboCONFIGRTKchangeEvent(QString text);
+    void getNewData(QString device);
 
 private:
     void setupTableSize(QTableWidget* table);
@@ -62,6 +64,7 @@ private:
     QString currentItemText;
     QByteArray streamBuffer;
     QString protocol;
+
     bool newResponse;
     int count = 0;
     bool velCheck;

@@ -4,6 +4,7 @@
 #include "ubloxparser.h"
 #include "convertors.h"
 #include "unicoreparser.h"
+#include "mainwindow.h"
 
 /// протоколы unicore
 /// отностельное решение:
@@ -123,6 +124,8 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,DeviceInfo> 
     , ui(new Ui::deviceConfigurationsDialog)
 {
     ui->setupUi(this);
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent);
+    connect(mainWindow, SIGNAL(newData(QString)), this, SLOT(getNewData(QString)));
     this->devicesMap = devicesMap;
     this->connectionsMap = connectionsMap;
     this->messagesMap = messagesMap;
@@ -452,21 +455,19 @@ void deviceConfigurationsDialog::showPortSettings(QString text){
     else setChildrenHidden(ui->framePRTUART, false);
 }
 
-
+void deviceConfigurationsDialog::getNewData(QString device)
+{
+    if (ui->comboBoxDevice1->currentText() != device) return;
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    QMap<QString,NewData> dataMap = mainWindow->getNewData();
+    streamBuffer.append(dataMap[device].buff);
+}
 
 void deviceConfigurationsDialog::parseMessage()
 {
 
     if (currentConnection == nullptr){
         return;
-    }
-
-    if (qobject_cast<QIODevice*>(currentConnection)){
-        QIODevice* ioCon = qobject_cast<QIODevice*>(currentConnection);
-        if (!ioCon->isOpen()) return;
-        if(ioCon->waitForReadyRead(1)){
-            streamBuffer.append(ioCon->readAll());
-        }
     }
 
     if (protocol == "Ublox"){
