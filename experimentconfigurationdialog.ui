@@ -48,10 +48,10 @@
          <item>
           <widget class="QComboBox" name="comboBoxExperimentType">
            <property name="currentText">
-            <string>Подвижный</string>
+            <string/>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>-1</number>
            </property>
            <item>
             <property name="text">
@@ -166,55 +166,79 @@
           <set>Qt::AlignCenter</set>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="labelLocationOfEvent">
-            <property name="text">
-             <string>Место проведения</string>
+          <item>
+           <widget class="QFrame" name="frameStationary">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
             </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_12">
+             <item>
+              <widget class="QLabel" name="labelLocationOfEvent">
+               <property name="text">
+                <string>Место проведения</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEditLocationOfEvent"/>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEditLocationOfEvent"/>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="labelStartPoint">
-            <property name="text">
-             <string>Стартовая точка</string>
+           <widget class="QFrame" name="frameMoving">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEditStartPoint"/>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="labelEndPoint">
-            <property name="text">
-             <string>Конечная точка</string>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
             </property>
+            <layout class="QVBoxLayout" name="verticalLayout_13">
+             <item>
+              <widget class="QLabel" name="labelStartPoint">
+               <property name="text">
+                <string>Стартовая точка</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEditStartPoint"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelEndPoint">
+               <property name="text">
+                <string>Конечная точка</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEditEndPoint"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelMovementMethod">
+               <property name="text">
+                <string>Вид движения</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEditMovementMethod"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelAboutVehicle">
+               <property name="text">
+                <string>Об источнике движения</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEditAboutVehicle"/>
+             </item>
+            </layout>
            </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEditEndPoint"/>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="labelMovementMethod">
-            <property name="text">
-             <string>Вид движения</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEditMovementMethod"/>
-          </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="labelAboutVehicle">
-            <property name="text">
-             <string>Об источнике движения</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEditAboutVehicle"/>
           </item>
           <item>
            <spacer name="verticalSpacer">
@@ -266,7 +290,7 @@
                <second>0</second>
                <year>2026</year>
                <month>2</month>
-               <day>2</day>
+               <day>1</day>
               </datetime>
              </property>
              <property name="currentSection">

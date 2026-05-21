@@ -36,6 +36,7 @@ public slots:
     void toggleAdressEditable(QString string);
     void saveSettings();
     void checkFields();
+    void toggleSerialTCPsettingsEnabled(bool);
 
 private:
     void setChildrenHidden(QObject* parent, bool isHidden);

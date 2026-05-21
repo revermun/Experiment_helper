@@ -18,7 +18,8 @@ struct DeviceInfo{
         int dataBits;
         QString parity;
         int stopBits;
-        QString tcpPort;
+        bool isTranslating;
+        uint16_t tcpPort;
         int tcpCount;
     }serialInfo;
     struct CANInfo{
@@ -28,7 +29,7 @@ struct DeviceInfo{
     struct TCPInfo{
         QString clientServer;
         QString adress;
-        QString port;
+        uint16_t port;
     }tcpInfo;
 };
 

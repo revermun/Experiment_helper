@@ -29,6 +29,8 @@ public:
     explicit experimentConfigurationDialog(QString experimentDirectory,QWidget *parent = nullptr);
     ~experimentConfigurationDialog();
 
+    void saveAll();
+
 public slots:
     void saveTab();
     void addDevice();
@@ -75,6 +77,9 @@ private:
     void sortListWidgetByDeviceType(QListWidget* listWidget, Qt::SortOrder order);
     QGroupBox* addParameter(QString parameter,  QGroupBox* group);
     QList<QGroupBox*> getParameters(QGroupBox* group);
+    void saveAboutExperiment();
+    void saveConnections();
+    void saveMounting();
 };
 
 #endif // EXPERIMENTCONFIGURATIONDIALOG_H

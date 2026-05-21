@@ -30,12 +30,13 @@ ConnectionSettings::ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent)
         ui->comboDataBits->setCurrentText       (QString::number(deviceInfo.serialInfo.dataBits));
         ui->comboParity->setCurrentText         (deviceInfo.serialInfo.parity);
         ui->comboStopBits->setCurrentText       (QString::number(deviceInfo.serialInfo.stopBits));
+        ui->checkSerialIsTranslating->setChecked(deviceInfo.serialInfo.isTranslating);
         ui->comboSerialConnNum->setCurrentText  (QString::number(deviceInfo.serialInfo.tcpCount));
-        ui->lineSerialTCPport->setText          (deviceInfo.serialInfo.tcpPort);
+        ui->spinSerialTCPport->setValue         (deviceInfo.serialInfo.tcpPort);
     }
     else if (connectionType == "TCP"){
         ui->comboTCPclientServer->setCurrentText(deviceInfo.tcpInfo.clientServer);
-        ui->lineTCPport->setText                (deviceInfo.tcpInfo.port);
+        ui->spinTCPport->setValue               (deviceInfo.tcpInfo.port);
         ui->lineTCPaddr->setText                (deviceInfo.tcpInfo.adress);
     }
     else if (connectionType == "CAN"){
@@ -48,6 +49,10 @@ ConnectionSettings::ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent)
 ConnectionSettings::~ConnectionSettings()
 {
     delete ui;
+}
+
+void ConnectionSettings::toggleSerialTCPsettingsEnabled(bool isEnabled){
+    ui->frameSerialTCP->setEnabled(isEnabled);
 }
 
 void ConnectionSettings::setChildrenHidden(QObject* parent, bool isHidden){
@@ -123,15 +128,15 @@ void ConnectionSettings::checkFields(){
         title = "Не выбран тип подключения!";
         text = "Выберите тип подключения";
     }
-    else if(ui->comboBoxConnectionType->currentText() == "Serial"){
-        if(ui->lineSerialTCPport->text().isEmpty()){
-            title = "Не указан TCP порт!";
-            text = "Введите TCP порт";
-        }
-        else isWarning = 0;
-    }
+    // else if(ui->comboBoxConnectionType->currentText() == "Serial"){
+    //     // if(ui->lineSerialTCPport->text().isEmpty()){
+    //     //     title = "Не указан TCP порт!";
+    //     //     text = "Введите TCP порт";
+    //     // }
+    //     // else isWarning = 0;
+    // }
     else if(ui->comboBoxConnectionType->currentText() == "TCP"){
-        if(ui->lineTCPport->text().isEmpty()){
+        if(ui->spinTCPport->text().isEmpty()){
             title = "Не указан TCP порт!";
             text = "Введите TCP порт";
         }
@@ -175,13 +180,15 @@ void ConnectionSettings::saveSettings()
         QString dataBits = ui->comboDataBits->currentText();
         QString parity = ui->comboParity->currentText();
         QString stopBits = ui->comboStopBits->currentText();
-        QString tcpPort = ui->lineSerialTCPport->text();
+        bool isTranslating = ui->checkSerialIsTranslating->isChecked();
+        uint16_t tcpPort = ui->spinSerialTCPport->value();
         QString tcpCount = ui->comboSerialConnNum->currentText();
         deviceInfo.serialInfo.port = port;
         deviceInfo.serialInfo.baudrate = baudrate.toInt();
         deviceInfo.serialInfo.dataBits = dataBits.toInt();
         deviceInfo.serialInfo.parity = parity;
         deviceInfo.serialInfo.stopBits = stopBits.toInt();
+        deviceInfo.serialInfo.isTranslating = isTranslating;
         deviceInfo.serialInfo.tcpCount = tcpCount.toInt();
         deviceInfo.serialInfo.tcpPort = tcpPort;
     }
@@ -193,7 +200,7 @@ void ConnectionSettings::saveSettings()
     }
     else if (connectionType == "TCP"){
         QString clientServer = ui->comboTCPclientServer->currentText();
-        QString port = ui->lineTCPport->text();
+        uint16_t port = ui->spinTCPport->value();
         QString adress = ui->lineTCPaddr->text();
         deviceInfo.tcpInfo.clientServer = clientServer;
         deviceInfo.tcpInfo.port = port;

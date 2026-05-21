@@ -37,6 +37,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     notesdialog.cpp \
+    pickdirectorydialog.cpp \
     startstopactionsdialog.cpp \
     ubloxparser.cpp \
     unicoreparser.cpp
@@ -53,6 +54,7 @@ HEADERS += \
     groupboxareawidget.h \
     mainwindow.h \
     notesdialog.h \
+    pickdirectorydialog.h \
     qchecklist.h \
     serialtotcpbridge.h \
     startstopactionsdialog.h \
@@ -71,6 +73,7 @@ FORMS += \
     experimentconfigurationdialog.ui \
     mainwindow.ui \
     notesdialog.ui \
+    pickdirectorydialog.ui \
     startstopactionsdialog.ui
 
 # Default rules for deployment.

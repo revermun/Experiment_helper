@@ -27,145 +27,163 @@ struct convert<QString> {
 
 // общее
 
+void experimentConfigurationDialog::saveAll()
+{
+    saveAboutExperiment();
+    saveConnections();
+    saveMounting();
+}
+
+void experimentConfigurationDialog::saveAboutExperiment(){
+    QFile file(aboutExperimentDirectory);
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    file.close();
+    YAML::Node config = YAML::LoadFile(aboutExperimentDirectory.toStdString());
+    config["Name"] = ui->lineEditExperimentID->text();
+    config["Date"] = ui->dateEdit->date().toString("dd.MM.yyyy");
+    config["Goal"] = ui->textEditGoal->toPlainText();
+    config["Type"] = ui->comboBoxExperimentType->currentText();
+    YAML::Node generalInfo = config["General info"];
+    generalInfo.reset();
+    generalInfo = config["General info"];
+    if (ui->comboBoxExperimentType->currentText() == "Подвижный"){
+        generalInfo["Start point"] = ui->lineEditStartPoint->text();
+        generalInfo["End point"] = ui->lineEditEndPoint->text();
+        generalInfo["Movement method"] = ui->lineEditMovementMethod->text();
+        generalInfo["About vehicle"] = ui->lineEditAboutVehicle->text();
+    }
+    else {
+        generalInfo["Location of event"] = ui->lineEditLocationOfEvent->text();
+    }
+    YAML::Node team = config["Team"];
+    team.reset();
+    team = config["Team"];
+    for (int row = 0; row < ui->tableTeam->rowCount(); ++row) {
+        QString FIO = ui->tableTeam->item(row,0)->text();
+        QString role = qobject_cast<QComboBox*>(ui->tableTeam->cellWidget(row,1))->currentText();
+        YAML::Node member;
+        member["Name"] = FIO;
+        member["Role"] = role;
+        team.push_back(member);
+    }
+    std::ofstream fout(aboutExperimentDirectory.toStdString());
+    fout << config;
+}
+
+void experimentConfigurationDialog::saveConnections(){
+    QFile file(experimentConnectionsDirectory);
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    file.close();
+    YAML::Node config = YAML::LoadFile(experimentConnectionsDirectory.toStdString());
+    YAML::Node Devices = config["Devices"];
+    YAML::Node Connections = config["Connections"];
+    foreach (auto device, this->devicesMap) {
+        YAML::Node deviceNode;
+        deviceNode["Name"] = device.id;
+        deviceNode["Model"] = device.model;
+        QString type = device.type;
+        deviceNode["Type"] = type;
+        YAML::Node ports;
+        foreach (auto port, device.outputs) {
+            ports.push_back(port);
+        }
+        deviceNode["Ports"] = ports;
+        YAML::Node Parameters;
+        if (type == "IMU"){
+            Parameters["Instability bias"] = device.imuInfo.instabBias;
+            Parameters["Random walk"] = device.imuInfo.randomWalk;
+            Parameters["Initial error"] = device.imuInfo.initialError;
+        }
+        else if (type == "Антенна"){
+            Parameters["Antex/PCV file path"] = device.antennaInfo.confFileDirectory;
+        }
+        else if (type == "Камера"){
+            Parameters["fps"] = device.cameraInfo.fps;
+            Parameters["Height"] = device.cameraInfo.heigt;
+            Parameters["Width"] = device.cameraInfo.width;
+        }
+        deviceNode["Parameters"] = Parameters;
+        Devices.push_back(deviceNode);
+    }
+    foreach (auto connection, connectionsMap) {
+        YAML::Node ConnectionNode;
+        ConnectionNode["Device1"] = connection.device1;
+        ConnectionNode["Device2"] = connection.device2;
+        ConnectionNode["Port1"] = connection.port1;
+        ConnectionNode["Port2"] = connection.port2;
+        QString connType = connection.connectionType;
+        ConnectionNode["Connection type"] = connType;
+        YAML::Node Parameters;
+        if (connType == "Serial"){
+            Parameters["Baudrate"] = connection.serialInfo.baudrate;
+            Parameters["Parity"] = connection.serialInfo.parity;
+            Parameters["Data bits"] = connection.serialInfo.dataBits;
+            Parameters["Stop bits"] = connection.serialInfo.stopBits;
+        }
+        else if (connType == "CAN"){
+            Parameters["Baudrate"] = connection.canInfo.baudrate;
+        }
+        else if (connType == "Коакс. кабель"){
+            Parameters["Length"] = connection.coaxCableInfo.length;
+            Parameters["Material"] = connection.coaxCableInfo.material;
+            Parameters["Data loss"] = connection.coaxCableInfo.dataLoss;
+        }
+        else if (connType == "TCP"){
+            Parameters["Adress"] = connection.tcpInfo.adress;
+            Parameters["Port"] = connection.tcpInfo.port;
+        }
+        ConnectionNode["Parameters"] = Parameters;
+        Connections.push_back(ConnectionNode);
+    }
+    std::ofstream fout(experimentConnectionsDirectory.toStdString());
+    fout << config;
+}
+
+void experimentConfigurationDialog::saveMounting(){
+    int count = ui->areaDeviceParameters->count();
+    QFile file(experimentMountingDirectory);
+    file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    file.close();
+    YAML::Node config = YAML::LoadFile(experimentMountingDirectory.toStdString());
+    YAML::Node Mounting = config["Mounting"];
+    for (int i = 0; i < count; ++i) {
+        QGroupBox* group = ui->areaDeviceParameters->groupAtPosition(i);
+        QString device = group->title();
+        YAML::Node DeviceNode;
+        DeviceNode["Name"] = device;
+        QList<QGroupBox*> parameterGroups = getParameters(group);
+        YAML::Node ParametersNode;
+        foreach (QGroupBox* parameterGroup, parameterGroups) {
+            QString name = parameterGroup->title();
+            YAML::Node ParameterNode;
+            QGridLayout* layout = qobject_cast<QGridLayout*>(parameterGroup->layout());
+            for (int j = 0; j < layout->rowCount(); ++j) {
+                QLabel* label = qobject_cast<QLabel*>(layout->itemAtPosition(j,0)->widget());
+                QSpinBox* spin =  qobject_cast<QSpinBox*>(layout->itemAtPosition(j,1)->widget());
+                QString parameterName = label->text();
+                int value = spin->value();
+                ParameterNode[parameterName] = value;
+            }
+            ParametersNode[name] = ParameterNode;
+        }
+        DeviceNode["Parameters"] = ParametersNode;
+        Mounting.push_back(DeviceNode);
+    }
+    std::ofstream fout(experimentMountingDirectory.toStdString());
+    fout << config;
+}
+
 void experimentConfigurationDialog::saveTab()
 {
     int index = ui->tabWidget->currentIndex();
     if (index == 0){
-        QFile file(aboutExperimentDirectory);
-        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-        file.close();
-        YAML::Node config = YAML::LoadFile(aboutExperimentDirectory.toStdString());
-        config["Name"] = ui->lineEditExperimentID->text();
-        config["Date"] = ui->dateEdit->date().toString("dd.MM.yyyy");
-        config["Goal"] = ui->textEditGoal->toPlainText();
-        config["Type"] = ui->comboBoxExperimentType->currentText();
-        YAML::Node generalInfo = config["General info"];
-        generalInfo.reset();
-        generalInfo = config["General info"];
-        if (ui->comboBoxExperimentType->currentText() == "Подвижный"){
-            generalInfo["Start point"] = ui->lineEditStartPoint->text();
-            generalInfo["End point"] = ui->lineEditEndPoint->text();
-            generalInfo["Movement method"] = ui->lineEditMovementMethod->text();
-            generalInfo["About vehicle"] = ui->lineEditAboutVehicle->text();
-        }
-        else {
-            generalInfo["Location of event"] = ui->lineEditLocationOfEvent->text();
-        }
-        YAML::Node team = config["Team"];
-        team.reset();
-        team = config["Team"];
-        for (int row = 0; row < ui->tableTeam->rowCount(); ++row) {
-            QString FIO = ui->tableTeam->item(row,0)->text();
-            QString role = qobject_cast<QComboBox*>(ui->tableTeam->cellWidget(row,1))->currentText();
-            YAML::Node member;
-            member["Name"] = FIO;
-            member["Role"] = role;
-            team.push_back(member);
-        }
-        std::ofstream fout(aboutExperimentDirectory.toStdString());
-        fout << config;
+        saveAboutExperiment();
     }
     else if (index == 1){
-        QFile file(experimentConnectionsDirectory);
-        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-        file.close();
-        YAML::Node config = YAML::LoadFile(experimentConnectionsDirectory.toStdString());
-        YAML::Node Devices = config["Devices"];
-        YAML::Node Connections = config["Connections"];
-        foreach (auto device, this->devicesMap) {
-            YAML::Node deviceNode;
-            deviceNode["Name"] = device.id;
-            deviceNode["Model"] = device.model;
-            QString type = device.type;
-            deviceNode["Type"] = type;
-            YAML::Node ports;
-            foreach (auto port, device.outputs) {
-                ports.push_back(port);
-            }
-            deviceNode["Ports"] = ports;
-            YAML::Node Parameters;
-            if (type == "IMU"){
-                Parameters["Instability bias"] = device.imuInfo.instabBias;
-                Parameters["Random walk"] = device.imuInfo.randomWalk;
-                Parameters["Initial error"] = device.imuInfo.initialError;
-            }
-            else if (type == "Антенна"){
-                Parameters["Antex/PCV file path"] = device.antennaInfo.confFileDirectory;
-            }
-            else if (type == "Камера"){
-                Parameters["fps"] = device.cameraInfo.fps;
-                Parameters["Height"] = device.cameraInfo.heigt;
-                Parameters["Width"] = device.cameraInfo.width;
-            }
-            deviceNode["Parameters"] = Parameters;
-            Devices.push_back(deviceNode);
-        }
-        foreach (auto connection, connectionsMap) {
-            YAML::Node ConnectionNode;
-            ConnectionNode["Device1"] = connection.device1;
-            ConnectionNode["Device2"] = connection.device2;
-            ConnectionNode["Port1"] = connection.port1;
-            ConnectionNode["Port2"] = connection.port2;
-            QString connType = connection.connectionType;
-            ConnectionNode["Connection type"] = connType;
-            YAML::Node Parameters;
-            if (connType == "Serial"){
-                Parameters["Baudrate"] = connection.serialInfo.baudrate;
-                Parameters["Parity"] = connection.serialInfo.parity;
-                Parameters["Data bits"] = connection.serialInfo.dataBits;
-                Parameters["Stop bits"] = connection.serialInfo.stopBits;
-            }
-            else if (connType == "CAN"){
-                Parameters["Baudrate"] = connection.canInfo.baudrate;
-            }
-            else if (connType == "Коакс. кабель"){
-                Parameters["Length"] = connection.coaxCableInfo.length;
-                Parameters["Material"] = connection.coaxCableInfo.material;
-                Parameters["Data loss"] = connection.coaxCableInfo.dataLoss;
-            }
-            else if (connType == "TCP"){
-                Parameters["Adress"] = connection.tcpInfo.adress;
-                Parameters["Port"] = connection.tcpInfo.port;
-            }
-            ConnectionNode["Parameters"] = Parameters;
-            Connections.push_back(ConnectionNode);
-        }
-        std::ofstream fout(experimentConnectionsDirectory.toStdString());
-        fout << config;
+        saveConnections();
     }
     else if (index == 2){
-        int count = ui->areaDeviceParameters->count();
-        QFile file(experimentMountingDirectory);
-        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-        file.close();
-        YAML::Node config = YAML::LoadFile(experimentMountingDirectory.toStdString());
-        YAML::Node Mounting = config["Mounting"];
-        for (int i = 0; i < count; ++i) {
-            QGroupBox* group = ui->areaDeviceParameters->groupAtPosition(i);
-            QString device = group->title();
-            YAML::Node DeviceNode;
-            DeviceNode["Name"] = device;
-            QList<QGroupBox*> parameterGroups = getParameters(group);
-            YAML::Node ParametersNode;
-            foreach (QGroupBox* parameterGroup, parameterGroups) {
-                QString name = parameterGroup->title();
-                YAML::Node ParameterNode;
-                QGridLayout* layout = qobject_cast<QGridLayout*>(parameterGroup->layout());
-                for (int j = 0; j < layout->rowCount(); ++j) {
-                    QLabel* label = qobject_cast<QLabel*>(layout->itemAtPosition(j,0)->widget());
-                    QSpinBox* spin =  qobject_cast<QSpinBox*>(layout->itemAtPosition(j,1)->widget());
-                    QString parameterName = label->text();
-                    int value = spin->value();
-                    ParameterNode[parameterName] = value;
-                }
-                ParametersNode[name] = ParameterNode;
-            }
-            DeviceNode["Parameters"] = ParametersNode;
-            Mounting.push_back(DeviceNode);
-        }
-        std::ofstream fout(experimentMountingDirectory.toStdString());
-        fout << config;
-
+        saveMounting();
     }
 }
 
@@ -243,6 +261,7 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
         YAML::Node config = YAML::LoadFile(aboutExperimentDirectory.toStdString());
         if (config["Name"]) ui->lineEditExperimentID->setText(config["Name"].as<QString>());
         if (config["Date"]) ui->dateEdit->setDate(QDate::fromString(config["Date"].as<QString>(),"dd.MM.yyyy"));
+        else ui->dateEdit->setDate(QDate::currentDate());
         if (config["Goal"]) ui->textEditGoal->setText(config["Goal"].as<QString>());
         if (config["Type"]) {
             QString type = config["Type"].as<QString>();
@@ -253,9 +272,11 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
                 if (generalInfo["End point"]) ui->lineEditEndPoint->setText(generalInfo["End point"].as<QString>());
                 if (generalInfo["Movement method"]) ui->lineEditMovementMethod->setText(generalInfo["Movement method"].as<QString>());
                 if (generalInfo["About vehicle"]) ui->lineEditAboutVehicle->setText(generalInfo["About vehicle"].as<QString>());
+                ui->frameStationary->setHidden(true);
             }
             else {
-                if (config["Location of event"]) ui->lineEditLocationOfEvent->setText(generalInfo["Location of event"].as<QString>());
+                if (generalInfo["Location of event"]) ui->lineEditLocationOfEvent->setText(generalInfo["Location of event"].as<QString>());
+                ui->frameMoving->setHidden(true);
             }
         }
         YAML::Node team = config["Team"];
@@ -416,9 +437,6 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
             }
         }
     }
-    ui->labelLocationOfEvent->setHidden(true);
-    ui->lineEditLocationOfEvent->setHidden(true);
-    ui->dateEdit->setDate(QDate::currentDate());
     addSaveButton(0);
     addSaveButton(1);
     addSaveButton(2);
@@ -473,18 +491,10 @@ void experimentConfigurationDialog::changeGeneralInfo(QString experimentType)
         }
     }
     if (experimentType == "Стационарный"){
-        ui->labelLocationOfEvent->setHidden(false);
-        ui->lineEditLocationOfEvent->setHidden(false);
+        ui->frameStationary->setHidden(false);
     }
     else{
-        ui->labelAboutVehicle->setHidden(false);
-        ui->lineEditAboutVehicle->setHidden(false);
-        ui->labelStartPoint->setHidden(false);
-        ui->lineEditStartPoint->setHidden(false);
-        ui->labelEndPoint->setHidden(false);
-        ui->lineEditEndPoint->setHidden(false);
-        ui->labelMovementMethod->setHidden(false);
-        ui->lineEditMovementMethod->setHidden(false);
+        ui->frameMoving->setHidden(false);
     }
 }
 

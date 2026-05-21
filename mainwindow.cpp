@@ -10,75 +10,27 @@
 #include "ubloxparser.h"
 #include "unicoreparser.h"
 #include "convertors.h"
+#include "pickdirectorydialog.h"
 
-
-/// TODO: разветвление потока
-/// Задача:
-/// Нужно добавить возможность ретранслировать данные из подключенного Serial потра
-/// на несколько TCP соединений без влияния на работу приложения.
-/// Идея:
-/// С Serial порта мы читаем ТОЛЬКО в главном окне, сохраняем данные в контейнер newData
-/// Далее этот контейнер передается нуждающимся объектам и сущностям
-/// Как реализовывать:
-/// Добавляем слот readPorts и массив структур newData содержащая инфу об источнике и QByteArray newData  для MainWindow.
-/// В нем читаются порты и новая информация добавляется в мапу буферов,
-/// отправляется сигнал newData, также при получении новой инфы загораются
-/// на определенное время ячейки данных в таблице.
-/// В конфигурации устройств и других окнах добавляется ссылка на MainWindow, поле buff
-/// а также слот getNewData, привязанный к сигналу newData, в котором читается новая структура,
-/// добавляющий инфу в buf то есть что-то на подобие: connect(mainWindow, SIGNAL(newData), this, SLOT(getNewData))
-/// У tcp моста в функции start остается только адрес сервера,
-/// также метод sendData и поле buff которое заполняется от этого метода.
-/// onSerialReadyRead отпраляет buff в сокеты и очищается
-/// Во всех функциях parseMessage ведется работа с buff.
-///
-/// План:
-/// 1. Передалать проект под задумку выше
-/// 2. Добавить в проект TCP мост
-/// 3. Протестировать разветвление
-///
-
-
-/// Мысли по поводу принципа работы приложения
-/// Чтение с портов:
-/// Чтение с портов происходит только в одном месте*, а в остальные окна отправляется уже обработанная информация
-/// Читаем порт, запускаем парсеры, парсим сообщения получаем наследников структуры Message, закидываем их в массив
-/// При запуске какого либо из окон передаем ему также ссылку на этот массив, с ним же и работаем
-///
-/// *В конфигурацию устройств пользователь не должен заходить посередине захода, следовательно там можно читать с порта
-/// *Во вкладке терминала нужно предупеждать о завершении захода
-
-/// Мысли по поводу правок:
-/// 1. Надо реализовать подключение по TCP. Выполнено, мыслей нет
-/// 2. Новые события для “Настройка событий”. Пока не представляю как это возможно сделать
-/// КАСТОМНЫЕ СОБЫТИЯ
-/// я) Наименование события.
-/// а) Выбор устройства (на котором мониторим возникновение события).
-/// б) Выбор сообщения (список сообщений протокола выбранного устройства). (нужно будет составить список сообщений)
-/// в) Номер пар-ра в сообщении. Можно ограничиться названием, а по словарю определять номер
-/// нужно составить алгоритм работы событий - единый для всех устройств
-/// Должен быть: контейнер содержащий в себе название события, название устройства,
-/// индентификатор сообщения, номер параметра, тип проверки, доп параметры для типа проверки
-/// При создании нового события нужно добавить в контейнер новый элемент, причем это распространяется и на заготовленные события
-/// При запуске эксперимента происходит проход по списку и отправляются сообщения на периодическую отправку заданных сообщений
-/// Во время эксперимента парсятся сообщения, а затем отправляются на проверку:
-/// В цикле идет сравнение со всеми элементами контейнера, при совпадении происходит унифицированный алгоритм проверки:
-/// Сначала смотрится тип проверки, затем по параметрам определяется, произошло событие или нет (ставится флаг),
-/// затем выводится сообщение
-/// Для нахождения событий полей флагов в Unicore придется работать с двоичным протоколом,
-/// а это значит что нужно расшифровывать сообщения и для него под свои нужды
 
 
 
-/// При изменении/удалении чего либо имеющего свой файл нужно "на ходу" изменить этот файл !!!! надо уточнить !!!!
-/// TODO: Загрузка эксперимента
-///
-/// TODO: Сохранение эксперимента
-///
-/// TODO: Разобраться с функционалом окна “Действия при старте/остановке захода”
-/// Скорее всего после нажатия на "готово" в папку "Lap_presets" сохраняются пары Устройство - конфиг
-/// и при запуске захода подобранные таким образом устройства настраиваются по этим конфигам
-///
+/// Мысли по поводу правок:
+///1)	СДЕЛАНО Нужен начальный экран, который заставляет выбрать папку для эксперимента.
+///9)	СДЕЛАНО Надо бы добавить описание пути, чтобы понимать, какой эксперимент загружен сейчас.
+///     Предлагаю выводить последние три названия (“../НадПапка1/Папка1/Эксперимент1”) над красной кнопкой, над полем “Используемый пресет”.
+///2)	СДЕЛАНО Наличие TCP порта является дополнительным, поэтому не должно мешать создавать устройство.
+///3)	СДЕЛАНО Пожалуй, следует делать проверку на правильность введённого порта (т.к. сейчас там хоть текст можно вписать).
+///4)	СДЕЛАНО При сохранении во вкладке об эксперименте произошёл вылет.
+///5)	СДЕЛАНО Что будет происходить, если мы решим сохранить что-то во вкладке “Конфигурация эксперимента” не выбрав папку для эксперимента? Куда программа будет пытаться всё записать?
+///6)	TODO: В редакторе устройств для антенны лучше разместить на разных строках описание “Путь к Antex/PCV файлу” и поле для пути.
+///7)	TODO: Вкладка “Устройства и связи”. При создании связи необходимо проверять, что порт устройства не занят. Так как сейчас можно на один порт повесить сколько угодно устройств, а должен быть только один.
+///8)	TODO: По кнопке “Готово” нужно сохранять изменения или предлагать сохранить.
+///10)	TODO: Для подключений. Было бы здорово, если можно было выделить несколько устройств и чтобы при удалении удалялись только устройства из этой группы.
+///11)	TODO: Добавить “Сохранить как…” для эксперимента.
+///12)	TODO: Ещё надо бы запоминать последний путь загрузки/сохранения чего-либо, а то постоянно из корня диска приходится путь выбирать
+
+
 void MainWindow::setupTableSize(QTableWidget* table) {
     // Автоматическая подгонка столбцов
     table->resizeColumnsToContents();
@@ -157,19 +109,36 @@ bool MainWindow::deleteDir(const QString &dirName, bool isDeleteOnlyContents)
     return !error;
 }
 
+bool MainWindow::openPickDirectoryDialog(){
+    pickDirectoryDialog pdd(this);
+    if (pdd.exec() == QDialog::Accepted){
+        QString dir = pdd.getDir();
+        if (dir.isEmpty()) return false;
+        loadExperiment(dir);
+        return true;
+    }
+    return false;
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    ui->tableWidgetConnections->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    QWidgetList allWidgets = QApplication::allWidgets();
-    foreach (QWidget* widget, allWidgets) {
-        QPushButton* button = qobject_cast<QPushButton*>(widget);
-        if (button) {
-            button->setEnabled(false);
+    versionLabel = new QLabel();
+    experimentDirectoryLabel = new QLabel();
+
+    if(!openPickDirectoryDialog()){
+        QWidgetList allWidgets = QApplication::allWidgets();
+        foreach (QWidget* widget, allWidgets) {
+            QPushButton* button = qobject_cast<QPushButton*>(widget);
+            if (button) {
+                button->setEnabled(false);
+            }
         }
     }
+
+    ui->tableWidgetConnections->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->actionLoadExperiment->setProperty("root","Эксперимент");
     ui->actionSaveExperiment->setProperty("root", "Эксперимент");
     ui->actionLoadPreset->setProperty("root","Пресет");
@@ -188,10 +157,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer, SIGNAL(timeout()), this, SLOT(indicateData()));
     connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
     timer->start(1);
-
-
-    QLabel* versionLabel = new QLabel(tr("Версия ПО: ") + this->version);
+    versionLabel->setText(tr("Версия ПО: ") + this->version);
     statusBar()->addWidget(versionLabel);
+    statusBar()->addWidget(experimentDirectoryLabel);
 }
 
 void MainWindow::getMessagesConfig()
@@ -303,17 +271,19 @@ void MainWindow::addItemToConnectionsTable(DeviceInfo info)
     fields.ID->setText(deviceName);
     fields.connectionType->setText(connType);
     if (connType == "Serial"){
-        QString TCPPort = info.serialInfo.tcpPort;
-        QString string = QString("%1 (%2 из %3)").arg(TCPPort).arg(0).arg(QString::number(info.serialInfo.tcpCount));
-        fields.TCPPort->setText(string);
+        if (info.serialInfo.isTranslating){
+            QString TCPPort = QString::number(info.serialInfo.tcpPort);
+            QString string = QString("%1 (%2 из %3)").arg(TCPPort).arg(0).arg(QString::number(info.serialInfo.tcpCount));
+            fields.TCPPort->setText(string);
+        }
     }
     else if (connType == "CAN"){
         // ничего
     }
     else if (connType == "TCP"){
-        QString port =  info.tcpInfo.port;
+        uint16_t port =  info.tcpInfo.port;
 
-        fields.TCPPort->setText(port);
+        fields.TCPPort->setText(QString::number(port));
     }
     ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_ID,fields.ID);
     ui->tableWidgetConnections->setItem(rowCount,INDEX_CONN_TABLE_TYPE,fields.connectionType);
@@ -348,13 +318,9 @@ void MainWindow::fillConnectionsTable()
     }
 }
 
-void MainWindow::addConnectionFromFile()
-{
-    QString dir = QFileDialog::getOpenFileName(this,
-                                               tr(""), "/home", tr("Connection file (*.xml)"));
-    if (dir == "") {return;}
-
-    QFile file(dir);
+void MainWindow::loadConnections(QString connFileDir){
+    if (connFileDir == "") {return;}
+    QFile file(connFileDir);
     if (!file.open(QIODevice::ReadWrite)) return;
     QDomDocument doc("document");
     file.close();
@@ -380,6 +346,7 @@ void MainWindow::addConnectionFromFile()
             QString dataBits =          parametersXml.attribute("data_bits");
             QString tcpPort =           parametersXml.attribute("TCP_port_number");
             QString parity =            parametersXml.attribute("parity");
+            QString isTranslating =     parametersXml.attribute("is_translating");
             QString stopBits =          parametersXml.attribute("stop_bits");
             QString tcpCount =          parametersXml.attribute("TCP_connections_number");
             info.serialInfo.port = port;
@@ -387,8 +354,9 @@ void MainWindow::addConnectionFromFile()
             info.serialInfo.dataBits = dataBits.toInt();
             info.serialInfo.parity = parity;
             info.serialInfo.stopBits = stopBits.toInt();
+            info.serialInfo.isTranslating = isTranslating.toInt();
             info.serialInfo.tcpCount = tcpCount.toInt();
-            info.serialInfo.tcpPort = tcpPort;
+            info.serialInfo.tcpPort = tcpPort.toUInt();
         }
         else if (connType == "CAN"){
             QString baudrate =           parametersXml.attribute("baudrate");
@@ -402,7 +370,7 @@ void MainWindow::addConnectionFromFile()
             QString port =              parametersXml.attribute("port_number");
             QString adress =            parametersXml.attribute("adress");
             info.tcpInfo.clientServer = clientServer;
-            info.tcpInfo.port = port;
+            info.tcpInfo.port = port.toUInt();
             info.tcpInfo.adress = adress;
         }
 
@@ -415,134 +383,110 @@ void MainWindow::addConnectionFromFile()
 
     setupTableSize(ui->tableWidgetConnections);
 }
+
+void MainWindow::loadEvents(QString eventFileDir)
+{
+    if (eventFileDir.isEmpty()) return;
+    QFile eventFile(eventFileDir);
+    eventFile.open(QIODevice::ReadWrite) /*return*/;
+    QDomDocument eventDoc("document");
+    eventFile.close();
+    if (!eventDoc.setContent(&eventFile)) /*return*/;
+
+    QDomElement docElem = eventDoc.documentElement();
+    QDomNode eventXml = docElem.firstChild();
+    while(!eventXml.isNull()) {
+        QDomElement e = eventXml.toElement();
+        QString eventName = e.tagName().replace('_',' ');
+        EventData event;
+        event.name                      = e.attribute("name");
+        event.device                    = e.attribute("device");
+        event.protocol                  = e.attribute("protocol");
+        event.message                   = e.attribute("message");
+        event.messageId                 = e.attribute("messageId");
+        event.fieldName                 = e.attribute("fieldName");
+        event.field                     = e.attribute("field").toInt();
+        event.fieldType                 = e.attribute("fieldType");
+        event.text                      = e.attribute("text");
+        event.intTriggers.isGreater     = e.attribute("isGreater").toInt();
+        event.intTriggers.isLesser      = e.attribute("isLesser").toInt();
+        event.intTriggers.isEqual       = e.attribute("isEqual").toInt();
+        event.intTriggers.threshhold    = e.attribute("threshhold").toInt();
+        event.bitmapTriggers.startBit   = e.attribute("startBit").toInt();
+        event.bitmapTriggers.endBit     = e.attribute("endBit").toInt();
+        event.bitmapTriggers.bitValue   = e.attribute("bitValue").toInt();
+        event.bitmapTriggers.isEqual    = e.attribute("bitIsEqual").toInt();
+        event.charTriggers.charValue    = e.attribute("charValue");
+        event.status                    = e.attribute("status").toInt();
+        if(!eventMap.contains(eventName)){
+            eventMap[eventName] = event;
+        }
+        eventXml = eventXml.nextSibling();
+    }
+}
+bool MainWindow::exploreExperiment(){
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                    "/home",
+                                                    QFileDialog::ShowDirsOnly
+                                                        | QFileDialog::DontResolveSymlinks);
+    if (dir.isEmpty()) return false;
+    this->experimentDirectory = dir;
+    return true;
+}
+
+bool MainWindow::loadExperiment(QString dir)
+{
+    if (dir == "") {return false;}
+    this->experimentDirectory = dir;
+    QStringList dirElements = dir.split('/');
+    QString labelStr;
+    if (dirElements.count() > 4) labelStr = QString("Директория эксперимента: %1/.../%2/%3/%4")
+                       .arg(dirElements.at(0))
+                       .arg(dirElements.at(dirElements.count()-3))
+                       .arg(dirElements.at(dirElements.count()-2))
+                       .arg(dirElements.at(dirElements.count()-1));
+    else labelStr = dir;
+    experimentDirectoryLabel->setText(labelStr);
+    this->devicesMap.clear();
+    this->eventMap.clear();
+    ///Чтение конфига устройств и заполнение таблицы
+
+    QString connectionsConfigDir = dir + '/' + "Configurations" + '/' + "connections.xml";
+    loadConnections(connectionsConfigDir);
+
+    QString eventsConfigDir = dir + '/' + "Configurations" + '/' + "events.xml";
+    loadEvents(eventsConfigDir);
+
+    notesDialog nD(experimentDirectory,isLap,this);
+    notesList = nD.getNotes();
+    qDebug() << notesList;
+    QWidgetList allWidgets = QApplication::allWidgets();
+    foreach (QWidget* widget, allWidgets) {
+        QPushButton* button = qobject_cast<QPushButton*>(widget);
+        if (button) {
+            button->setEnabled(true);
+        }
+    }
+    QDir experimentDir(experimentDirectory);
+    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
+    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
+    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
+    return true;
+}
+
+void MainWindow::addConnectionFromFile()
+{
+    QString dir = QFileDialog::getOpenFileName(this,
+                                               tr(""), experimentDirectory, tr("Connection file (*.xml)"));
+    loadConnections(dir);
+}
+
 /// TODO:: Можно выбрать пустую папку, если в ней нет нужных файлов, то они создаются пустыми, а походу работы с приложением
 /// заполняются
 void MainWindow::performAction(QAction *action)
 {
     if (action->text() == "Загрузить" && action->property("root") == "Эксперимент" ){
-        QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                        "/home",
-                                                        QFileDialog::ShowDirsOnly
-                                                            | QFileDialog::DontResolveSymlinks);
-        if (dir == "") {return;}
-        this->experimentDirectory = dir;
-        this->devicesMap.clear();
-        this->eventMap.clear();
-        ///Чтение конфига устройств и заполнение таблицы
-
-        QString connectionsConfigDir = dir + '/' + "Configurations" + '/' + "connections.xml";
-        QFile file(connectionsConfigDir);
-        file.open(QIODevice::ReadWrite) /*return*/;
-        QDomDocument doc("document");
-        file.close();
-        if (!doc.setContent(&file)) /*return*/;
-
-        QDomElement docElem = doc.documentElement();
-        QDomNode deviceXml = docElem.firstChild();
-        while(!deviceXml.isNull()) {
-            DeviceInfo info;
-            QDomElement e = deviceXml.toElement();
-            QString deviceName = e.tagName();
-            QDomElement parametersXml = deviceXml.firstChild().toElement();
-            QString connType = parametersXml.tagName();
-            QString transferProtocol =  parametersXml.attribute("transfer_protocol");
-            QString deviceType =        parametersXml.attribute("device_type");
-            info.ID = deviceName;
-            info.connType = connType;
-            info.protocol = transferProtocol;
-            info.deviceType = deviceType;
-            if (connType == "Serial"){
-                QString port =              parametersXml.attribute("Serial_port");
-                QString baudrate =          parametersXml.attribute("baudrate");
-                QString dataBits =          parametersXml.attribute("data_bits");
-                QString tcpPort =           parametersXml.attribute("TCP_port_number");
-                QString parity =            parametersXml.attribute("parity");
-                QString stopBits =          parametersXml.attribute("stop_bits");
-                QString tcpCount =          parametersXml.attribute("TCP_connections_number");
-                info.serialInfo.port = port;
-                info.serialInfo.baudrate = baudrate.toInt();
-                info.serialInfo.dataBits = dataBits.toInt();
-                info.serialInfo.parity = parity;
-                info.serialInfo.stopBits = stopBits.toInt();
-                info.serialInfo.tcpCount = tcpCount.toInt();
-                info.serialInfo.tcpPort = tcpPort;
-            }
-            else if (connType == "CAN"){
-                QString baudrate =           parametersXml.attribute("baudrate");
-                QString type =           parametersXml.attribute("CAN_type");
-
-                info.canInfo.baudrate = baudrate.toInt();
-                info.canInfo.type = type;
-            }
-            else if (connType == "TCP"){
-                QString clientServer =      parametersXml.attribute("source");
-                QString port =              parametersXml.attribute("port_number");
-                QString adress =            parametersXml.attribute("adress");
-                info.tcpInfo.clientServer = clientServer;
-                info.tcpInfo.port = port;
-                info.tcpInfo.adress = adress;
-            }
-
-            if(!devicesMap.contains(deviceName)){
-                devicesMap[deviceName] = info;
-            }
-            deviceXml = deviceXml.nextSibling();
-        }
-        fillConnectionsTable();
-        setupTableSize(ui->tableWidgetConnections);
-
-        QString eventsConfigDir = dir + '/' + "Configurations" + '/' + "events.xml";
-        QFile eventFile(eventsConfigDir);
-        eventFile.open(QIODevice::ReadWrite) /*return*/;
-        QDomDocument eventDoc("document");
-        eventFile.close();
-        if (!eventDoc.setContent(&eventFile)) /*return*/;
-
-        docElem = eventDoc.documentElement();
-        QDomNode eventXml = docElem.firstChild();
-        while(!eventXml.isNull()) {
-            QDomElement e = eventXml.toElement();
-            QString eventName = e.tagName().replace('_',' ');
-            EventData event;
-            event.name                      = e.attribute("name");
-            event.device                    = e.attribute("device");
-            event.protocol                  = e.attribute("protocol");
-            event.message                   = e.attribute("message");
-            event.messageId                 = e.attribute("messageId");
-            event.fieldName                 = e.attribute("fieldName");
-            event.field                     = e.attribute("field").toInt();
-            event.fieldType                 = e.attribute("fieldType");
-            event.text                      = e.attribute("text");
-            event.intTriggers.isGreater     = e.attribute("isGreater").toInt();
-            event.intTriggers.isLesser      = e.attribute("isLesser").toInt();
-            event.intTriggers.isEqual       = e.attribute("isEqual").toInt();
-            event.intTriggers.threshhold    = e.attribute("threshhold").toInt();
-            event.bitmapTriggers.startBit   = e.attribute("startBit").toInt();
-            event.bitmapTriggers.endBit     = e.attribute("endBit").toInt();
-            event.bitmapTriggers.bitValue   = e.attribute("bitValue").toInt();
-            event.bitmapTriggers.isEqual    = e.attribute("bitIsEqual").toInt();
-            event.charTriggers.charValue    = e.attribute("charValue");
-            event.status                    = e.attribute("status").toInt();
-            if(!eventMap.contains(eventName)){
-                eventMap[eventName] = event;
-            }
-            eventXml = eventXml.nextSibling();
-        }
-        notesDialog nD(experimentDirectory,isLap,this);
-        notesList = nD.getNotes();
-        qDebug() << notesList;
-        QWidgetList allWidgets = QApplication::allWidgets();
-        foreach (QWidget* widget, allWidgets) {
-            QPushButton* button = qobject_cast<QPushButton*>(widget);
-            if (button) {
-                button->setEnabled(true);
-            }
-        }
-        QDir experimentDir(experimentDirectory);
-        experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
-        experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
-        experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
-
+        if (exploreExperiment()) loadExperiment(experimentDirectory);
     }
     else if (action->text() == "Сохранить" && action->property("root") == "Эксперимент"){
         if (experimentDirectory.isEmpty()){
@@ -565,8 +509,9 @@ void MainWindow::performAction(QAction *action)
                 QString dataBits =          (QString::number(info.serialInfo.dataBits));
                 QString parity =            (info.serialInfo.parity);
                 QString stopBits =          (QString::number(info.serialInfo.stopBits));
+                QString isTranslating =     (QString::number(info.serialInfo.isTranslating));
                 QString TCPCount =          (QString::number(info.serialInfo.tcpCount));
-                QString TCPPort =           (info.serialInfo.tcpPort);
+                QString TCPPort =           (QString::number(info.serialInfo.tcpPort));
 
                 QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
                 connectionsRootElement.appendChild(deviceXml);
@@ -579,6 +524,7 @@ void MainWindow::performAction(QAction *action)
                 protocolXml.setAttribute("data_bits", dataBits);
                 protocolXml.setAttribute("TCP_port_number", TCPPort);
                 protocolXml.setAttribute("parity", parity);
+                protocolXml.setAttribute("is_translating", isTranslating);
                 protocolXml.setAttribute("stop_bits", stopBits);
                 protocolXml.setAttribute("TCP_connections_number", TCPCount);
                 deviceXml.appendChild(protocolXml);
@@ -599,7 +545,7 @@ void MainWindow::performAction(QAction *action)
             }
             else if (connType == "TCP"){
                 QString clientServer =      (info.tcpInfo.clientServer);
-                QString port =              (info.tcpInfo.port);
+                QString port =              (QString::number(info.tcpInfo.port));
                 QString adress =            (info.tcpInfo.adress);
 
                 QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
@@ -678,8 +624,14 @@ void MainWindow::performAction(QAction *action)
         eventFile.close();
     }
     else if (action->text() == "Конфигурация эксперимента"){
+        if (experimentDirectory.isEmpty()){
+            QMessageBox::warning(this, "Ошибка", "Не выбрана директория эксперимента!");
+            return;
+        }
         experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(experimentDirectory,this);
-        experimentDialog.exec();
+        if (experimentDialog.exec() == QDialog::Accepted){
+            experimentDialog.saveAll();
+        }
     }
     else if (action->text() == "Конфигурация устройств"){
         deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap, connectionsMap, messagesMap, this);
@@ -892,7 +844,7 @@ void MainWindow::connectDevice()
         connectionsMap.insert(deviceName, connection);
         DeviceInfo info = devicesMap[deviceName];
         if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
-            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort.toInt(), this);
+            SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort, this);
             bridgeMap.insert(deviceName,bridge);
             connect(bridge, SIGNAL(newConnectionCount()), this, SLOT(onNewBridgeConnection()));
             bridge->start();

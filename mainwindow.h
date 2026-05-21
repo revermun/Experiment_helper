@@ -12,6 +12,7 @@
 #include <QTime>
 #include <QTcpSocket>
 #include <QScrollBar>
+#include <QLabel>
 
 #include "enums.h"
 #include "structs.h"
@@ -32,7 +33,7 @@ public:
 
     QMap<QString,NewData> getNewData();
 
-public slots:
+private slots:
     void openConnectionSettings();
     void performAction(QAction* action);
     void deleteConnection();
@@ -51,6 +52,8 @@ public slots:
     void readPorts();
     void indicateData();
     void onNewBridgeConnection();
+    bool exploreExperiment();
+
 
 signals:
     void newData(QString name);
@@ -62,6 +65,11 @@ private:
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
     void setupTableSize(QTableWidget* table);
     void addItemToLogTable(QString localTime, QString GNSSTime, QString event);
+    void loadConnections(QString connFileDir);
+    bool openPickDirectoryDialog();
+    bool loadExperiment(QString dir);
+    void loadEvents(QString eventFileDir);
+
     Ui::MainWindow *ui;
 
     //контейнеры
@@ -92,7 +100,10 @@ private:
     bool eventSettingsRelSolLost = 0;
 
     QTime lapTime;
-    QString version = "0.2.0";
+    QString version = "0.2.1";
+
+    QLabel* versionLabel;
+    QLabel* experimentDirectoryLabel;
 
 };
 #endif // MAINWINDOW_H
