@@ -26,6 +26,15 @@
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidgetConnections">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ContiguousSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectItems</enum>
+         </property>
          <attribute name="horizontalHeaderVisible">
           <bool>true</bool>
          </attribute>
@@ -551,6 +560,7 @@ border-radius: 150px;</string>
     </property>
     <addaction name="actionLoadExperiment"/>
     <addaction name="actionSaveExperiment"/>
+    <addaction name="actionSaveAsExperiment"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -599,6 +609,11 @@ border-radius: 150px;</string>
   <action name="actionDeviceConfig">
    <property name="text">
     <string>Конфигурация устройств</string>
+   </property>
+  </action>
+  <action name="actionSaveAsExperiment">
+   <property name="text">
+    <string>Сохранить как...</string>
    </property>
   </action>
  </widget>

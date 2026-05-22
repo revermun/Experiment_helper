@@ -16,17 +16,11 @@
 
 
 /// Мысли по поводу правок:
-///1)	СДЕЛАНО Нужен начальный экран, который заставляет выбрать папку для эксперимента.
-///9)	СДЕЛАНО Надо бы добавить описание пути, чтобы понимать, какой эксперимент загружен сейчас.
-///     Предлагаю выводить последние три названия (“../НадПапка1/Папка1/Эксперимент1”) над красной кнопкой, над полем “Используемый пресет”.
-///2)	СДЕЛАНО Наличие TCP порта является дополнительным, поэтому не должно мешать создавать устройство.
-///3)	СДЕЛАНО Пожалуй, следует делать проверку на правильность введённого порта (т.к. сейчас там хоть текст можно вписать).
-///4)	СДЕЛАНО При сохранении во вкладке об эксперименте произошёл вылет.
-///5)	СДЕЛАНО Что будет происходить, если мы решим сохранить что-то во вкладке “Конфигурация эксперимента” не выбрав папку для эксперимента? Куда программа будет пытаться всё записать?
 ///6)	TODO: В редакторе устройств для антенны лучше разместить на разных строках описание “Путь к Antex/PCV файлу” и поле для пути.
-///7)	TODO: Вкладка “Устройства и связи”. При создании связи необходимо проверять, что порт устройства не занят. Так как сейчас можно на один порт повесить сколько угодно устройств, а должен быть только один.
-///8)	TODO: По кнопке “Готово” нужно сохранять изменения или предлагать сохранить.
-///10)	TODO: Для подключений. Было бы здорово, если можно было выделить несколько устройств и чтобы при удалении удалялись только устройства из этой группы.
+///7)	СДЕЛАНО Вкладка “Устройства и связи”. При создании связи необходимо проверять,
+/// что порт устройства не занят. Так как сейчас можно на один порт повесить сколько угодно устройств,
+///10)	СДЕЛАНО Для подключений. Было бы здорово, если можно было выделить несколько устройств и чтобы при удалении удалялись только устройства из этой группы.ё
+/// а должен быть только один.
 ///11)	TODO: Добавить “Сохранить как…” для эксперимента.
 ///12)	TODO: Ещё надо бы запоминать последний путь загрузки/сохранения чего-либо, а то постоянно из корня диска приходится путь выбирать
 
@@ -141,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidgetConnections->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->actionLoadExperiment->setProperty("root","Эксперимент");
     ui->actionSaveExperiment->setProperty("root", "Эксперимент");
+    ui->actionSaveAsExperiment->setProperty("root", "Эксперимент");
     ui->actionLoadPreset->setProperty("root","Пресет");
     ui->actionSavePreset->setProperty("root","Пресет");
 
@@ -481,147 +476,222 @@ void MainWindow::addConnectionFromFile()
     loadConnections(dir);
 }
 
+void MainWindow::saveConnections(QString dir){
+    connectionsDoc.clear();
+    connectionsRootElement = connectionsDoc.createElement("Connections");
+    connectionsDoc.appendChild(connectionsRootElement);
+    for (const auto &key: devicesMap.keys()) {
+        QString deviceName = key;
+        DeviceInfo info = devicesMap.value(key);
+        QString connType = info.connType;
+        QString transferProtocol = info.protocol;
+        QString deviceType = info.deviceType;
+        if (connType == "Serial"){
+            QString port =              (info.serialInfo.port);
+            QString baudrate =          (QString::number(info.serialInfo.baudrate));
+            QString dataBits =          (QString::number(info.serialInfo.dataBits));
+            QString parity =            (info.serialInfo.parity);
+            QString stopBits =          (QString::number(info.serialInfo.stopBits));
+            QString isTranslating =     (QString::number(info.serialInfo.isTranslating));
+            QString TCPCount =          (QString::number(info.serialInfo.tcpCount));
+            QString TCPPort =           (QString::number(info.serialInfo.tcpPort));
+
+            QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
+            connectionsRootElement.appendChild(deviceXml);
+
+            QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
+            protocolXml.setAttribute("device_type", deviceType);
+            protocolXml.setAttribute("transfer_protocol", transferProtocol);
+            protocolXml.setAttribute("Serial_port", port);
+            protocolXml.setAttribute("baudrate", baudrate);
+            protocolXml.setAttribute("data_bits", dataBits);
+            protocolXml.setAttribute("TCP_port_number", TCPPort);
+            protocolXml.setAttribute("parity", parity);
+            protocolXml.setAttribute("is_translating", isTranslating);
+            protocolXml.setAttribute("stop_bits", stopBits);
+            protocolXml.setAttribute("TCP_connections_number", TCPCount);
+            deviceXml.appendChild(protocolXml);
+        }
+        else if (connType == "CAN"){
+            QString CANType =           (QString::number(info.canInfo.baudrate));
+            QString baudrate =          (info.canInfo.type);
+
+            QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
+            connectionsRootElement.appendChild(deviceXml);
+
+            QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
+            protocolXml.setAttribute("device_type", deviceType);
+            protocolXml.setAttribute("transfer_protocol", transferProtocol);
+            protocolXml.setAttribute("baudrate", baudrate);
+            protocolXml.setAttribute("CAN_type", CANType);
+            deviceXml.appendChild(protocolXml);
+        }
+        else if (connType == "TCP"){
+            QString clientServer =      (info.tcpInfo.clientServer);
+            QString port =              (QString::number(info.tcpInfo.port));
+            QString adress =            (info.tcpInfo.adress);
+
+            QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
+            connectionsRootElement.appendChild(deviceXml);
+
+            QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
+            protocolXml.setAttribute("device_type", deviceType);
+            protocolXml.setAttribute("transfer_protocol", transferProtocol);
+            protocolXml.setAttribute("source", clientServer);
+            protocolXml.setAttribute("port_number", port);
+            protocolXml.setAttribute("adress", adress);
+            deviceXml.appendChild(protocolXml);
+        }
+    }
+    QFile connFile = QFile( dir + '/' + "Configurations" + '/' + "connections.xml" );
+    if( !connFile.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) )
+    {
+        qDebug( "Failed to open file for writing." );
+    }
+    QTextStream connStream( &connFile );
+    connStream.setCodec("UTF-8");
+    connStream << connectionsDoc.toString();
+    connFile.close();
+}
+
+void MainWindow::saveEvents(QString dir){
+    for (const auto &key: eventMap.keys()) {
+        QString eventName = key;
+        EventData event = eventMap.value(key);
+        QString name        = event.name;
+        QString device      = event.device;
+        QString protocol    = event.protocol;
+        QString message     = event.message;
+        QString messageId   = event.messageId;
+        QString fieldName   = event.fieldName;
+        QString field       = QString::number(event.field);
+        QString fieldType   = event.fieldType;
+        QString text        = event.text;
+        QString isGreater   = QString::number(event.intTriggers.isGreater);
+        QString isLesser    = QString::number(event.intTriggers.isLesser);
+        QString isEqual     = QString::number(event.intTriggers.isEqual);
+        QString threshhold  = QString::number(event.intTriggers.threshhold);
+        QString startBit    = QString::number(event.bitmapTriggers.startBit);
+        QString endBit      = QString::number(event.bitmapTriggers.endBit);
+        QString bitValue    = QString::number(event.bitmapTriggers.bitValue);
+        QString bitIsEqual  = QString::number(event.bitmapTriggers.isEqual);
+        QString charValue   = event.charTriggers.charValue;
+        QString status      = QString::number(event.status);
+        QDomElement eventXml = eventDoc.createElement(eventName.replace(' ','_'));
+        eventXml.setAttribute("name", name);
+        eventXml.setAttribute("device", device);
+        eventXml.setAttribute("protocol", protocol);
+        eventXml.setAttribute("message", message);
+        eventXml.setAttribute("messageId", messageId);
+        eventXml.setAttribute("fieldName", fieldName);
+        eventXml.setAttribute("field", field);
+        eventXml.setAttribute("fieldType", fieldType);
+        eventXml.setAttribute("text", text);
+        eventXml.setAttribute("isGreater", isGreater);
+        eventXml.setAttribute("isLesser", isLesser);
+        eventXml.setAttribute("isEqual", isEqual);
+        eventXml.setAttribute("threshhold", threshhold);
+        eventXml.setAttribute("startBit", startBit);
+        eventXml.setAttribute("endBit", endBit);
+        eventXml.setAttribute("bitValue", bitValue);
+        eventXml.setAttribute("bitIsEqual", bitIsEqual);
+        eventXml.setAttribute("charValue", charValue);
+        eventXml.setAttribute("status", status);
+        eventRootElement.appendChild(eventXml);
+    }
+    QFile eventFile = QFile( dir + '/' + "Configurations" + '/' + "events.xml" );
+    if( !eventFile.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) )
+    {
+        qDebug( "Failed to open file for writing." );
+    }
+    QTextStream eventStream( &eventFile );
+    eventStream.setCodec("UTF-8");
+    eventStream << eventDoc.toString();
+    eventFile.close();
+}
+
+void MainWindow::saveNotes(QString dir){
+    notesDialog nD(experimentDirectory,isLap,this);
+    notesList = nD.getNotes();
+    QStringList fileNamesNew;
+    for (auto note: notesList){
+        QString tag = note.at(INDEX_NOTE_TAG);
+        QString title = note.at(INDEX_NOTE_TITLE);
+        QString body = note.at(INDEX_NOTE_BODY);
+        QString isLapNote = note.at(INDEX_NOTE_ISLAP);
+        QString fileName;
+        if (isLapNote.toInt()){
+            fileName = tag +"_Lap_"+lapNumber+"_"+title+".txt";
+        }
+        else{
+            fileName = tag+"_General_"+title+".txt";
+        }
+        fileNamesNew.append(fileName);
+        QFile file(dir + '/' + "Notes" + '/' + fileName);
+        if( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+        {
+            qDebug( "Failed to open file for writing." );
+        }
+        QTextStream stream( &file );
+        stream.setCodec("UTF-8");
+        stream << body;
+        file.close();
+    }
+    QDir directory(dir + '/' + "Notes" + '/');
+    QStringList fileNamesOld = directory.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
+    for(QString fileNameOld: fileNamesOld){
+        if (!fileNamesNew.contains(fileNameOld)){
+            QFile::remove(dir + '/' + + "Notes" + '/' + fileNameOld);
+        }
+    }
+}
+
+void MainWindow::saveExperimentConfiguration(QString dir){
+    experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(experimentDirectory,this);
+    experimentDialog.changeDir(dir);
+    experimentDialog.saveAll();
+}
+
+void MainWindow::saveExperiment(QString dir)
+{
+    QDir experimentDir(dir);
+    experimentDir.mkpath(dir + '/' + "Notes");
+    experimentDir.mkpath(dir + '/' + "Configurations");
+    experimentDir.mkpath(dir + '/' + "Configurations" + '/' + "Experiment_configurations");
+    experimentDir.mkpath(dir + '/' + "Configurations" + '/' + "Device_configurations");
+    experimentDir.mkpath(dir + '/' + "Configurations" + '/' + "Lap_presets");
+    saveConnections(dir);
+    saveEvents(dir);
+    saveExperimentConfiguration(dir);
+    saveNotes(dir);
+}
+
 /// TODO:: Можно выбрать пустую папку, если в ней нет нужных файлов, то они создаются пустыми, а походу работы с приложением
 /// заполняются
 void MainWindow::performAction(QAction *action)
 {
-    if (action->text() == "Загрузить" && action->property("root") == "Эксперимент" ){
-        if (exploreExperiment()) loadExperiment(experimentDirectory);
-    }
-    else if (action->text() == "Сохранить" && action->property("root") == "Эксперимент"){
-        if (experimentDirectory.isEmpty()){
+    if (action->property("root") == "Эксперимент"){
+        if (action->text() == "Загрузить"){
+            if (exploreExperiment()) loadExperiment(experimentDirectory);
+        }
+        else if (action->text() == "Сохранить"){
+            if (experimentDirectory.isEmpty()){
+                QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                                "/home",
+                                                                QFileDialog::ShowDirsOnly
+                                                                    | QFileDialog::DontResolveSymlinks);
+                this->experimentDirectory = dir;
+            }
+            saveExperiment(experimentDirectory);
+        }
+        else if (action->text() == "Сохранить как..."){
             QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                        "/home",
-                                                        QFileDialog::ShowDirsOnly
+                                                            experimentDirectory,
+                                                            QFileDialog::ShowDirsOnly
                                                                 | QFileDialog::DontResolveSymlinks);
+            saveExperiment(dir);
             this->experimentDirectory = dir;
         }
-        //Сохранение файла подключений
-        for (const auto &key: devicesMap.keys()) {
-            QString deviceName = key;
-            DeviceInfo info = devicesMap.value(key);
-            QString connType = info.connType;
-            QString transferProtocol = info.protocol;
-            QString deviceType = info.deviceType;
-            if (connType == "Serial"){
-                QString port =              (info.serialInfo.port);
-                QString baudrate =          (QString::number(info.serialInfo.baudrate));
-                QString dataBits =          (QString::number(info.serialInfo.dataBits));
-                QString parity =            (info.serialInfo.parity);
-                QString stopBits =          (QString::number(info.serialInfo.stopBits));
-                QString isTranslating =     (QString::number(info.serialInfo.isTranslating));
-                QString TCPCount =          (QString::number(info.serialInfo.tcpCount));
-                QString TCPPort =           (QString::number(info.serialInfo.tcpPort));
-
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
-                connectionsRootElement.appendChild(deviceXml);
-
-                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
-                protocolXml.setAttribute("device_type", deviceType);
-                protocolXml.setAttribute("transfer_protocol", transferProtocol);
-                protocolXml.setAttribute("Serial_port", port);
-                protocolXml.setAttribute("baudrate", baudrate);
-                protocolXml.setAttribute("data_bits", dataBits);
-                protocolXml.setAttribute("TCP_port_number", TCPPort);
-                protocolXml.setAttribute("parity", parity);
-                protocolXml.setAttribute("is_translating", isTranslating);
-                protocolXml.setAttribute("stop_bits", stopBits);
-                protocolXml.setAttribute("TCP_connections_number", TCPCount);
-                deviceXml.appendChild(protocolXml);
-            }
-            else if (connType == "CAN"){
-                QString CANType =           (QString::number(info.canInfo.baudrate));
-                QString baudrate =          (info.canInfo.type);
-
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
-                connectionsRootElement.appendChild(deviceXml);
-
-                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
-                protocolXml.setAttribute("device_type", deviceType);
-                protocolXml.setAttribute("transfer_protocol", transferProtocol);
-                protocolXml.setAttribute("baudrate", baudrate);
-                protocolXml.setAttribute("CAN_type", CANType);
-                deviceXml.appendChild(protocolXml);
-            }
-            else if (connType == "TCP"){
-                QString clientServer =      (info.tcpInfo.clientServer);
-                QString port =              (QString::number(info.tcpInfo.port));
-                QString adress =            (info.tcpInfo.adress);
-
-                QDomElement deviceXml = connectionsDoc.createElement(deviceName.replace(' ','_'));
-                connectionsRootElement.appendChild(deviceXml);
-
-                QDomElement protocolXml = connectionsDoc.createElement(connType.replace(' ','_'));
-                protocolXml.setAttribute("device_type", deviceType);
-                protocolXml.setAttribute("transfer_protocol", transferProtocol);
-                protocolXml.setAttribute("source", clientServer);
-                protocolXml.setAttribute("port_number", port);
-                protocolXml.setAttribute("adress", adress);
-                deviceXml.appendChild(protocolXml);
-            }
-        }
-        QFile connFile = QFile( experimentDirectory + '/' + "Configurations" + '/' + "connections.xml" );
-        if( !connFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
-        {
-            qDebug( "Failed to open file for writing." );
-        }
-        QTextStream connStream( &connFile );
-        connStream.setCodec("UTF-8");
-        connStream << connectionsDoc.toString();
-        connFile.close();
-        for (const auto &key: eventMap.keys()) {
-            QString eventName = key;
-            EventData event = eventMap.value(key);
-            QString name        = event.name;
-            QString device      = event.device;
-            QString protocol    = event.protocol;
-            QString message     = event.message;
-            QString messageId   = event.messageId;
-            QString fieldName   = event.fieldName;
-            QString field       = QString::number(event.field);
-            QString fieldType   = event.fieldType;
-            QString text        = event.text;
-            QString isGreater   = QString::number(event.intTriggers.isGreater);
-            QString isLesser    = QString::number(event.intTriggers.isLesser);
-            QString isEqual     = QString::number(event.intTriggers.isEqual);
-            QString threshhold  = QString::number(event.intTriggers.threshhold);
-            QString startBit    = QString::number(event.bitmapTriggers.startBit);
-            QString endBit      = QString::number(event.bitmapTriggers.endBit);
-            QString bitValue    = QString::number(event.bitmapTriggers.bitValue);
-            QString bitIsEqual  = QString::number(event.bitmapTriggers.isEqual);
-            QString charValue   = event.charTriggers.charValue;
-            QString status      = QString::number(event.status);
-            QDomElement eventXml = eventDoc.createElement(eventName.replace(' ','_'));
-            eventXml.setAttribute("name", name);
-            eventXml.setAttribute("device", device);
-            eventXml.setAttribute("protocol", protocol);
-            eventXml.setAttribute("message", message);
-            eventXml.setAttribute("messageId", messageId);
-            eventXml.setAttribute("fieldName", fieldName);
-            eventXml.setAttribute("field", field);
-            eventXml.setAttribute("fieldType", fieldType);
-            eventXml.setAttribute("text", text);
-            eventXml.setAttribute("isGreater", isGreater);
-            eventXml.setAttribute("isLesser", isLesser);
-            eventXml.setAttribute("isEqual", isEqual);
-            eventXml.setAttribute("threshhold", threshhold);
-            eventXml.setAttribute("startBit", startBit);
-            eventXml.setAttribute("endBit", endBit);
-            eventXml.setAttribute("bitValue", bitValue);
-            eventXml.setAttribute("bitIsEqual", bitIsEqual);
-            eventXml.setAttribute("charValue", charValue);
-            eventXml.setAttribute("status", status);
-            eventRootElement.appendChild(eventXml);
-        }
-        QFile eventFile = QFile( experimentDirectory + '/' + "Configurations" + '/' + "events.xml" );
-        if( !eventFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
-        {
-            qDebug( "Failed to open file for writing." );
-        }
-        QTextStream eventStream( &eventFile );
-        eventStream.setCodec("UTF-8");
-        eventStream << eventDoc.toString();
-        eventFile.close();
     }
     else if (action->text() == "Конфигурация эксперимента"){
         if (experimentDirectory.isEmpty()){
@@ -645,22 +715,26 @@ void MainWindow::deleteConnection()
         QMessageBox::warning(this, "Ошибка", "Устройство не выбрано!");
         return;
     }
-    int row = ui->tableWidgetConnections->currentRow();
-    QString deviceName = ui->tableWidgetConnections->item(ui->tableWidgetConnections->currentRow(), 0)->text();
-    if (connectionsMap.contains(deviceName)){
-        QMessageBox::warning(this, "Ошибка", "Отключите устройство перед удалением!");
-        return;
+    QTableWidgetSelectionRange range = ui->tableWidgetConnections->selectedRanges().at(0);
+    int startRow = range.topRow();
+    int endRow = range.bottomRow();
+    for (int row = endRow; row >= startRow; row--) {
+        QString deviceName = ui->tableWidgetConnections->item(row, 0)->text();
+        if (connectionsMap.contains(deviceName)){
+            QMessageBox::warning(this, "Ошибка", "Отключите устройство перед удалением!");
+            return;
+        }
+        tableFieldsMap.remove(deviceName);
+        foreach (auto key, tableFieldsMap.keys()) {
+            TableConnectionsFields *fields = &tableFieldsMap[key];
+            if (fields->row > row) fields->row -= 1;
+        }
+        if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.isTranslating) bridgeMap.remove(deviceName);
+        devicesMap.remove(deviceName);
+        bufferMap.remove(deviceName);
+        newDataMap.remove(deviceName);
+        ui->tableWidgetConnections->removeRow(row);
     }
-    tableFieldsMap.remove(deviceName);
-    foreach (auto key, tableFieldsMap.keys()) {
-        TableConnectionsFields *fields = &tableFieldsMap[key];
-        if (fields->row > row) fields->row -= 1;
-    }
-    if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.tcpCount > 0) bridgeMap.remove(deviceName);
-    devicesMap.remove(deviceName);
-    bufferMap.remove(deviceName);
-    newDataMap.remove(deviceName);
-    ui->tableWidgetConnections->removeRow(ui->tableWidgetConnections->currentRow());
     setupTableSize(ui->tableWidgetConnections);
 }
 
@@ -678,7 +752,7 @@ void MainWindow::editConnection()
     }
 
     DeviceInfo deviceInfo = devicesMap[deviceName];
-    ConnectionSettings cs(deviceInfo, this);
+    ConnectionSettings cs(deviceInfo, devicesMap, this);
     if (cs.exec() == QDialog::Accepted){
         DeviceInfo info = cs.getSettings();
         QString deviceName = info.ID;
@@ -690,7 +764,7 @@ void MainWindow::editConnection()
 
 void MainWindow::openConnectionSettings()
 {
-    ConnectionSettings cs(this);
+    ConnectionSettings cs(devicesMap,this);
     if (cs.exec() == QDialog::Accepted){
         DeviceInfo info = cs.getSettings();
         QString deviceName = info.ID;
@@ -843,7 +917,7 @@ void MainWindow::connectDevice()
         onnOffItem->setBackground(QBrush(QColor(0,255,0)));
         connectionsMap.insert(deviceName, connection);
         DeviceInfo info = devicesMap[deviceName];
-        if (info.connType == "Serial" && info.serialInfo.tcpCount > 0){
+        if (info.connType == "Serial" && info.serialInfo.isTranslating){
             SerialToTcpBridge *bridge = new SerialToTcpBridge(info.serialInfo.tcpCount, info.serialInfo.tcpPort, this);
             bridgeMap.insert(deviceName,bridge);
             connect(bridge, SIGNAL(newConnectionCount()), this, SLOT(onNewBridgeConnection()));
@@ -898,7 +972,7 @@ void MainWindow::disconnectDevice()
     }
     onnOffItem->setBackground(QBrush(QColor(255,0,0)));
     delete bufferMap[deviceName];
-    if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.tcpCount > 0){
+    if (devicesMap[deviceName].connType == "Serial" && devicesMap[deviceName].serialInfo.isTranslating){
         SerialToTcpBridge* bridge = bridgeMap[deviceName];
         bridge->stop();
         bridgeMap.remove(deviceName);
@@ -1029,7 +1103,7 @@ void MainWindow::readPorts()
         data.deviceInfo = devicesMap[connDevice];
         data.buff = buff;
         newDataMap[connDevice] = data;
-        if (data.deviceInfo.connType == "Serial" && data.deviceInfo.serialInfo.tcpCount > 0){
+        if (data.deviceInfo.connType == "Serial" && data.deviceInfo.serialInfo.isTranslating){
             SerialToTcpBridge* bridge = bridgeMap[connDevice];
             bridge->write(buff);
         }

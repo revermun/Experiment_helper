@@ -27,6 +27,14 @@ struct convert<QString> {
 
 // общее
 
+void experimentConfigurationDialog::changeDir(QString dir){
+
+    this->currentDirectory = dir + '/' + "Configurations" + '/' + "Experiment_configurations";
+    this->aboutExperimentDirectory = currentDirectory + '/' + "About_experiment.yaml";
+    this->experimentConnectionsDirectory = currentDirectory + '/' + "Experiment_connections.yaml";
+    this->experimentMountingDirectory = currentDirectory + '/' + "Experiment_mounting.yaml";
+}
+
 void experimentConfigurationDialog::saveAll()
 {
     saveAboutExperiment();
@@ -1002,12 +1010,30 @@ void experimentConfigurationDialog::checkConnectionSettingsFields(QComboBox *com
     else dialog->accept();
 }
 
-void experimentConfigurationDialog::changeDeviceOutputs(QComboBox *comboDeviceOutput){
+/// Нужно проверить заняты ли некоторые порты
+/// аргоритм:
+/// Для каждого соединения смотрим наличие нашего устройста и использованный порт
+
+void experimentConfigurationDialog::changeDeviceOutputs(QComboBox *comboDeviceOutput, bool isEditing, QString device2){
     comboDeviceOutput->clear();
     QComboBox* comboDevice = qobject_cast<QComboBox*>(sender());
     QString deviceName = comboDevice->currentText();
     ExperimentDeviceInfo data = devicesMap[deviceName];
-    QStringList outputs = data.outputs;
+    QStringList outputs;
+    QStringList usedOutputs;
+    foreach (QString key, connectionsMap.keys()) {
+        QStringList devices = key.split('&');
+        if (devices.contains(deviceName)){
+            if (isEditing && devices.contains(device2)) continue;
+            QString port;
+            if (devices.at(0) == deviceName) port = connectionsMap[key].port1;
+            if (devices.at(1) == deviceName) port = connectionsMap[key].port2;
+            usedOutputs.append(port);
+        }
+    }
+    foreach (QString output, data.outputs) {
+        if (!usedOutputs.contains(output)) outputs.append(output);
+    }
     comboDeviceOutput->addItems(outputs);
 }
 
@@ -1217,9 +1243,15 @@ void experimentConfigurationDialog::editConnection()
     QPushButton *okButton = new QPushButton("Готово");
     QPushButton *cancelButton = new QPushButton("Отмена");
 
+    QString device1 = ui->tableWidgetConnections->item(row,0)->text();
+    QString device2 = ui->tableWidgetConnections->item(row,3)->text();
+    QString port1 = ui->tableWidgetConnections->item(row,1)->text();
+    QString port2 = ui->tableWidgetConnections->item(row,4)->text();
+    QString connectionType = ui->tableWidgetConnections->item(row,2)->text();
+
     QObject::connect(comboInterface, &QComboBox::currentTextChanged, this, [this, groupSettings]() {changeGroupBoxSettings(groupSettings);});
-    QObject::connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput1]() {changeDeviceOutputs(comboDeviceOutput1);});
-    QObject::connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput2]() {changeDeviceOutputs(comboDeviceOutput2);});
+    QObject::connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput1,device2]() {changeDeviceOutputs(comboDeviceOutput1,true,device2);});
+    QObject::connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboDeviceOutput2,device1]() {changeDeviceOutputs(comboDeviceOutput2,true,device1);});
     QObject::connect(okButton, &QPushButton::clicked, this, [this, comboDevice1, comboDevice2, &dialog]() {checkConnectionSettingsFields(comboDevice1, comboDevice2, &dialog);});
     QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
 
@@ -1230,11 +1262,6 @@ void experimentConfigurationDialog::editConnection()
     comboDevice2->addItems(devices);
     QStringList interfaces =  {"Serial", "CAN", "Коакс. кабель", "TCP"};
     comboInterface->addItems(interfaces);
-    QString device1 = ui->tableWidgetConnections->item(row,0)->text();
-    QString device2 = ui->tableWidgetConnections->item(row,3)->text();
-    QString port1 = ui->tableWidgetConnections->item(row,1)->text();
-    QString port2 = ui->tableWidgetConnections->item(row,4)->text();
-    QString connectionType = ui->tableWidgetConnections->item(row,2)->text();
     comboDevice1->setCurrentText(device1);
     comboDevice2->setCurrentText(device2);
     comboDeviceOutput1->setCurrentText(port1);

@@ -23,8 +23,8 @@ class ConnectionSettings : public QDialog
     Q_OBJECT
 
 public:
-    ConnectionSettings(QWidget *parent = nullptr);
-    ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent = nullptr);
+    ConnectionSettings(QMap<QString,DeviceInfo> devicesMap, QWidget *parent = nullptr);
+    ConnectionSettings(DeviceInfo deviceInfo, QMap<QString,DeviceInfo> devicesMap, QWidget *parent = nullptr);
     ~ConnectionSettings();
 
 
@@ -42,5 +42,7 @@ private:
     void setChildrenHidden(QObject* parent, bool isHidden);
     Ui::ConnectionSettings *ui;
     DeviceInfo settings;
+    QMap<QString,DeviceInfo> devicesMap;
+    bool isEditing;
 };
 #endif // CONNECTIONSETTINGS_H

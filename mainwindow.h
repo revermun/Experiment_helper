@@ -61,14 +61,19 @@ signals:
 private:
     void getMessagesConfig();
     void fillConnectionsTable();
+    bool openPickDirectoryDialog();
     void addItemToConnectionsTable(DeviceInfo info);
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
     void setupTableSize(QTableWidget* table);
     void addItemToLogTable(QString localTime, QString GNSSTime, QString event);
     void loadConnections(QString connFileDir);
-    bool openPickDirectoryDialog();
-    bool loadExperiment(QString dir);
     void loadEvents(QString eventFileDir);
+    bool loadExperiment(QString dir);
+    void saveConnections(QString dir);
+    void saveEvents(QString dir);
+    void saveNotes(QString dir);
+    void saveExperimentConfiguration(QString dir);
+    void saveExperiment(QString dir);
 
     Ui::MainWindow *ui;
 
@@ -100,7 +105,7 @@ private:
     bool eventSettingsRelSolLost = 0;
 
     QTime lapTime;
-    QString version = "0.2.1";
+    QString version = "0.2.2";
 
     QLabel* versionLabel;
     QLabel* experimentDirectoryLabel;

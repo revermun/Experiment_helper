@@ -30,6 +30,7 @@ public:
     ~experimentConfigurationDialog();
 
     void saveAll();
+    void changeDir(QString dir);
 
 public slots:
     void saveTab();
@@ -52,7 +53,7 @@ public slots:
     void changeGroupBoxInfo(QGroupBox *groupInfo);
     void changeGeneralInfo(QString experimentType);
     void changeGroupBoxSettings(QGroupBox* groupSettings);
-    void changeDeviceOutputs(QComboBox* comboDeviceOutput);
+    void changeDeviceOutputs(QComboBox* comboDeviceOutput, bool isEditing = false, QString device2 = "");
     void checkConnectionSettingsFields(QComboBox* comboDevice1, QComboBox* comboDevice2, QDialog* dialog);
 
 

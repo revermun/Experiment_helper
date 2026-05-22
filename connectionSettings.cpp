@@ -1,25 +1,28 @@
 #include "connectionSettings.h"
 #include "ui_connectionSettings.h"
 
-ConnectionSettings::ConnectionSettings(QWidget *parent)
+ConnectionSettings::ConnectionSettings(QMap<QString,DeviceInfo> devicesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ConnectionSettings)
 {
     ui->setupUi(this);
+    this->devicesMap = devicesMap;
+    isEditing = false;
     setChildrenHidden(ui->groupBoxSettings,true);
 }
 
-ConnectionSettings::ConnectionSettings(DeviceInfo deviceInfo, QWidget *parent)
+ConnectionSettings::ConnectionSettings(DeviceInfo deviceInfo, QMap<QString,DeviceInfo> devicesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ConnectionSettings)
 {
     ui->setupUi(this);
+    this->devicesMap = devicesMap;
+    isEditing = true;
     QString connectionType = deviceInfo.connType;
     ui->lineEditName->setText(deviceInfo.ID);
     ui->comboBoxConnectionType->setCurrentText(connectionType);
     ui->comboBoxDevice->setCurrentText(deviceInfo.deviceType);
     ui->comboBoxProtocol->setCurrentText(deviceInfo.protocol);
-    ui->comboBoxConnectionType->setEnabled(false);
     ui->comboBoxDevice->setEnabled(false);
     ui->comboBoxProtocol->setEnabled(false);
     ui->lineEditName->setEnabled(false);
@@ -124,17 +127,31 @@ void ConnectionSettings::checkFields(){
         title = "Поле id пустое!";
         text = "Введите название устройства";
     }
+    else if (devicesMap.contains(ui->lineEditName->text()) && !isEditing){
+        title = "Такое устройство уже добавлено!";
+        text = "Измените название";
+    }
     else if(ui->comboBoxConnectionType->currentText().isEmpty()){
         title = "Не выбран тип подключения!";
         text = "Выберите тип подключения";
     }
-    // else if(ui->comboBoxConnectionType->currentText() == "Serial"){
-    //     // if(ui->lineSerialTCPport->text().isEmpty()){
-    //     //     title = "Не указан TCP порт!";
-    //     //     text = "Введите TCP порт";
-    //     // }
-    //     // else isWarning = 0;
-    // }
+    else if(ui->comboBoxConnectionType->currentText() == "Serial"){
+        if (ui->checkSerialIsTranslating->isChecked()){
+            foreach (auto deviceName, devicesMap.keys()) {
+                DeviceInfo info = devicesMap[deviceName];
+                if ((info.connType == "Serial" && info.ID != ui->lineEditName->text() && info.serialInfo.isTranslating
+                     && info.serialInfo.tcpPort == ui->spinSerialTCPport->value()) ||
+                    (info.connType == "TCP" && info.tcpInfo.clientServer == "Сервер" && info.tcpInfo.port == ui->spinSerialTCPport->value())){
+                    title = "Для другого устройства уже задан такой TCP порт!";
+                    text = "Выберите другой порт";
+                    isWarning = 1;
+                    break;
+                }
+                else isWarning = 0;
+            }
+        }
+        else isWarning = 0;
+    }
     else if(ui->comboBoxConnectionType->currentText() == "TCP"){
         if(ui->spinTCPport->text().isEmpty()){
             title = "Не указан TCP порт!";
@@ -143,6 +160,21 @@ void ConnectionSettings::checkFields(){
         else if(ui->comboTCPclientServer->currentText() == "Клиент" && ui->lineTCPaddr->text().isEmpty()){
             title = "Не указан адрес!";
             text = "Введите адрес";
+        }
+        else if (ui->comboTCPclientServer->currentText() == "Сервер"){
+            foreach (auto deviceName, devicesMap.keys()) {
+                DeviceInfo info = devicesMap[deviceName];
+                if ((info.connType == "Serial" && info.serialInfo.isTranslating
+                     && info.serialInfo.tcpPort == ui->spinSerialTCPport->value()) ||
+                    (info.connType == "TCP"  && info.ID != ui->lineEditName->text()
+                        && info.tcpInfo.clientServer == "Сервер" && info.tcpInfo.port == ui->spinSerialTCPport->value())){
+                    title = "Для другого устройства уже задан такой TCP порт!";
+                    text = "Выберите другой порт";
+                    isWarning = 1;
+                    break;
+                }
+                else isWarning = 0;
+            }
         }
         else isWarning = 0;
     }
