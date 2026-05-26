@@ -16,13 +16,23 @@
 
 
 /// Мысли по поводу правок:
-///6)	TODO: В редакторе устройств для антенны лучше разместить на разных строках описание “Путь к Antex/PCV файлу” и поле для пути.
+///     TODO: Множественное подключение и отключение
+///
+///
+///6)	СДЕЛАНО В редакторе устройств для антенны лучше разместить на разных строках описание “Путь к Antex/PCV файлу” и поле для пути.
 ///7)	СДЕЛАНО Вкладка “Устройства и связи”. При создании связи необходимо проверять,
 /// что порт устройства не занят. Так как сейчас можно на один порт повесить сколько угодно устройств,
 ///10)	СДЕЛАНО Для подключений. Было бы здорово, если можно было выделить несколько устройств и чтобы при удалении удалялись только устройства из этой группы.ё
 /// а должен быть только один.
-///11)	TODO: Добавить “Сохранить как…” для эксперимента.
-///12)	TODO: Ещё надо бы запоминать последний путь загрузки/сохранения чего-либо, а то постоянно из корня диска приходится путь выбирать
+///11)	СДЕЛАНО Добавить “Сохранить как…” для эксперимента.
+///12)	СДЕЛАНО Ещё надо бы запоминать последний путь загрузки/сохранения чего-либо, а то постоянно из корня диска приходится путь выбирать
+/// 1)  СДЕЛАНО В "Заметках" после окончания редактирования смещается выделение заметки вниз.
+/// 2)  СДЕЛАНО В "Заметках" если выйти из редактора через кнопку отмены "Cancel", то область заметок остаётся заблокированной.
+/// 3)  СДЕЛАНО В "Заметках" не сохраняются данные после первого пробела при следующей последовательности действий:
+///   а) Закрыть окно с заметками.
+///   б) Открыть окно заново.
+///   в) Начать редактировать заметку.
+/// До редактирования текст заметки не меняется.
 
 
 void MainWindow::setupTableSize(QTableWidget* table) {
@@ -44,7 +54,7 @@ void dumpSimpleMap(const QMap<K, V> &m, int indent = 0)
 {
     QString prefix(indent, ' ');
     for (auto it = m.cbegin(); it != m.cend(); ++it) {
-        qDebug() << prefix << it.key() << "->" << it.value();
+        // qDebug() << prefix << it.key() << "->" << it.value();
     }
 }
 
@@ -53,7 +63,7 @@ void dumpNestedMap(const QMap<K, QMap<InnerK, InnerV>> &m, int indent = 0)
 {
     QString prefix(indent, ' ');
     for (auto it = m.cbegin(); it != m.cend(); ++it) {
-        qDebug() << prefix << "Key:" << it.key();
+        // qDebug() << prefix << "Key:" << it.key();
         dumpSimpleMap(it.value(), indent + 4);
     }
 }
@@ -81,7 +91,7 @@ bool MainWindow::deleteDir(const QString &dirName, bool isDeleteOnlyContents)
             QFile::setPermissions(filePath, QFile::WriteOwner);
             if (!QFile::remove(filePath))
             {
-                qDebug() << "remove file" << filePath << " failed!";
+                // qDebug() << "remove file" << filePath << " failed!";
                 error = true;
             }
         }
@@ -96,7 +106,7 @@ bool MainWindow::deleteDir(const QString &dirName, bool isDeleteOnlyContents)
     if (!isDeleteOnlyContents){
         if (!directory.rmdir(QDir::toNativeSeparators(directory.path())))
         {
-            qDebug() << "remove dir" << directory.path() << " failed!";
+            // qDebug() << "remove dir" << directory.path() << " failed!";
             error = true;
         }
     }
@@ -429,10 +439,8 @@ bool MainWindow::exploreExperiment(){
     return true;
 }
 
-bool MainWindow::loadExperiment(QString dir)
-{
-    if (dir == "") {return false;}
-    this->experimentDirectory = dir;
+void MainWindow::changeExperimentDirectoryLabel(){
+    QString dir = this->experimentDirectory;
     QStringList dirElements = dir.split('/');
     QString labelStr;
     if (dirElements.count() > 4) labelStr = QString("Директория эксперимента: %1/.../%2/%3/%4")
@@ -442,6 +450,13 @@ bool MainWindow::loadExperiment(QString dir)
                        .arg(dirElements.at(dirElements.count()-1));
     else labelStr = dir;
     experimentDirectoryLabel->setText(labelStr);
+}
+
+bool MainWindow::loadExperiment(QString dir)
+{
+    if (dir == "") {return false;}
+    this->experimentDirectory = dir;
+    changeExperimentDirectoryLabel();
     this->devicesMap.clear();
     this->eventMap.clear();
     ///Чтение конфига устройств и заполнение таблицы
@@ -454,7 +469,7 @@ bool MainWindow::loadExperiment(QString dir)
 
     notesDialog nD(experimentDirectory,isLap,this);
     notesList = nD.getNotes();
-    qDebug() << notesList;
+    // qDebug() << notesList;
     QWidgetList allWidgets = QApplication::allWidgets();
     foreach (QWidget* widget, allWidgets) {
         QPushButton* button = qobject_cast<QPushButton*>(widget);
@@ -546,7 +561,7 @@ void MainWindow::saveConnections(QString dir){
     QFile connFile = QFile( dir + '/' + "Configurations" + '/' + "connections.xml" );
     if( !connFile.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) )
     {
-        qDebug( "Failed to open file for writing." );
+        // qDebug( "Failed to open file for writing." );
     }
     QTextStream connStream( &connFile );
     connStream.setCodec("UTF-8");
@@ -555,6 +570,9 @@ void MainWindow::saveConnections(QString dir){
 }
 
 void MainWindow::saveEvents(QString dir){
+    eventDoc.clear();
+    eventRootElement = eventDoc.createElement("Events");
+    eventDoc.appendChild(eventRootElement);
     for (const auto &key: eventMap.keys()) {
         QString eventName = key;
         EventData event = eventMap.value(key);
@@ -602,7 +620,7 @@ void MainWindow::saveEvents(QString dir){
     QFile eventFile = QFile( dir + '/' + "Configurations" + '/' + "events.xml" );
     if( !eventFile.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) )
     {
-        qDebug( "Failed to open file for writing." );
+        // qDebug( "Failed to open file for writing." );
     }
     QTextStream eventStream( &eventFile );
     eventStream.setCodec("UTF-8");
@@ -612,38 +630,8 @@ void MainWindow::saveEvents(QString dir){
 
 void MainWindow::saveNotes(QString dir){
     notesDialog nD(experimentDirectory,isLap,this);
-    notesList = nD.getNotes();
-    QStringList fileNamesNew;
-    for (auto note: notesList){
-        QString tag = note.at(INDEX_NOTE_TAG);
-        QString title = note.at(INDEX_NOTE_TITLE);
-        QString body = note.at(INDEX_NOTE_BODY);
-        QString isLapNote = note.at(INDEX_NOTE_ISLAP);
-        QString fileName;
-        if (isLapNote.toInt()){
-            fileName = tag +"_Lap_"+lapNumber+"_"+title+".txt";
-        }
-        else{
-            fileName = tag+"_General_"+title+".txt";
-        }
-        fileNamesNew.append(fileName);
-        QFile file(dir + '/' + "Notes" + '/' + fileName);
-        if( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
-        {
-            qDebug( "Failed to open file for writing." );
-        }
-        QTextStream stream( &file );
-        stream.setCodec("UTF-8");
-        stream << body;
-        file.close();
-    }
-    QDir directory(dir + '/' + "Notes" + '/');
-    QStringList fileNamesOld = directory.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
-    for(QString fileNameOld: fileNamesOld){
-        if (!fileNamesNew.contains(fileNameOld)){
-            QFile::remove(dir + '/' + + "Notes" + '/' + fileNameOld);
-        }
-    }
+    nD.changeDir(dir);
+    nD.saveNotes();
 }
 
 void MainWindow::saveExperimentConfiguration(QString dir){
@@ -666,8 +654,6 @@ void MainWindow::saveExperiment(QString dir)
     saveNotes(dir);
 }
 
-/// TODO:: Можно выбрать пустую папку, если в ней нет нужных файлов, то они создаются пустыми, а походу работы с приложением
-/// заполняются
 void MainWindow::performAction(QAction *action)
 {
     if (action->property("root") == "Эксперимент"){
@@ -691,6 +677,7 @@ void MainWindow::performAction(QAction *action)
                                                                 | QFileDialog::DontResolveSymlinks);
             saveExperiment(dir);
             this->experimentDirectory = dir;
+            changeExperimentDirectoryLabel();
         }
     }
     else if (action->text() == "Конфигурация эксперимента"){
@@ -782,37 +769,6 @@ void MainWindow::openNotes()
     notesDialog nD(experimentDirectory,isLap,this);
     nD.exec();
     notesList = nD.getNotes();
-    QStringList fileNamesNew;
-    for (auto note: notesList){
-        QString tag = note.at(INDEX_NOTE_TAG);
-        QString title = note.at(INDEX_NOTE_TITLE);
-        QString body = note.at(INDEX_NOTE_BODY);
-        QString isLapNote = note.at(INDEX_NOTE_ISLAP);
-        QString fileName;
-        if (isLapNote.toInt()){
-            fileName = tag +"_Lap_"+lapNumber+"_"+title+".txt";
-        }
-        else{
-            fileName = tag+"_General_"+title+".txt";
-        }
-        fileNamesNew.append(fileName);
-        QFile file(experimentDirectory + '/' + "Notes" + '/' + fileName);
-        if( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
-        {
-            qDebug( "Failed to open file for writing." );
-        }
-        QTextStream stream( &file );
-        stream.setCodec("UTF-8");
-        stream << body;
-        file.close();
-    }
-    QDir directory(experimentDirectory + '/' + "Notes" + '/');
-    QStringList fileNamesOld = directory.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
-    for(QString fileNameOld: fileNamesOld){
-        if (!fileNamesNew.contains(fileNameOld)){
-            QFile::remove(experimentDirectory + '/' + + "Notes" + '/' + fileNameOld);
-        }
-    }
 }
 
 void MainWindow::openEventSettings()
@@ -984,7 +940,7 @@ void MainWindow::disconnectDevice()
 void MainWindow::sendUserEvent()
 {
     if(!isLap) return;
-    QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+    QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
     QString event = ui->lineEditAddEvent->text();
     addItemToLogTable(localTime, "", event);
     ui->lineEditAddEvent->clear();
@@ -1047,12 +1003,12 @@ void MainWindow::startExperiment()
                     QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
                     msg.append(checkSum);
                     UbloxParser parser(connection);
-                    qDebug() << msg.toHex(' ');
+                    // qDebug() << msg.toHex(' ');
                     parser.sendMessage(msg);
                 }
                 else if (event->protocol == "Unicore"){
                     UnicoreParser parser(connection);
-                    qDebug() << event->message + "B 1";
+                    // qDebug() << event->message + "B 1";
                     parser.sendMessage(event->message + "B 1");
                 }
             }
@@ -1108,7 +1064,7 @@ void MainWindow::readPorts()
             bridge->write(buff);
         }
         bufferMap[connDevice]->append(buff);
-        emit newData(connDevice);
+        emit newData(data);
     }
 }
 
@@ -1120,11 +1076,12 @@ void MainWindow::parseMessage()
 {
     if (!isLap) return;
     QTime currTime = QTime::currentTime();
-    int currSeconds = currTime.second() + currTime.minute()*60 + currTime.hour()*3600;
-    int startSeconds = lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600;
-    int diffSeconds = currSeconds - startSeconds;
-    ui->labelElapsedTime->setText(QString::number(diffSeconds) + currTime.toString(".zzz").left(3));
-
+    int currMsec = currTime.msec() + (currTime.second() + currTime.minute()*60 + currTime.hour()*3600)*1000;
+    int startMsec = lapTime.msec() + (lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600)*1000;
+    int diffMsec = currMsec - startMsec;
+    qDebug() << diffMsec/1000 << diffMsec%1000;
+    ui->labelElapsedTime->setText(QString("%1.%2").arg(QString::number(diffMsec/1000),QString::number(diffMsec%1000).rightJustified(3,'0')));
+    // ui->labelElapsedTime->setText(QString("%1.%2").arg(diffSeconds,diffMsec)); //прикол
     foreach (QString connDevice, connectionsMap.keys()) {
         QObject* connection = connectionsMap[connDevice];
         QByteArray *buff = bufferMap[connDevice];
@@ -1167,8 +1124,8 @@ void MainWindow::parseMessage()
             QDataStream stream(data);
             stream.setByteOrder(order);
             bool check = false;
-            qDebug() << '\n';
-            qDebug() << ("event: " + event->name) << ("field: " + event->fieldName) << ("type: " + event->fieldType);
+            // qDebug() << '\n';
+            // qDebug() << ("event: " + event->name) << ("field: " + event->fieldName) << ("type: " + event->fieldType);
             if (event->fieldType == "int" || event->fieldType == "uint" || event->fieldType == "float" || event->fieldType == "double"){
                 int flags = (int)event->intTriggers.isEqual +
                             ((int)event->intTriggers.isGreater << 1) +
@@ -1191,7 +1148,7 @@ void MainWindow::parseMessage()
                 }
             }
             else if (event->fieldType == "char"){
-                qDebug() << ("data: " + QString::fromLatin1(data)) << ("event value: " + event->charTriggers.charValue);
+                // qDebug() << ("data: " + QString::fromLatin1(data)) << ("event value: " + event->charTriggers.charValue);
                 check = QString::fromLatin1(data) == event->charTriggers.charValue;
             }
             else if (event->fieldType == "bitmap"){
@@ -1205,7 +1162,7 @@ void MainWindow::parseMessage()
             }
             if (check){
                 if (event->status != INDEX_FLAGS_TRUE){
-                    QString localTime = QTime::currentTime().toString("hh:mm:ss.zz");
+                    QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
                     event->status = INDEX_FLAGS_TRUE;
                     if (protocol == "Ublox"){
                         int offset = messagesMap[event->message].fields["itow"].offset;

@@ -47,7 +47,7 @@ public slots:
     void enableEphFrame(bool state);
     void MASKcheckClickEvent(bool state);
     void comboCONFIGRTKchangeEvent(QString text);
-    void getNewData(QString device);
+    void getNewData(NewData data);
 
 private:
     void setupTableSize(QTableWidget* table);

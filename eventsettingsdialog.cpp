@@ -140,6 +140,6 @@ void eventSettingsDialog::deleteEvent()
     }
     QString name = ui->listEvents->currentItem()->text();
     QListWidgetItem *item = ui->listEvents->takeItem(ui->listEvents->currentRow());
-    qDebug() << eventMap->remove(name);
+    // qDebug() << eventMap->remove(name);
     delete item;
 }

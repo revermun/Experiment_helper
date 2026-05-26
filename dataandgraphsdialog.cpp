@@ -279,7 +279,7 @@ void dataAndGraphsDialog::openGraphs()
     QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
 
     if (dialog.exec() == QDialog::Accepted) {
-        /// TODO: сдесь должен быть код реалицации открытия отдельного окна с графиком
+        /// TODO: здесь должен быть код реалицации открытия отдельного окна с графиком
     }
 }
 
@@ -430,7 +430,7 @@ void dataAndGraphsDialog::addGroup(){
     else{
         nextColumn++;
     }
-    qDebug() << nextRow << nextColumn;
+    // qDebug() << nextRow << nextColumn;
     ui->gridLayoutGroupBoxes->addWidget(ui->groupBox, nextRow, nextColumn);
 }
 
@@ -540,8 +540,8 @@ void dataAndGraphsDialog::sendNum()
 {
     QString mess = ui->lineEditMessageToSend->text();
     QByteArray num = stringToNumFormat(mess);
-    qDebug() << num;
-    qDebug() << num.toHex();
+    // qDebug() << num;
+    // qDebug() << num.toHex();
     QObject* connection = connectionsMap[ui->comboBoxDevice->currentText()];
     if (qobject_cast<QIODevice*>(connection)){
         QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
@@ -568,8 +568,8 @@ void dataAndGraphsDialog::sendASCII()
         if (ui->checkBoxSlashN){
             ascii += '\n';
         }
-        qDebug() << ascii;
-        qDebug() << ascii.toHex();
+        // qDebug() << ascii;
+        // qDebug() << ascii.toHex();
         ioCon->write(ascii);
     }
 }

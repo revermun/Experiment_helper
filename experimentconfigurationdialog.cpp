@@ -1,14 +1,6 @@
 #include "experimentconfigurationdialog.h"
 #include "ui_experimentconfigurationdialog.h"
 
-/// TODO: Третья вкладка
-/// Каждый параметр представляется в виде группы из трёх координат/углов
-/// Нужно удалять координаты/углы не по одному, а группой
-/// Скорее всего нужно будет создавать для каждого параметра по groupBox с названием параметра
-/// Внутри groupBox будут параметры и ещё ниже кнопка удаления группы
-/// TODO: Сохранение в файл
-/// может быть всё-таки разобраться с подключением yaml-cpp
-
 namespace YAML {
 template<>
 struct convert<QString> {
@@ -107,7 +99,7 @@ void experimentConfigurationDialog::saveConnections(){
         }
         else if (type == "Камера"){
             Parameters["fps"] = device.cameraInfo.fps;
-            Parameters["Height"] = device.cameraInfo.heigt;
+            Parameters["Height"] = device.cameraInfo.height;
             Parameters["Width"] = device.cameraInfo.width;
         }
         deviceNode["Parameters"] = Parameters;
@@ -195,74 +187,7 @@ void experimentConfigurationDialog::saveTab()
     }
 }
 
-/*
-Devices:
- - Name:
-   Model:
-   Type: camera
-   Parameters:
-   Ports:
-    - o1
-    - o2
-    - o3
- - Name:
-...
-Connections:
- - Device1:
-   Device2:
-   Port1:
-   Port2:
-   Connection type:
-   Connection parameters:
-    Bitrate:
-    Start bits:
-    Stop bits:
- - Device1:
-...
-Mounting:
- - Name:
-   Parameters:
-    Position:
-     - 0.0
-     - 0.0
-     - 0.0
-    Boresight: []
-    Lever arm: []
-
-
-*/
-void experimentConfigurationDialog::setupTableSize(QTableWidget* table) {
-    // Автоматическая подгонка столбцов
-    table->resizeColumnsToContents();
-    table->resizeRowsToContents();
-
-    // Отключаем скроллбары (если таблица небольшая)
-    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-    // Вычисляем и устанавливаем размер
-    table->setFixedHeight(table->verticalHeader()->length() + table->horizontalHeader()->height() + table->frameWidth() * 2);
-    table->setMinimumWidth(table->horizontalHeader()->length() + table->verticalHeader()->width() + table->frameWidth() * 2);
-}
-
-void experimentConfigurationDialog::addSaveButton(int index)
-{
-    QPushButton* button = new QPushButton("");
-    button->setStyleSheet("image: url(:/resources/save.png);");
-
-    connect(button, &QPushButton::clicked, this, &experimentConfigurationDialog::saveTab);
-    ui->tabWidget->tabBar()->setTabButton(index, QTabBar::RightSide, button);
-}
-
-experimentConfigurationDialog::experimentConfigurationDialog(QString experimentDirectory,QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::experimentConfigurationDialog)
-{
-    ui->setupUi(this);
-    this->currentDirectory = experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations";
-    this->aboutExperimentDirectory = currentDirectory + '/' + "About_experiment.yaml";
-    this->experimentConnectionsDirectory = currentDirectory + '/' + "Experiment_connections.yaml";
-    this->experimentMountingDirectory = currentDirectory + '/' + "Experiment_mounting.yaml";
+void experimentConfigurationDialog::loadAboutExperiment(){
     QFile aboutFile(aboutExperimentDirectory);
     if (aboutFile.open(QIODevice::ReadOnly)){
         aboutFile.close();
@@ -299,6 +224,9 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
             combo->setCurrentText(role);
         }
     }
+}
+
+void experimentConfigurationDialog::loadConnections(){
     QFile connectionsFile(experimentConnectionsDirectory);
     if (connectionsFile.open(QIODevice::ReadOnly)){
         connectionsFile.close();
@@ -333,7 +261,7 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
                     }
                     else if (type == "Камера"){
                         if (Parameters["fps"]) info.cameraInfo.fps = Parameters["fps"].as<int>();
-                        if (Parameters["Height"]) info.cameraInfo.heigt = Parameters["Height"].as<int>();
+                        if (Parameters["Height"]) info.cameraInfo.height = Parameters["Height"].as<int>();
                         if (Parameters["Width"]) info.cameraInfo.width = Parameters["Width"].as<int>();
                     }
                 }
@@ -395,6 +323,8 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
             }
         }
     }
+}
+void experimentConfigurationDialog::loadMounting(){
     QFile mountingFile(experimentMountingDirectory);
     if (mountingFile.open(QIODevice::ReadOnly)){
         mountingFile.close();
@@ -445,11 +375,204 @@ experimentConfigurationDialog::experimentConfigurationDialog(QString experimentD
             }
         }
     }
+}
+
+
+/*
+Devices:
+ - Name:
+   Model:
+   Type: camera
+   Parameters:
+   Ports:
+    - o1
+    - o2
+    - o3
+ - Name:
+...
+Connections:
+ - Device1:
+   Device2:
+   Port1:
+   Port2:
+   Connection type:
+   Connection parameters:
+    Bitrate:
+    Start bits:
+    Stop bits:
+ - Device1:
+...
+Mounting:
+ - Name:
+   Parameters:
+    Position:
+     - 0.0
+     - 0.0
+     - 0.0
+    Boresight: []
+    Lever arm: []
+
+
+*/
+void experimentConfigurationDialog::setupTableSize(QTableWidget* table) {
+    // Автоматическая подгонка столбцов
+    table->resizeColumnsToContents();
+    table->resizeRowsToContents();
+
+    // Отключаем скроллбары (если таблица небольшая)
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // Вычисляем и устанавливаем размер
+    table->setFixedHeight(table->verticalHeader()->length() + table->horizontalHeader()->height() + table->frameWidth() * 2);
+    table->setMinimumWidth(table->horizontalHeader()->length() + table->verticalHeader()->width() + table->frameWidth() * 2);
+}
+
+void experimentConfigurationDialog::addSaveButton(int index)
+{
+    QPushButton* button = new QPushButton("");
+    button->setStyleSheet("image: url(:/resources/save.png);");
+
+    connect(button, &QPushButton::clicked, this, &experimentConfigurationDialog::saveTab);
+    ui->tabWidget->tabBar()->setTabButton(index, QTabBar::RightSide, button);
+}
+
+void experimentConfigurationDialog::setupWidgets(){
+    frameIMU = new QFrame(this);
+    labelInstabilityBias = new QLabel("Нестабильность смещения: ",this);
+    spinInstabilityBias = new QDoubleSpinBox(this);
+    labelRandomWalk = new QLabel("Случайное блуждание: ",this);
+    spinRandomWalk = new QDoubleSpinBox(this);
+    labelInitialError = new QLabel("Начальная погрешность: ",this);
+    spinInitialError = new QDoubleSpinBox(this);
+
+    frameCamera = new QFrame(this);
+    labelFPS = new QLabel("Кол-во кадров в секунду: ",this);
+    spinFPS = new QSpinBox(this);
+    labelHeight = new QLabel("Высота: ",this);
+    spinHeight = new QSpinBox(this);
+    labelWidth = new QLabel("Ширина: ",this);
+    spinWidth = new QSpinBox(this);
+
+    frameAntenna = new QFrame(this);
+    labelDirectory = new QLabel("Путь к Antex/PCV файлу: ",this);
+    lineDirectory = new QLineEdit(this);
+
+    QGridLayout* layoutIMU = new QGridLayout(frameIMU);
+    layoutIMU->addWidget(labelInstabilityBias, 0, 0);
+    layoutIMU->addWidget(spinInstabilityBias, 0, 1);
+    layoutIMU->addWidget(labelRandomWalk, 1, 0);
+    layoutIMU->addWidget(spinRandomWalk, 1, 1);
+    layoutIMU->addWidget(labelInitialError, 2, 0);
+    layoutIMU->addWidget(spinInitialError, 2, 1);
+    frameIMU->setLayout(layoutIMU);
+
+    QGridLayout* layoutCamera = new QGridLayout(frameCamera);
+    layoutCamera->addWidget(labelFPS, 0, 0);
+    layoutCamera->addWidget(spinFPS, 0, 1);
+    layoutCamera->addWidget(labelHeight, 1, 0);
+    layoutCamera->addWidget(spinHeight, 1, 1);
+    layoutCamera->addWidget(labelWidth, 2, 0);
+    layoutCamera->addWidget(spinWidth, 2, 1);
+    frameCamera->setLayout(layoutCamera);
+
+    QVBoxLayout* layoutAntenna = new QVBoxLayout(frameAntenna);
+    layoutAntenna->addWidget(labelDirectory);
+    layoutAntenna->addWidget(lineDirectory);
+    frameAntenna->setLayout(layoutAntenna);
+
+    deviceDialog = new QDialog(this);
+    deviceDialog->setWindowTitle("Редактор устройств");
+    deviceLayout = new QVBoxLayout(deviceDialog);
+    deviceLayoutLines = new QHBoxLayout();
+    deviceLayoutGroupBoxes = new QHBoxLayout();
+    deviceHLayout = new QHBoxLayout();
+    deviceLabelID = new QLabel("ID: ");
+    deviceLineID = new QLineEdit();
+    deviceLabelModel = new QLabel("Модель: ");
+    deviceLineModel = new QLineEdit();
+    deviceLabelType = new QLabel("Тип: ");
+    deviceComboType = new QComboBox();
+    deviceComboType->addItems({"Приёмник", "IMU", "Камера", "Одометр", "Антенна", "Сплиттер", "Другое"});
+    deviceComboType->setCurrentIndex(-1);
+    deviceGroupOutputs = new QGroupBox("Выводы");
+    deviceGroupOutputs->setAlignment(Qt::AlignHCenter);
+    deviceGroupInfo = new QGroupBox("Дополнительная информация");
+    deviceGroupInfo->setAlignment(Qt::AlignHCenter);
+    deviceGroupOutputsLayout = new QVBoxLayout();
+    deviceGroupInfoLayout = new QVBoxLayout();
+    deviceGroupInfoLayout->addWidget(frameAntenna);
+    deviceGroupInfoLayout->addWidget(frameCamera);
+    deviceGroupInfoLayout->addWidget(frameIMU);
+    deviceGroupInfoLayout->addSpacing(100);
+
+    spinInstabilityBias->setValue(0);
+    spinRandomWalk->setValue(0);
+    spinInitialError->setValue(0);
+    spinFPS->setValue(0);
+    spinHeight->setValue(0);
+    spinWidth->setValue(0);
+    lineDirectory->setText("");
+
+    deviceListOutputs = new QListWidget();
+    deviceLayoutOutputButtons = new QVBoxLayout();
+    deviceAddButton = new QPushButton("");
+    deviceAddButton->setStyleSheet("image: url(:/resources/add.png);");
+    deviceDeleteButton = new QPushButton("");
+    deviceDeleteButton->setStyleSheet("image: url(:/resources/delete.png);");
+
+    deviceOkButton = new QPushButton("Готово");
+    deviceCancelButton = new QPushButton("Отмена");
+
+    deviceLayoutLines->addWidget(deviceLabelID);
+    deviceLayoutLines->addWidget(deviceLineID);
+    deviceLayoutLines->addWidget(deviceLabelModel);
+    deviceLayoutLines->addWidget(deviceLineModel);
+    deviceLayoutLines->addWidget(deviceLabelType);
+    deviceLayoutLines->addWidget(deviceComboType);
+
+    deviceGroupOutputs->setLayout(deviceGroupOutputsLayout);
+    deviceGroupOutputs->layout()->addWidget(deviceListOutputs);
+    deviceGroupInfo->setLayout(deviceGroupInfoLayout);
+    deviceLayoutGroupBoxes->addWidget(deviceGroupOutputs);
+    deviceLayoutOutputButtons->addWidget(deviceAddButton);
+    deviceLayoutOutputButtons->addWidget(deviceDeleteButton);
+    deviceLayoutGroupBoxes->addLayout(deviceLayoutOutputButtons);
+    deviceLayoutGroupBoxes->addWidget(deviceGroupInfo);
+    deviceLayoutGroupBoxes->setStretchFactor(deviceLayoutOutputButtons,0);
+    deviceHLayout->addWidget(deviceOkButton);
+    deviceHLayout->addWidget(deviceCancelButton);
+    deviceHLayout->addStretch(100);
+
+    deviceLayout->addLayout(deviceLayoutLines);
+    deviceLayout->addLayout(deviceLayoutGroupBoxes);
+    deviceLayout->addLayout(deviceHLayout);
+
+    QObject::connect(deviceComboType, &QComboBox::currentTextChanged, this, &experimentConfigurationDialog::changeGroupBoxInfo);
+    QObject::connect(deviceAddButton, &QPushButton::clicked, this, [this]() {addOutput(deviceListOutputs);});
+    QObject::connect(deviceDeleteButton, &QPushButton::clicked, this, [this]() {deleteOutput(deviceListOutputs);});
+    QObject::connect(deviceOkButton, &QPushButton::clicked, deviceDialog, &QDialog::accept);
+    QObject::connect(deviceCancelButton, &QPushButton::clicked, deviceDialog, &QDialog::reject);
+}
+
+experimentConfigurationDialog::experimentConfigurationDialog(QString experimentDirectory,QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::experimentConfigurationDialog)
+{
+    ui->setupUi(this);
+    this->currentDirectory = experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations";
+    this->aboutExperimentDirectory = currentDirectory + '/' + "About_experiment.yaml";
+    this->experimentConnectionsDirectory = currentDirectory + '/' + "Experiment_connections.yaml";
+    this->experimentMountingDirectory = currentDirectory + '/' + "Experiment_mounting.yaml";
+    loadAboutExperiment();
+    loadConnections();
+    loadMounting();
     addSaveButton(0);
     addSaveButton(1);
     addSaveButton(2);
     ui->tabWidget->tabBar()->tabButton(1,QTabBar::RightSide)->setHidden(true);
     ui->tabWidget->tabBar()->tabButton(2,QTabBar::RightSide)->setHidden(true);
+    setupWidgets();
 
 }
 
@@ -509,58 +632,21 @@ void experimentConfigurationDialog::changeGeneralInfo(QString experimentType)
 // 1я вкладка
 
 // 2я вкладка
-void experimentConfigurationDialog::changeGroupBoxInfo(QGroupBox* groupInfo)
+void experimentConfigurationDialog::changeGroupBoxInfo()
 {
     QComboBox *comboType = qobject_cast<QComboBox*>(sender());
-    QGridLayout *groupLayoutOld = qobject_cast<QGridLayout*>(groupInfo->layout());
-    foreach (auto object, groupInfo->children()) {
-        if(!qobject_cast<QGridLayout*>(object)){
-            QWidget *widget = qobject_cast<QWidget*>(object);
-            groupLayoutOld->removeWidget(widget);
-            delete widget;
-        }
-    }
-    delete groupLayoutOld;
-    QGridLayout *groupLayoutNew = new QGridLayout();
-    groupInfo->setLayout(groupLayoutNew);
+    frameCamera->setHidden(true);
+    frameAntenna->setHidden(true);
+    frameIMU->setHidden(true);
     QString type = comboType->currentText();
     if (type == "IMU"){
-        QLabel *labelShiftDistability = new QLabel("Нестабильность смещения: ");
-        QDoubleSpinBox *lineShiftDistability = new QDoubleSpinBox();
-        QLabel *labelRandomLuft = new QLabel("Случайное блуждание: ");
-        QDoubleSpinBox *lineRandomLuft = new QDoubleSpinBox();
-        QLabel *labelStartError = new QLabel("Начальная погрешность: ");
-        QDoubleSpinBox *lineStartError = new QDoubleSpinBox();
-
-        groupLayoutNew->addWidget(labelShiftDistability, 0, 0);
-        groupLayoutNew->addWidget(lineShiftDistability, 0, 1);
-        groupLayoutNew->addWidget(labelRandomLuft, 1, 0);
-        groupLayoutNew->addWidget(lineRandomLuft, 1, 1);
-        groupLayoutNew->addWidget(labelStartError, 2, 0);
-        groupLayoutNew->addWidget(lineStartError, 2, 1);
+        frameIMU->setHidden(false);
     }
     else if (type == "Камера"){
-        QLabel *labelFPS = new QLabel("Кол-во кадров в секунду: ");
-        QSpinBox *lineFPS = new QSpinBox();
-        QLabel *labelHeight = new QLabel("Высота: ");
-        QSpinBox *lineHeight = new QSpinBox();
-        QLabel *labelWidth = new QLabel("Ширина: ");
-        QSpinBox *lineWidth = new QSpinBox();
-
-        groupLayoutNew->addWidget(labelFPS, 0, 0);
-        groupLayoutNew->addWidget(lineFPS, 0, 1);
-        groupLayoutNew->addWidget(labelHeight, 1, 0);
-        groupLayoutNew->addWidget(lineHeight, 1, 1);
-        groupLayoutNew->addWidget(labelWidth, 2, 0);
-        groupLayoutNew->addWidget(lineWidth, 2, 1);
-
+        frameCamera->setHidden(false);
     }
     else if (type == "Антенна"){
-        QLabel *labelDirectory = new QLabel("Путь к Antex/PCV файлу: ");
-        QLineEdit *lineDirectory = new QLineEdit();
-
-        groupLayoutNew->addWidget(labelDirectory, 0, 0);
-        groupLayoutNew->addWidget(lineDirectory, 0, 1);
+        frameAntenna->setHidden(false);
     }
 }
 
@@ -581,99 +667,32 @@ void experimentConfigurationDialog::deleteOutput(QListWidget *listOutputs)
 
 void experimentConfigurationDialog::addDevice()
 {
-    QDialog dialog(this);
-    dialog.setWindowTitle("Редактор устройств");
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *layoutLines = new QHBoxLayout();
-    QHBoxLayout *layoutGroupBoxes = new QHBoxLayout();
-    QHBoxLayout *hLayout = new QHBoxLayout();
-    QLabel *labelID = new QLabel("ID: ");
-    QLineEdit *lineID = new QLineEdit();
-    QLabel *labelModel = new QLabel("Модель: ");
-    QLineEdit *lineModel = new QLineEdit();
-    QLabel *labelType = new QLabel("Тип: ");
-    QComboBox *comboType = new QComboBox();
-    comboType->addItems({"Приёмник", "IMU", "Камера", "Одометр", "Антенна", "Сплиттер", "Другое"});
-    comboType->setCurrentIndex(-1);
-    QGroupBox *groupOutputs = new QGroupBox("Выводы");
-    groupOutputs->setAlignment(Qt::AlignHCenter);
-    QGroupBox *groupInfo = new QGroupBox("Дополнительная информация");
-    groupInfo->setAlignment(Qt::AlignHCenter);
-    QVBoxLayout *groupOutputsLayout = new QVBoxLayout();
-    QGridLayout *groupInfoLayout = new QGridLayout();
-    QListWidget *listOutputs = new QListWidget();
-    QVBoxLayout *layoutOutputButtons = new QVBoxLayout();
-    QPushButton *addButton = new QPushButton("");
-    addButton->setStyleSheet("image: url(:/resources/add.png);");
-    QPushButton *deleteButton = new QPushButton("");
-    deleteButton->setStyleSheet("image: url(:/resources/delete.png);");
 
-    QPushButton *okButton = new QPushButton("Готово");
-    QPushButton *cancelButton = new QPushButton("Отмена");
+    spinInstabilityBias->clear();
+    spinRandomWalk->clear();
+    spinInitialError->clear();
+    spinFPS->clear();
+    spinHeight->clear();
+    spinWidth->clear();
+    lineDirectory->clear();
+    deviceLineID->clear();
+    deviceLineModel->clear();
+    deviceComboType->clear();
+    deviceListOutputs->clear();
 
-    layoutLines->addWidget(labelID);
-    layoutLines->addWidget(lineID);
-    layoutLines->addWidget(labelModel);
-    layoutLines->addWidget(lineModel);
-    layoutLines->addWidget(labelType);
-    layoutLines->addWidget(comboType);
-
-    groupOutputs->setLayout(groupOutputsLayout);
-    groupOutputs->layout()->addWidget(listOutputs);
-    groupInfo->setLayout(groupInfoLayout);
-    layoutGroupBoxes->addWidget(groupOutputs);
-    layoutOutputButtons->addWidget(addButton);
-    layoutOutputButtons->addWidget(deleteButton);
-    layoutGroupBoxes->addLayout(layoutOutputButtons);
-    layoutGroupBoxes->addWidget(groupInfo);
-    layoutGroupBoxes->setStretchFactor(layoutOutputButtons,0);
-    hLayout->addWidget(okButton);
-    hLayout->addWidget(cancelButton);
-    hLayout->addStretch(100);
-
-    layout->addLayout(layoutLines);
-    layout->addLayout(layoutGroupBoxes);
-    layout->addLayout(hLayout);
-
-    QObject::connect(comboType, &QComboBox::currentTextChanged, this, [this, groupInfo](const QString& text) {changeGroupBoxInfo(groupInfo);});
-    QObject::connect(addButton, &QPushButton::clicked, this, [this, listOutputs]() {addOutput(listOutputs);});
-    QObject::connect(deleteButton, &QPushButton::clicked, this, [this, listOutputs]() {deleteOutput(listOutputs);});
-    QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-    QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
-
-    if (dialog.exec() == QDialog::Accepted) {
-        QString id = lineID->text();
+    if (deviceDialog->exec() == QDialog::Accepted) {
+        QString id = deviceLineID->text();
         if(devicesMap.contains(id)){
             QMessageBox::warning(this, "Ошибка!", "Такое устройство уже есть!");
             return;
         }
         QListWidgetItem *item = new QListWidgetItem();
         item->setText(id);
-        QString model = lineModel->text();
-        QString type = comboType->currentText();
+        QString model = deviceLineModel->text();
+        QString type = deviceComboType->currentText();
         QList<QString> outputs;
-        QList<QString> info;
-        QGridLayout *groupInfoLayout = qobject_cast<QGridLayout*>(groupInfo->layout());
-        if (!groupInfoLayout->isEmpty()){
-            for(int i = 0; i<groupInfoLayout->rowCount(); i++){
-                QWidget *layoutItem = groupInfoLayout->itemAtPosition(i, 1)->widget();
-                if (qobject_cast<QLineEdit*>(layoutItem)){
-                    QLineEdit *lineEdit = qobject_cast<QLineEdit*>(layoutItem);
-                    info << lineEdit->text();
-                }
-                else if (qobject_cast<QDoubleSpinBox*>(layoutItem)){
-                    QDoubleSpinBox *spin = qobject_cast<QDoubleSpinBox*>(layoutItem);
-                    info << QString::number(spin->value(), 'f');
-                }
-                else if (qobject_cast<QSpinBox*>(layoutItem)){
-                    QSpinBox *spin = qobject_cast<QSpinBox*>(layoutItem);
-                    info << QString::number(spin->value());
-                }
-
-            }
-        }
-        for(int i = 0; i < listOutputs->count(); i++) {
-            outputs << listOutputs->item(i)->text();
+        for(int i = 0; i < deviceListOutputs->count(); i++) {
+            outputs << deviceListOutputs->item(i)->text();
         }
         ExperimentDeviceInfo deviceInfo;
         deviceInfo.id = id;
@@ -681,23 +700,23 @@ void experimentConfigurationDialog::addDevice()
         deviceInfo.type = type;
         deviceInfo.outputs = outputs;
         if (type == "IMU"){
-            deviceInfo.imuInfo.instabBias = info.at(0).toDouble();
-            deviceInfo.imuInfo.randomWalk = info.at(1).toDouble();
-            deviceInfo.imuInfo.initialError = info.at(2).toDouble();
+            deviceInfo.imuInfo.instabBias = spinInstabilityBias->value();
+            deviceInfo.imuInfo.randomWalk = spinRandomWalk->value();
+            deviceInfo.imuInfo.initialError = spinInitialError->value();
         }
         else if (type == "Камера"){
-            deviceInfo.cameraInfo.fps = info.at(0).toInt();
-            deviceInfo.cameraInfo.heigt = info.at(1).toInt();
-            deviceInfo.cameraInfo.width = info.at(2).toInt();
+            deviceInfo.cameraInfo.fps = spinFPS->value();
+            deviceInfo.cameraInfo.height = spinHeight->value();
+            deviceInfo.cameraInfo.width = spinWidth->value();
         }
         else if (type == "Антенна"){
-            deviceInfo.antennaInfo.confFileDirectory = info.at(0);
+            deviceInfo.antennaInfo.confFileDirectory = lineDirectory->text();
         }
         devicesMap[id] = deviceInfo;
         ui->listWidgetDevices->addItem(item);
     }
 }
-/// TOASK: В тз не написанно про нередактируемость полей этого окна, поэтому я ничего не делал нередактируемым
+
 void experimentConfigurationDialog::editDevice()
 {
     if (ui->listWidgetDevices->selectedItems().isEmpty()) return;
@@ -708,146 +727,63 @@ void experimentConfigurationDialog::editDevice()
     QString model = data.model;
     QString type = data.type;
     QList<QString> outputs = data.outputs;
-    QList<QString> info;
+
+    spinInstabilityBias->setValue(0);
+    spinRandomWalk->setValue(0);
+    spinInitialError->setValue(0);
+    spinFPS->setValue(0);
+    spinHeight->setValue(0);
+    spinWidth->setValue(0);
+    lineDirectory->setText("");
+
     if (type == "IMU"){
-        info << QString::number(data.imuInfo.instabBias,'f') << QString::number(data.imuInfo.randomWalk,'f') << QString::number(data.imuInfo.initialError,'f');
+        spinInstabilityBias->setValue(data.imuInfo.instabBias);
+        spinRandomWalk->setValue(data.imuInfo.randomWalk) ;
+        spinInitialError->setValue(data.imuInfo.initialError);
     }
     else if (type == "Камера"){
-        info << QString::number(data.cameraInfo.fps) << QString::number(data.cameraInfo.heigt) << QString::number(data.cameraInfo.width);
+        spinFPS->setValue(data.cameraInfo.fps);
+        spinHeight->setValue(data.cameraInfo.height);
+        spinWidth->setValue(data.cameraInfo.width);
     }
     else if (type == "Антенна"){
-        info << data.antennaInfo.confFileDirectory;
+        lineDirectory->setText(data.antennaInfo.confFileDirectory);
     }
 
-    QDialog dialog(this);
-    dialog.setWindowTitle("Редактор устройств");
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *layoutLines = new QHBoxLayout();
-    QHBoxLayout *layoutGroupBoxes = new QHBoxLayout();
-    QHBoxLayout *hLayout = new QHBoxLayout();
-    QLabel *labelID = new QLabel("ID: ");
-    QLineEdit *lineID = new QLineEdit(id);
-    QLabel *labelModel = new QLabel("Модель: ");
-    QLineEdit *lineModel = new QLineEdit(model);
-    QLabel *labelType = new QLabel("Тип: ");
-    QComboBox *comboType = new QComboBox();
-    comboType->addItems({"Приёмник", "IMU", "Камера", "Одометр", "Антенна", "Сплиттер", "Другое"});
-    QGroupBox *groupOutputs = new QGroupBox("Выводы");
-    groupOutputs->setAlignment(Qt::AlignHCenter);
-    QGroupBox *groupInfo = new QGroupBox("Дополнительная информация");
-    groupInfo->setAlignment(Qt::AlignHCenter);
-    QGridLayout *groupInfoLayoutOrigin = new QGridLayout();
-    groupInfo->setLayout(groupInfoLayoutOrigin);
-    QVBoxLayout *groupOutputsLayout = new QVBoxLayout();
-    QListWidget *listOutputs = new QListWidget();
-    listOutputs->addItems(outputs);
-    for(int i = 0; i < listOutputs->count(); i++) {
-        listOutputs->item(i)->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
-    }
-    QVBoxLayout *layoutOutputButtons = new QVBoxLayout();
-    QPushButton *addButton = new QPushButton("");
-    addButton->setStyleSheet("image: url(:/resources/add.png);");
-    QPushButton *deleteButton = new QPushButton("");
-    deleteButton->setStyleSheet("image: url(:/resources/delete.png);");
+    deviceListOutputs->clear();
 
-    QPushButton *okButton = new QPushButton("Готово");
-    QPushButton *cancelButton = new QPushButton("Отмена");
+    deviceLineID->setText(id);
+    deviceLineModel->setText(model);
+    deviceComboType->setCurrentText(type);
+    deviceListOutputs->addItems(outputs);
 
-    layoutLines->addWidget(labelID);
-    layoutLines->addWidget(lineID);
-    layoutLines->addWidget(labelModel);
-    layoutLines->addWidget(lineModel);
-    layoutLines->addWidget(labelType);
-    layoutLines->addWidget(comboType);
-
-    groupOutputs->setLayout(groupOutputsLayout);
-    groupOutputs->layout()->addWidget(listOutputs);
-    layoutGroupBoxes->addWidget(groupOutputs);
-    layoutOutputButtons->addWidget(addButton);
-    layoutOutputButtons->addWidget(deleteButton);
-    layoutGroupBoxes->addLayout(layoutOutputButtons);
-    layoutGroupBoxes->addWidget(groupInfo);
-    layoutGroupBoxes->setStretchFactor(layoutOutputButtons,0);
-    hLayout->addWidget(okButton);
-    hLayout->addWidget(cancelButton);
-    hLayout->addStretch(100);
-
-    layout->addLayout(layoutLines);
-    layout->addLayout(layoutGroupBoxes);
-    layout->addLayout(hLayout);
-
-    QObject::connect(comboType, &QComboBox::currentTextChanged, this, [this, groupInfo](const QString& text) {changeGroupBoxInfo(groupInfo);});
-    QObject::connect(addButton, &QPushButton::clicked, this, [this, listOutputs]() {addOutput(listOutputs);});
-    QObject::connect(deleteButton, &QPushButton::clicked, this, [this, listOutputs]() {deleteOutput(listOutputs);});
-    QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-    QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
-
-    comboType->setCurrentText(type);
-    QGridLayout *groupInfoLayout = qobject_cast<QGridLayout*>(groupInfo->layout());
-    if (!groupInfoLayout->isEmpty()){
-        for(int i = 0; i<groupInfoLayout->rowCount(); i++){
-            QWidget *layoutItem = groupInfoLayout->itemAtPosition(i, 1)->widget();
-            if (qobject_cast<QLineEdit*>(layoutItem)){
-                QLineEdit *lineEdit = qobject_cast<QLineEdit*>(layoutItem);
-                lineEdit->setText(info.at(i));
-            }
-            else if (qobject_cast<QDoubleSpinBox*>(layoutItem)){
-                QDoubleSpinBox *spin = qobject_cast<QDoubleSpinBox*>(layoutItem);
-                spin->setValue(info.at(i).toDouble());
-            }
-            else if (qobject_cast<QSpinBox*>(layoutItem)){
-                QSpinBox *spin = qobject_cast<QSpinBox*>(layoutItem);
-                spin->setValue(info.at(i).toInt());
-            }
-        }
-    }
-    if (dialog.exec() == QDialog::Accepted) {
-        QGridLayout *groupInfoLayout = qobject_cast<QGridLayout*>(groupInfo->layout());
+    if (deviceDialog->exec() == QDialog::Accepted) {
         QListWidgetItem *item = new QListWidgetItem();
-        QString id = lineID->text();
+        QString id = deviceLineID->text();
         item->setText(id);
         ExperimentDeviceInfo deviceInfo;
-        QString model = lineModel->text();
-        QString type = comboType->currentText();
+        QString model = deviceLineModel->text();
+        QString type = deviceComboType->currentText();
         QList<QString> outputs;
-        QList<QString> info;
-        if (!groupInfoLayout->isEmpty()){
-            for(int i = 0; i<groupInfoLayout->rowCount(); i++){
-                QWidget *layoutItem = groupInfoLayout->itemAtPosition(i, 1)->widget();
-                if (qobject_cast<QLineEdit*>(layoutItem)){
-                    QLineEdit *lineEdit = qobject_cast<QLineEdit*>(layoutItem);
-                    info << lineEdit->text();
-                }
-                else if (qobject_cast<QDoubleSpinBox*>(layoutItem)){
-                    QDoubleSpinBox *spin = qobject_cast<QDoubleSpinBox*>(layoutItem);
-                    info << QString::number(spin->value(), 'f');
-                }
-                else if (qobject_cast<QSpinBox*>(layoutItem)){
-                    QSpinBox *spin = qobject_cast<QSpinBox*>(layoutItem);
-                    info << QString::number(spin->value());
-                }
-
-            }
-        }
-        for(int i = 0; i < listOutputs->count(); i++) {
-            outputs << listOutputs->item(i)->text();
+        for(int i = 0; i < deviceListOutputs->count(); i++) {
+            outputs << deviceListOutputs->item(i)->text();
         }
         deviceInfo.id = id;
         deviceInfo.model = model;
         deviceInfo.type = type;
         deviceInfo.outputs = outputs;
         if (type == "IMU"){
-            deviceInfo.imuInfo.instabBias = info.at(0).toDouble();
-            deviceInfo.imuInfo.randomWalk = info.at(1).toDouble();
-            deviceInfo.imuInfo.initialError = info.at(2).toDouble();
+            deviceInfo.imuInfo.instabBias = spinInstabilityBias->value();
+            deviceInfo.imuInfo.randomWalk = spinRandomWalk->value();
+            deviceInfo.imuInfo.initialError = spinInitialError->value();
         }
         else if (type == "Камера"){
-            deviceInfo.cameraInfo.fps = info.at(0).toInt();
-            deviceInfo.cameraInfo.heigt = info.at(1).toInt();
-            deviceInfo.cameraInfo.width = info.at(2).toInt();
+            deviceInfo.cameraInfo.fps = spinFPS->value();
+            deviceInfo.cameraInfo.height = spinHeight->value();
+            deviceInfo.cameraInfo.width = spinWidth->value();
         }
         else if (type == "Антенна"){
-            deviceInfo.antennaInfo.confFileDirectory = info.at(0);
+            deviceInfo.antennaInfo.confFileDirectory = lineDirectory->text();
         }
         devicesMap.remove(id);
         devicesMap[id] = deviceInfo;
@@ -1197,7 +1133,7 @@ void experimentConfigurationDialog::addConnection()
         }
         QString key = device1+'&'+device2;
         connectionsMap[key] = info;
-        qDebug() << connectionsMap[key].coaxCableInfo.length << connectionsMap[key].coaxCableInfo.material << connectionsMap[key].coaxCableInfo.dataLoss;
+        // qDebug() << connectionsMap[key].coaxCableInfo.length << connectionsMap[key].coaxCableInfo.material << connectionsMap[key].coaxCableInfo.dataLoss;
         int row = ui->tableWidgetConnections->rowCount();
         ui->tableWidgetConnections->setRowCount(row + 1);
         ui->tableWidgetConnections->setItem(row, 0, device1Item);
@@ -1282,7 +1218,7 @@ void experimentConfigurationDialog::editConnection()
     else if (connectionType == "TCP"){
         info << data.tcpInfo.adress << data.tcpInfo.port;
     }
-    qDebug() << info;
+    // qDebug() << info;
     int index = 0;
     foreach (auto obj, groupSettings->children()) {
         if (!(qobject_cast<QLineEdit*>(obj) || qobject_cast<QComboBox*>(obj) || qobject_cast<QSpinBox*>(obj))) continue;
@@ -1441,7 +1377,6 @@ void experimentConfigurationDialog::deleteConnection()
 
 // 3я вклада
 
-/// TODO: функции
 /// addParametersEvent - слот, дающий выбор устройства перед добавлением groupBox
 void experimentConfigurationDialog::addParametersEvent(){
     QStringList keys = devicesMap.keys();

@@ -57,7 +57,6 @@ enum messageIndexes{
     INDEX_MSG_LEN1,
     INDEX_MSG_LEN2
 };
-/// TODO:: переделать парсер под структуру
 struct UbloxMessage{
     uint8_t messId;
     uint8_t messClass;

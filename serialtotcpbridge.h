@@ -35,7 +35,7 @@ public:
     // Инициализация и запуск сервера
     bool start() {
         if (!m_tcpServer->listen(QHostAddress::Any, tcpPort)) {
-            qDebug() << "Не удалось запустить TCP сервер на порту" << tcpPort;
+            // qDebug() << "Не удалось запустить TCP сервер на порту" << tcpPort;
             return false;
         }
         isRunning = 1;
@@ -78,21 +78,21 @@ private slots:
     // Новый клиент подключился к TCP серверу
     void onNewConnection() {
         if (maxConCount == m_clients.count()){
-            qDebug() << "Превышен лимит клиентов";
+            // qDebug() << "Превышен лимит клиентов";
             return;
         }
         QTcpSocket *clientSocket = m_tcpServer->nextPendingConnection();
         if (clientSocket) {
             // Добавляем клиента в список
             m_clients.append(clientSocket);
-            qDebug() << "Новый клиент подключен. Всего клиентов:" << m_clients.size();
+            // qDebug() << "Новый клиент подключен. Всего клиентов:" << m_clients.size();
 
             // --- Управление отключением клиента ---
             // Слот для удаления клиента из списка при его отключении
             auto handleDisconnect = [this, clientSocket]() {
                 m_clients.removeOne(clientSocket);
                 clientSocket->deleteLater();
-                qDebug() << "Клиент отключен. Осталось:" << m_clients.size();
+                // qDebug() << "Клиент отключен. Осталось:" << m_clients.size();
                 emit newConnectionCount();
             };
             connect(clientSocket, &QTcpSocket::disconnected, this, handleDisconnect);

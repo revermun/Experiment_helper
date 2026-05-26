@@ -13,6 +13,8 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <QFile>
+#include <QFrame>
+#include <QVBoxLayout>
 
 #include "enums.h"
 #include "structs.h"
@@ -50,7 +52,7 @@ public slots:
     void changeSaveButtons(int index);
     void addOutput(QListWidget *listOutputs);
     void deleteOutput(QListWidget *listOutputs);
-    void changeGroupBoxInfo(QGroupBox *groupInfo);
+    void changeGroupBoxInfo();
     void changeGeneralInfo(QString experimentType);
     void changeGroupBoxSettings(QGroupBox* groupSettings);
     void changeDeviceOutputs(QComboBox* comboDeviceOutput, bool isEditing = false, QString device2 = "");
@@ -70,6 +72,48 @@ private:
     Ui::experimentConfigurationDialog *ui;
     Qt::SortOrder devicesSort = Qt::AscendingOrder;
 
+    QFrame* frameIMU;
+    QLabel *labelInstabilityBias;
+    QDoubleSpinBox *spinInstabilityBias;
+    QLabel *labelRandomWalk;
+    QDoubleSpinBox *spinRandomWalk;
+    QLabel *labelInitialError;
+    QDoubleSpinBox *spinInitialError;
+
+    QFrame* frameCamera;
+    QLabel *labelFPS;
+    QSpinBox *spinFPS;
+    QLabel *labelHeight;
+    QSpinBox *spinHeight;
+    QLabel *labelWidth;
+    QSpinBox *spinWidth;
+
+    QFrame* frameAntenna;
+    QLabel *labelDirectory;
+    QLineEdit *lineDirectory;
+
+    QDialog     *deviceDialog;
+    QLabel      *deviceLabelID;
+    QLineEdit   *deviceLineID;
+    QVBoxLayout *deviceLayout;
+    QHBoxLayout *deviceLayoutLines;
+    QHBoxLayout *deviceLayoutGroupBoxes;
+    QHBoxLayout *deviceHLayout;
+    QLabel      *deviceLabelModel;
+    QLineEdit   *deviceLineModel;
+    QLabel      *deviceLabelType;
+    QComboBox   *deviceComboType;
+    QGroupBox   *deviceGroupOutputs;
+    QGroupBox   *deviceGroupInfo;
+    QListWidget *deviceListOutputs;
+    QPushButton *deviceAddButton;
+    QPushButton *deviceDeleteButton;
+    QPushButton *deviceOkButton;
+    QPushButton *deviceCancelButton;
+    QVBoxLayout *deviceGroupOutputsLayout;
+    QVBoxLayout *deviceGroupInfoLayout;
+    QVBoxLayout *deviceLayoutOutputButtons;
+
     QGroupBox* createParameterGroup(QString parameter, QWidget* parent = nullptr);
     QGroupBox* createParametersGroup(QString id, bool isCheckType = true);
     void setupTableSize(QTableWidget* table);
@@ -81,6 +125,10 @@ private:
     void saveAboutExperiment();
     void saveConnections();
     void saveMounting();
+    void loadAboutExperiment();
+    void loadConnections();
+    void loadMounting();
+    void setupWidgets();
 };
 
 #endif // EXPERIMENTCONFIGURATIONDIALOG_H

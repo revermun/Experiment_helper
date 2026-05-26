@@ -1,12 +1,6 @@
 #include "startstopactionsdialog.h"
 #include "ui_startstopactionsdialog.h"
 
-/// TODO: Просмотр файлов
-///
-/// TODO: Понять куда сохраняются конфиги после завершения работы с окном и сохраняются ли они вообще
-///
-/// TODO: Определить можно ли менять конфиг на старте и стопе для одного и того же устройства
-
 startStopActionsDialog::startStopActionsDialog(QList<QString> devices,QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::startStopActionsDialog)
@@ -26,7 +20,7 @@ void startStopActionsDialog::exploreConfig()
                                                     "/home",
                                                     tr("Config files (*.conf)"));
     if (fileName == "") {return;}
-    qDebug() << fileName;
+    // qDebug() << fileName;
     QString confName = fileName.split('/').last();
     ui->lineEditConfName->setText(confName);
 }

@@ -115,7 +115,7 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
                 asciiHeader.leapSec = static_cast<quint8>(fields.at(8).toUInt(nullptr));
                 asciiHeader.delayMs = static_cast<quint16>(fields.at(9).toUInt(nullptr));
                 res.asciiHeader = asciiHeader;
-                qDebug() << data;
+                // qDebug() << data;
                 buff->remove(0, pos);
                 return res;
             }
@@ -133,7 +133,7 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
             bool slashRSlashNCheck = (buff->indexOf('\n') - buff->indexOf('\r')) == 1;
             // qDebug() << dotcommaPos << astericsPos << slashRPos << slashNPos << separatorCheck << slashRSlashNCheck;
             if (slashRPos == -1 || slashNPos == -1 || !separatorCheck || !slashRSlashNCheck || !crcLenCheck) {buff->remove(0,1); continue;}
-            qDebug() << *buff;
+            // qDebug() << *buff;
             QByteArray header;
             int pos = 1;
             do{
@@ -168,7 +168,7 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
                 UnicoreMessage::AsciiHeader asciiHeader;
                 QList<QByteArray> fields = header.split(',');
                 asciiHeader.messageName = QString::fromLatin1(fields.at(0));
-                qDebug() << asciiHeader.messageName;
+                // qDebug() << asciiHeader.messageName;
                 asciiHeader.cpuIdle = static_cast<quint8>(fields.at(1).toUInt(nullptr));
                 asciiHeader.timeRef = QString::fromLatin1(fields.at(2));
                 asciiHeader.timeStatus = QString::fromLatin1(fields.at(3));
@@ -194,7 +194,7 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
             int slashNPos = buff->indexOf('\n');
             bool slashRSlashNCheck = (slashNPos - slashRPos) == 1;
             if (astericsPos == -1 || (astericsPos >= 0 && astericsPos >= (buff->count() - 2)) || !slashRSlashNCheck)  {buff->remove(0,1); continue;}
-            qDebug() << *buff;
+            // qDebug() << *buff;
             int pos = 1;
             QByteArray data;
             do{
@@ -307,7 +307,7 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
                 asciiHeader.leapSec = static_cast<quint8>(fields.at(8).toUInt(nullptr));
                 asciiHeader.delayMs = static_cast<quint16>(fields.at(9).toUInt(nullptr));
                 res.asciiHeader = asciiHeader;
-                qDebug() << data;
+                // qDebug() << data;
                 buff->remove(0, pos);
                 return res;
             }
@@ -331,7 +331,7 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
             int MessageLength = data.count() + header.count();
             QByteArray CRC;
             int crclen = buff->indexOf('\r') - buff->indexOf('*') - 1;
-            qDebug() << buff->indexOf('\r') << buff->indexOf('*') << crclen;
+            // qDebug() << buff->indexOf('\r') << buff->indexOf('*') << crclen;
             if (crclen != 2 && crclen != 8) {buff->remove(0,1); continue;}
             for(int i = 0; i<crclen; i++){
                 pos++;
@@ -350,7 +350,7 @@ UnicoreMessage UnicoreParser::parseMessage(QByteArray* buff)
                 UnicoreMessage::AsciiHeader asciiHeader;
                 QList<QByteArray> fields = header.split(',');
                 asciiHeader.messageName = QString::fromLatin1(fields.at(0));
-                qDebug() << asciiHeader.messageName;
+                // qDebug() << asciiHeader.messageName;
                 asciiHeader.cpuIdle = static_cast<quint8>(fields.at(1).toUInt(nullptr));
                 asciiHeader.timeRef = QString::fromLatin1(fields.at(2));
                 asciiHeader.timeStatus = QString::fromLatin1(fields.at(3));
@@ -410,24 +410,24 @@ bool UnicoreParser::sendMessage(QString msg)
         QSerialPort* serialCon = qobject_cast<QSerialPort*>(connection);
         serialCon->write(msgData);
         bool res = serialCon->flush();
-        if (!res) qDebug() << "send failed!";
+        // if (!res) qDebug() << "send failed!";
         return res;
     }
     else if (qobject_cast<QTcpSocket*>(connection)){
         QTcpSocket* tcpCon = qobject_cast<QTcpSocket*>(connection);
         tcpCon->write(msgData);
         bool res = tcpCon->flush();
-        if (!res) qDebug() << "send failed!";
+        // if (!res) qDebug() << "send failed!";
         return res;
     }
     else if (qobject_cast<QIODevice*>(connection)){
         QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
         bool res = ioCon->write(msgData);
-        qDebug() << ioCon->write(msgData);
+        // qDebug() << ioCon->write(msgData);
         return res;
     }
     else{
-        qDebug() << "uncknown connection type";
+        // qDebug() << "uncknown connection type";
         return false;
     }
 }

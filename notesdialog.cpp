@@ -19,17 +19,34 @@ notesDialog::notesDialog(QString experimentDirectory, bool isLap, QWidget *paren
     ui->groupBoxRedactor->setVisible(false);
     noRedactorHeight = this->height();
     noRedactorWidth = this->width();
+    this->experimentDirectory = experimentDirectory;
+    loadNotes();
+}
+
+
+notesDialog::~notesDialog()
+{
+    saveNotes();
+    delete ui;
+}
+
+void notesDialog::loadNotes(){
     QDir directory(experimentDirectory + '/' + "Notes" + '/');
-    QStringList fileNames = directory.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
-    qDebug() << fileNames;
-    for(QString fileName: fileNames){
+    if (!directory.exists()) {
+        directory.mkpath(".");
+    }
+
+    QStringList fileNames = directory.entryList(QDir::Files | QDir::NoDotAndDotDot);
+
+    for(QString fileName : fileNames){
         QStringList fragments = fileName.split("_");
         if(fragments.count() < 3){
             continue;
         }
+
         QString tag = fragments.at(0);
         QString title;
-        QString body;
+
         /// Если имеется дело с general, то название файла имеет 3 части: тэг, General и заголовок
         if (fragments.at(1) == "General"){
             title = fragments.at(2).split(".").at(0);
@@ -38,30 +55,71 @@ notesDialog::notesDialog(QString experimentDirectory, bool isLap, QWidget *paren
         else if (fragments.at(1) == "Lap"){
             title = fragments.at(3).split(".").at(0);
         }
-        QFile file(experimentDirectory + '/' + "Notes" + '/' + fileName);
-        if( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
-        {
-            qDebug( "Failed to open file for writing." );
-        }
-        QTextStream stream( &file );
-        stream.setCodec("UTF-8");
-        stream >> body;
-        file.close();
-        QListWidgetItem* item = new QListWidgetItem();
-        QList<QVariant> data = {QVariant(tag), QVariant(title), QVariant(body), QVariant(isLap)};
-        item->setText('(' + tag + ") " + title);
-        item->setData(Qt::UserRole,data);
-        ui->listWidgetNotes->addItem(item);
 
+        QFile file(experimentDirectory + '/' + "Notes" + '/' + fileName);
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qDebug() << "Failed to open file:" << fileName;
+            continue;
+        }
+
+        QTextStream stream(&file);
+        stream.setCodec("UTF-8");
+
+        QString body = stream.readAll();
+
+        qDebug() << "Loaded note:" << title << "Body length:" << body.length();
+        file.close();
+
+        QListWidgetItem* item = new QListWidgetItem();
+        Note note;
+        note.tag = tag;
+        note.body = body;
+        note.title = title;
+        notesList.append(note);
+        item->setText('(' + tag + ") " + title);
+        ui->listWidgetNotes->addItem(item);
     }
 }
-
-
-notesDialog::~notesDialog()
+void notesDialog::changeDir(QString dir)
 {
-    delete ui;
+    this->experimentDirectory = dir;
 }
 
+void notesDialog::saveNotes()
+{
+    QDir directory(experimentDirectory + '/' + "Notes" + '/');
+
+    if (!directory.exists()) {
+        directory.mkpath(".");
+    }
+
+    QStringList fileNamesOld = directory.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    for(QString fileNameOld : fileNamesOld){
+        QFile::remove(experimentDirectory + "/Notes/" + fileNameOld);
+    }
+
+    for (const Note& note : notesList){
+        QString tag = note.tag;
+        QString title = note.title;
+        QString body = note.body;
+
+        QString safeTitle = title;
+        safeTitle.remove(QRegularExpression("[\\\\/*?:\"<>|]"));
+
+        QString fileName = tag + "_General_" + safeTitle + ".txt";
+
+        QFile file(experimentDirectory + "/Notes/" + fileName);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qDebug() << "Failed to open file for writing:" << fileName;
+            continue;
+        }
+
+        QTextStream stream(&file);
+        stream.setCodec("UTF-8");
+        stream << body;
+        file.close();
+    }
+}
 
 void notesDialog::animateResize(int newWidth, int newHeight)
 {
@@ -90,9 +148,11 @@ void notesDialog::editNote()
         openRedactor();
         isAdd = false;
         isEdit = true;
-        ui->comboBoxTag->setCurrentText(ui->listWidgetNotes->currentItem()->data(Qt::UserRole).toList()[0].toString());
-        ui->lineEditTitle->setText(ui->listWidgetNotes->currentItem()->data(Qt::UserRole).toList()[1].toString());
-        ui->textEditNote->setText(ui->listWidgetNotes->currentItem()->data(Qt::UserRole).toList()[2].toString());
+        int index = ui->listWidgetNotes->currentRow();
+        Note note = notesList.at(index);
+        ui->comboBoxTag->setCurrentText(note.tag);
+        ui->lineEditTitle->setText(note.title);
+        ui->textEditNote->setText(note.body);
         ui->listWidgetNotes->setEnabled(false);
     }
 }
@@ -121,27 +181,32 @@ void notesDialog::redactorAccept()
         if (row == ui->listWidgetNotes->currentRow()){
             continue;
         }
-        QListWidgetItem* item = ui->listWidgetNotes->item(row);
-        QString itemTag = item->data(Qt::UserRole).toList()[INDEX_NOTE_TAG].toString();
-        QString itemTitle = item->data(Qt::UserRole).toList()[INDEX_NOTE_TITLE].toString();
+        Note note = notesList.at(row);
+        QString itemTag = note.tag;
+        QString itemTitle = note.title;
         if (itemTag == tag && itemTitle == title){
             ui->labelWarning->setText("Заметка с таким названием и тэгом уже существует!");
             return;
         }
     }
     QString body = ui->textEditNote->toPlainText();
-
-    QListWidgetItem* item = new QListWidgetItem();
-    QList<QVariant> data = {QVariant(tag), QVariant(title), QVariant(body), QVariant(isLap)};
-    item->setText('(' + tag + ") " + title);
-    item->setData(Qt::UserRole,data);
+    qDebug() << body;
+    Note note;
+    note.tag = tag;
+    note.title = title;
+    note.body = body;
+    QString newItemTitle = '(' + tag + ") " + title;
     if (isAdd){
+        QListWidgetItem* item = new QListWidgetItem(newItemTitle);
         ui->listWidgetNotes->addItem(item);
+        notesList.append(note);
     }
     else if (isEdit){
         int row = ui->listWidgetNotes->currentRow();
-        delete ui->listWidgetNotes->takeItem(row);
-        ui->listWidgetNotes->insertItem(row, item);
+        notesList.removeAt(row);
+        notesList.insert(row,note);
+        QListWidgetItem* oldItem = ui->listWidgetNotes->item(row);
+        oldItem->setText(newItemTitle);
     }
     ui->listWidgetNotes->setEnabled(true);
     closeRedactor();
@@ -150,6 +215,8 @@ void notesDialog::redactorAccept()
 void notesDialog::deleteNote()
 {
     if (ui->listWidgetNotes->count()>0 && !ui->groupBoxRedactor->isVisible() && !ui->listWidgetNotes->selectedItems().isEmpty()) {
+        int row = ui->listWidgetNotes->currentRow();
+        notesList.removeAt(row);
         delete ui->listWidgetNotes->takeItem(ui->listWidgetNotes->currentRow());
     }
 }
@@ -158,7 +225,8 @@ void notesDialog::filterNotes(QString tag)
 {
     for(int row = 0; row<ui->listWidgetNotes->count(); row++){
         QListWidgetItem* item = ui->listWidgetNotes->item(row);
-        QString itemTag = item->data(Qt::UserRole).toList()[0].toString();
+        Note note = notesList.at(row);
+        QString itemTag = note.tag;
         if(tag == "All"){
             item->setHidden(false);
         }
@@ -175,6 +243,7 @@ void notesDialog::closeRedactor()
     ui->lineEditTitle->clear();
     ui->textEditNote->clear();
     ui->comboBoxTag->setCurrentIndex(0);
+    ui->listWidgetNotes->setEnabled(true);
     this->animateResize(noRedactorWidth, noRedactorHeight);
 }
 
@@ -185,18 +254,7 @@ void notesDialog::openRedactor()
     ui->groupBoxRedactor->setVisible(true);
 }
 
-QList<QList<QString>> notesDialog::getNotes()
+QList<Note> notesDialog::getNotes()
 {
-    QList<QList<QString>> notesList;
-    for(int row = 0; row<ui->listWidgetNotes->count(); row++){
-        QListWidgetItem* item = ui->listWidgetNotes->item(row);
-        QString itemTag = item->data(Qt::UserRole).toList()[INDEX_NOTE_TAG].toString();
-        QString itemTitle = item->data(Qt::UserRole).toList()[INDEX_NOTE_TITLE].toString();
-        QString itemBody = item->data(Qt::UserRole).toList()[INDEX_NOTE_BODY].toString();
-        QString itemIsLap = item->data(Qt::UserRole).toList()[INDEX_NOTE_ISLAP].toString();
-        QList<QString> note;
-        note << itemTag << itemTitle << itemBody << itemIsLap;
-        notesList << note;
-    }
     return notesList;
 }

@@ -7,6 +7,12 @@
 #include <QGroupBox>
 #include <QTableWidget>
 
+struct Note{
+    QString tag;
+    QString title;
+    QString body;
+};
+
 struct DeviceInfo{
     QString ID;
     QString deviceType;
@@ -171,7 +177,7 @@ struct ExperimentDeviceInfo
     struct CameraInfo{
         int fps;
         int width;
-        int heigt;
+        int height;
     }cameraInfo;
     struct AntennaInfo{
         QString confFileDirectory;

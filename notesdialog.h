@@ -6,9 +6,8 @@
 #include <QPropertyAnimation>
 #include <QDir>
 
+#include "structs.h"
 #include "enums.h"
-/// TODO: Когда будет настроено подключение начать реализовывать передачу данных
-
 
 namespace Ui {
 class notesDialog;
@@ -22,7 +21,9 @@ public:
     explicit notesDialog(QString experimentDirectory, bool isLap, QWidget *parent = nullptr);
     ~notesDialog();
 
-    QList<QList<QString>> getNotes();
+    QList<Note> getNotes();
+    void changeDir(QString dir);
+    void saveNotes();
 
 public slots:
     void addNote();
@@ -43,7 +44,11 @@ private:
     int noRedactorHeight;
     int redactorWidth;
     int redactorHeight;
+    void loadNotes();
     void animateResize(int newWidth, int newHeight);
+    QList<Note> notesList;
+
+    QString experimentDirectory;
 };
 
 #endif // NOTESDIALOG_H

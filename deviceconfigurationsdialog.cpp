@@ -99,14 +99,6 @@
 ///
 
 
-///TODO: Основные настройки устройств
-/// Что нужно?
-/// Используемые диапазоны частот. Плюс, надо учитывать, какие диапазоны частот может принимать соответствующая антенна.
-/// !!!!!!
-/// непонятно
-/// !!!!
-
-
 /// Работа с сообщениями по файлу/мапе с сообщениями
 /// При выборе устройства идет прогон по мапе: сверяются названия протокола и тип сообщений
 /// Если название протокола совпадает, то смотрим тип сообщения:
@@ -125,11 +117,10 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,DeviceInfo> 
 {
     ui->setupUi(this);
     MainWindow* mainWindow = qobject_cast<MainWindow*>(parent);
-    connect(mainWindow, SIGNAL(newData(QString)), this, SLOT(getNewData(QString)));
+    connect(mainWindow, SIGNAL(newData(NewData)), this, SLOT(getNewData(NewData)));
     this->devicesMap = devicesMap;
     this->connectionsMap = connectionsMap;
     this->messagesMap = messagesMap;
-    qDebug() << connectionsMap;
     foreach (QString key, connectionsMap.keys()) {
         ui->comboBoxDevice1->addItem(key);
         ui->comboBoxDevice2->addItem(key);
@@ -455,12 +446,10 @@ void deviceConfigurationsDialog::showPortSettings(QString text){
     else setChildrenHidden(ui->framePRTUART, false);
 }
 
-void deviceConfigurationsDialog::getNewData(QString device)
+void deviceConfigurationsDialog::getNewData(NewData data)
 {
-    if (ui->comboBoxDevice1->currentText() != device) return;
-    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
-    QMap<QString,NewData> dataMap = mainWindow->getNewData();
-    streamBuffer.append(dataMap[device].buff);
+    if (ui->comboBoxDevice1->currentText() != data.deviceInfo.ID) return;
+    streamBuffer.append(data.buff);
 }
 
 void deviceConfigurationsDialog::parseMessage()
@@ -481,13 +470,13 @@ void deviceConfigurationsDialog::parseMessage()
             ui->labelResponse->setText("Принято ответное сообщение!");
             ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
             this->newResponse = true;
-            qDebug() << "ACK-ACK" << mess.data.toHex(' ');
+            // qDebug() << "ACK-ACK" << mess.data.toHex(' ');
         }
         else if (messClass == ACK::NAK::classID && messId == ACK::NAK::messageID){
             ui->labelResponse->setText("Сообщение отклонено!");
             ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
             this->newResponse = true;
-            qDebug() << "ACK-NAK" << mess.data.toHex(' ');
+            // qDebug() << "ACK-NAK" << mess.data.toHex(' ');
         }
 
         Message* decodedMessage = parser.decode(mess);
@@ -1010,7 +999,7 @@ void deviceConfigurationsDialog::parseMessage()
             QDataStream stream(&name, QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
             stream << datumName1 << datumName2;
-            qDebug() << name;
+            // qDebug() << name;
             R8 majA = info->majA;
             R8 flat = info->flat;
             R4 dX = info->dX;
@@ -1279,14 +1268,14 @@ void deviceConfigurationsDialog::parseMessage()
         if (!mess.isAscii) return;
         if (mess.data.split(',').count() <= 1) return;
         if (mess.isCommand && mess.data.contains("command") && mess.data.contains("OK")){
-            qDebug() << "OK";
+            // qDebug() << "OK";
             ui->labelResponse->setText("Принято ответное сообщение!");
             ui->labelResponse->setStyleSheet("color: rgb(0, 255, 0);");
             this->newResponse = true;
             return;
         }
         else if (mess.isCommand && mess.data.contains("command") && !mess.data.contains("OK")){
-            qDebug() << "NOT OK: "  << mess.data;
+            // qDebug() << "NOT OK: "  << mess.data;
             ui->labelResponse->setText("Сообщение отклонено!");
             ui->labelResponse->setStyleSheet("color: rgb(255, 0, 0);");
             this->newResponse = true;
@@ -1357,9 +1346,9 @@ void deviceConfigurationsDialog::parseMessage()
             }
         }
         else if (mess.asciiHeader.messageName == "MODE"){
-            qDebug() << mess.data;
+            // qDebug() << mess.data;
             QList<QByteArray> fields = mess.data.split(',').at(0).split(' ');
-            qDebug() << fields;
+            // qDebug() << fields;
             QList<QString> fieldsStr;
             foreach (QByteArray field, fields) {
                 fieldsStr.append(QString::fromLatin1(field));
@@ -1370,7 +1359,7 @@ void deviceConfigurationsDialog::parseMessage()
                 currMode += word;
                 if (wordIndex != fieldsStr.count() - 1) currMode+=' ';
             }
-            qDebug() << currMode;
+            // qDebug() << currMode;
             ui->comboMODE->setCurrentText(currMode);
             QMap<QString,QString> modeMap;
             modeMap["ROVER"] = "Portable";
@@ -1487,13 +1476,13 @@ void deviceConfigurationsDialog::parseMessage()
             QStringList fields = message.getSortedFieldKeys();
             QGridLayout* layout = qobject_cast<QGridLayout*>(ui->frameGeneralLabels->layout());
             QList<QByteArray> data = mess.data.split(',');
-            qDebug() << data;
+            // qDebug() << data;
             QList<QString> dataStr;
             foreach (QByteArray d, data) {
                 dataStr.append(QString::fromLatin1(d));
             }
             QString answerName = QString::fromLatin1(mess.header.split(',').at(0));
-            qDebug() << answerName << answerName.contains(message.name);
+            // qDebug() << answerName << answerName.contains(message.name);
             if (!answerName.contains(message.name)) return;
             int row = 0;
             int dataIndex = 0;
@@ -1580,13 +1569,13 @@ void deviceConfigurationsDialog::sendPoll()
         else if (currentItemText.left(3) == "NAV"){
             QString text = currentItemText;
             QString messName = text.remove("NAV-");
-            qDebug() << messName;
+            // qDebug() << messName;
             msg = UbloxParser::createPollMessage(messagesIDMapUBX[messName].first, messagesIDMapUBX[messName].second);
         }
         else if (currentItemText.left(3) == "CFG"){
             QString text = currentItemText;
             QString messName = text.remove("CFG-");
-            qDebug() << messName;
+            // qDebug() << messName;
             msg = UbloxParser::createPollMessage(messagesIDMapUBX[messName].first, messagesIDMapUBX[messName].second);
         }
         else return;
@@ -1670,7 +1659,7 @@ void deviceConfigurationsDialog::changeBBRSelection(QString text)
 
 void deviceConfigurationsDialog::sendSet()
 {
-    qDebug() << currentItemText;
+    // qDebug() << currentItemText;
     if (protocol == "Ublox"){
         if (currentItemText == "CFG-MSG"){
             QComboBox* comboMSG = ui->comboMSG;
@@ -1729,7 +1718,7 @@ void deviceConfigurationsDialog::sendSet()
                 stream << value;
             }
             payload.append(memByte);
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1745,7 +1734,7 @@ void deviceConfigurationsDialog::sendSet()
             QByteArray en(reinterpret_cast<char*>(endata), sizeof(endata));
             U1 payloadData[] = {dgnssMode, 0x00, 0x00, 0x00};
             QByteArray payload(reinterpret_cast<char*>(payloadData), sizeof(payloadData));
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1773,7 +1762,7 @@ void deviceConfigurationsDialog::sendSet()
             QDataStream stream(&payload, QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
             stream << navBbrMask << resetMode << reserved;
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1795,7 +1784,7 @@ void deviceConfigurationsDialog::sendSet()
             QDataStream stream(&payload, QIODevice::WriteOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
             stream << measRate << navRate << timeRef;
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1842,7 +1831,7 @@ void deviceConfigurationsDialog::sendSet()
                 txReady = en + (pol << 1) + (pin << 2) + (threshhold << 7);
                 stream <<  portId << reserved1 << txReady << mode << baudRate << inProtoMask << outProtoMask << flags << reserved2;
             }
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1867,7 +1856,7 @@ void deviceConfigurationsDialog::sendSet()
             U2 pAcc = ui->spinNAV5PAcc->value();
             U2 tAcc = ui->spinNAV5TAcc->value();
             U1 staticHoldThresh = (U1)(ui->spinNAV5SHT->value()*100);
-            qDebug() << fixedAlt << fixedAltVar << pDop << tDop << staticHoldThresh;
+            // qDebug() << fixedAlt << fixedAltVar << pDop << tDop << staticHoldThresh;
             U1 dgnssTimeout = ui->spinNAV5DGNSSTimeout->value();
             U1 cnoThreshNumSVs = ui->spinNAV5CNOThresh->value();
             U1 cnoThresh = ui->spinNAV5CNOThresh->value();
@@ -1888,7 +1877,7 @@ void deviceConfigurationsDialog::sendSet()
                    << staticHoldThresh << dgnssTimeout << cnoThreshNumSVs << cnoThresh << reserved1 << reserved2 << staticHoldMaxDist
                    << utcStandard << reserved3 << reserved4 << reserved5 << reserved6 << reserved7;
 
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1970,7 +1959,7 @@ void deviceConfigurationsDialog::sendSet()
                 stream << gnssId << resTrkCh << maxTrkCh << reserved << flags;
             }
 
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -1997,7 +1986,7 @@ void deviceConfigurationsDialog::sendSet()
             config = bbThreshold + (cwTheshhold << 4) + (algorithmBits << 9) + (en1 << 31);
             config2 = genetalBits + (antType << 12) + (en2 << 14);
             stream << config << config2;
-            qDebug() << payload.toHex(' ');
+            // qDebug() << payload.toHex(' ');
             QByteArray msg = hdr + en + payload;
             QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
             msg.append(checkSum);
@@ -2765,7 +2754,7 @@ void deviceConfigurationsDialog::sendSettings()
         modeMap["wrist worn watch"] = "";
         modeMap["Bike"] = "ROVER AUTOMOTIVE";
         modeMap["Other"] = "";
-        qDebug() << modeMap[ui->comboRecieverMode->currentText()];
+        // qDebug() << modeMap[ui->comboRecieverMode->currentText()];
         parser.sendMessage("MODE " + modeMap[ui->comboRecieverMode->currentText()]);
 
         /// rel pos

@@ -56,7 +56,7 @@ private slots:
 
 
 signals:
-    void newData(QString name);
+    void newData(NewData data);
 
 private:
     void getMessagesConfig();
@@ -74,11 +74,12 @@ private:
     void saveNotes(QString dir);
     void saveExperimentConfiguration(QString dir);
     void saveExperiment(QString dir);
+    void changeExperimentDirectoryLabel();
 
     Ui::MainWindow *ui;
 
     //контейнеры
-    QList<QList<QString>> notesList;
+    QList<Note> notesList;
     QMap<QString,Mess> messagesMap;
     QMap<QString,EventData> eventMap;
 
@@ -105,7 +106,7 @@ private:
     bool eventSettingsRelSolLost = 0;
 
     QTime lapTime;
-    QString version = "0.2.2";
+    QString version = "0.2.3";
 
     QLabel* versionLabel;
     QLabel* experimentDirectoryLabel;

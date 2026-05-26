@@ -118,24 +118,24 @@ bool UbloxParser::sendMessage(QByteArray msg)
         QSerialPort* serialCon = qobject_cast<QSerialPort*>(connection);
         serialCon->write(msg);
         bool res = serialCon->flush();
-        if (!res) qDebug() << "send failed!";
+        // if (!res) qDebug() << "send failed!";
         return res;
     }
     else if (qobject_cast<QTcpSocket*>(connection)){
         QTcpSocket* tcpCon = qobject_cast<QTcpSocket*>(connection);
         tcpCon->write(msg);
         bool res = tcpCon->flush();
-        if (!res) qDebug() << "send failed!";
+        // if (!res) qDebug() << "send failed!";
         return res;
     }
     else if (qobject_cast<QIODevice*>(connection)){
         QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
         bool res = ioCon->write(msg);
-        qDebug() << ioCon->write(msg);
+        // qDebug() << ioCon->write(msg);
         return res;
     }
     else{
-        qDebug() << "uncknown connection type";
+        // qDebug() << "uncknown connection type";
         return false;
     }
 }
