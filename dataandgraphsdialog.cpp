@@ -204,10 +204,10 @@ void dataAndGraphsDialog::openGraphs()
     foreach (QComboBox* combo, vectorData) {
         combo->addItem("");
     }
-    connect(comboData1, &QComboBox::currentTextChanged, this, [this, comboUnit1](const QString& text) {changeUnitComboBox(comboUnit1);});
-    connect(comboData2, &QComboBox::currentTextChanged, this, [this, comboUnit2](const QString& text) {changeUnitComboBox(comboUnit2);});
-    connect(comboData3, &QComboBox::currentTextChanged, this, [this, comboUnit3](const QString& text) {changeUnitComboBox(comboUnit3);});
-    connect(comboData4, &QComboBox::currentTextChanged, this, [this, comboUnit4](const QString& text) {changeUnitComboBox(comboUnit4);});
+    connect(comboData1, &QComboBox::currentTextChanged, this, [this, comboUnit1]() {changeUnitComboBox(comboUnit1);});
+    connect(comboData2, &QComboBox::currentTextChanged, this, [this, comboUnit2]() {changeUnitComboBox(comboUnit2);});
+    connect(comboData3, &QComboBox::currentTextChanged, this, [this, comboUnit3]() {changeUnitComboBox(comboUnit3);});
+    connect(comboData4, &QComboBox::currentTextChanged, this, [this, comboUnit4]() {changeUnitComboBox(comboUnit4);});
 
     // QStringList dataList;
     QGridLayout* groupGridLayout = qobject_cast<QGridLayout*>(groupLayout->itemAt(1)->layout());
@@ -384,10 +384,10 @@ void dataAndGraphsDialog::openSettings()
     layout->addLayout(gridLayout);
     layout->addLayout(hLayout);
 
-    connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboData1](const QString& text) {changeDataComboBox(comboData1);});
-    connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboData2](const QString& text) {changeDataComboBox(comboData2);});
-    connect(comboDevice3, &QComboBox::currentTextChanged, this, [this, comboData3](const QString& text) {changeDataComboBox(comboData3);});
-    connect(comboDevice4, &QComboBox::currentTextChanged, this, [this, comboData4](const QString& text) {changeDataComboBox(comboData4);});
+    connect(comboDevice1, &QComboBox::currentTextChanged, this, [this, comboData1]() {changeDataComboBox(comboData1);});
+    connect(comboDevice2, &QComboBox::currentTextChanged, this, [this, comboData2]() {changeDataComboBox(comboData2);});
+    connect(comboDevice3, &QComboBox::currentTextChanged, this, [this, comboData3]() {changeDataComboBox(comboData3);});
+    connect(comboDevice4, &QComboBox::currentTextChanged, this, [this, comboData4]() {changeDataComboBox(comboData4);});
     QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
     QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
 

@@ -98,7 +98,7 @@ void notesDialog::saveNotes()
         QFile::remove(experimentDirectory + "/Notes/" + fileNameOld);
     }
 
-    for (const Note& note : notesList){
+    for (const Note& note : std::as_const(notesList)){
         QString tag = note.tag;
         QString title = note.title;
         QString body = note.body;

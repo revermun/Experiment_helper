@@ -66,20 +66,27 @@ private:
     bool deleteDir(const QString &dirName, bool isDeleteOnlyContents = false);
     void setupTableSize(QTableWidget* table);
     void addItemToLogTable(QString localTime, QString GNSSTime, QString event);
+    void loadPreset(QString dir);
     void loadConnections(QString connFileDir);
     void loadEvents(QString eventFileDir);
     bool loadExperiment(QString dir);
     void saveConnections(QString dir);
-    void saveEvents(QString dir);
-    void saveNotes(QString dir);
-    void saveExperimentConfiguration(QString dir);
-    void saveExperiment(QString dir);
+    void savePreset(QString dir = "");
+    void saveEvents(QString dir = "");
+    void saveNotes(QString dir = "");
+    void saveExperimentConfiguration(QString dir = "");
+    void saveExperiment(QString dir = "");
     void changeExperimentDirectoryLabel();
+    void updatePreset();
+    void checkPreset();
+    void processStartStopActions(bool isStart);
+    QString tableWidgetToString(QTableWidget* table);
 
     Ui::MainWindow *ui;
 
     //контейнеры
     QList<Note> notesList;
+    QList<StartStopAction> startStopActionsList;
     QMap<QString,Mess> messagesMap;
     QMap<QString,EventData> eventMap;
 
@@ -100,13 +107,10 @@ private:
     //флаги
     bool isLap = 0;
     int lapNumber = 0;
-    bool eventSettingsSolFound = 0;
-    bool eventSettingsSolLost = 0;
-    bool eventSettingsRelSolFound = 0;
-    bool eventSettingsRelSolLost = 0;
 
+    Preset currentPreset;
     QTime lapTime;
-    QString version = "0.2.3";
+    QString version = "0.2.4";
 
     QLabel* versionLabel;
     QLabel* experimentDirectoryLabel;

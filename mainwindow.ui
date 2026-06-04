@@ -358,7 +358,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="labelPreset">
+       <widget class="QLabel" name="labelPresetTitle">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
@@ -370,6 +370,22 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelPresetDescription">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -414,6 +430,24 @@ border-radius: 150px;</string>
         </property>
         <property name="text">
          <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonStartActions">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>7</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Инициализация при старте/остановке</string>
         </property>
        </widget>
       </item>
@@ -481,24 +515,6 @@ border-radius: 150px;</string>
     </item>
     <item row="1" column="2">
      <layout class="QVBoxLayout" name="verticalLayout_4">
-      <item>
-       <widget class="QPushButton" name="pushButtonStartActions">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>7</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Действия при запуске/остановке</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QLabel" name="label_5">
         <property name="sizePolicy">
@@ -568,6 +584,7 @@ border-radius: 150px;</string>
     </property>
     <addaction name="actionLoadPreset"/>
     <addaction name="actionSavePreset"/>
+    <addaction name="actionSaveAsPreset"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -612,6 +629,11 @@ border-radius: 150px;</string>
    </property>
   </action>
   <action name="actionSaveAsExperiment">
+   <property name="text">
+    <string>Сохранить как...</string>
+   </property>
+  </action>
+  <action name="actionSaveAsPreset">
    <property name="text">
     <string>Сохранить как...</string>
    </property>

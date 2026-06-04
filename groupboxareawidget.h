@@ -37,11 +37,8 @@ public:
 
     bool removeGroup(int row, int column)
     {
-        QLayoutItem* item = gridLayoutGroupBoxes->itemAtPosition(row, column);
-        if (!item) return false;
-
-        QGroupBox* group = qobject_cast<QGroupBox*>(item->widget());
-        if (!groupBox) return false;
+        QGroupBox* group = groupAtPosition(row, column);
+        if (!group) return false;
 
         removeItem(group);
         return true;
@@ -152,11 +149,11 @@ private:
 
         gridLayoutGroupBoxes->addWidget(groupBox, 0, 0, 1, 1);
 
-        horizontalSpacer = new QSpacerItem(422, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-        gridLayoutGroupBoxes->addItem(horizontalSpacer, 1, 1, 1, 1);
+        // horizontalSpacer = new QSpacerItem(422, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        // gridLayoutGroupBoxes->addItem(horizontalSpacer, 1, 1, 1, 1);
 
-        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        gridLayoutGroupBoxes->addItem(verticalSpacer, 1, 0, 1, 1);
+        // verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+        // gridLayoutGroupBoxes->addItem(verticalSpacer, 1, 0, 1, 1);
 
         gridLayoutGroupBoxes->setRowStretch(0, 1);
         gridLayoutGroupBoxes->setRowStretch(1, 1);
@@ -229,8 +226,8 @@ private:
     QSpacerItem *horizontalSpacer_2;
     QSpacerItem *horizontalSpacer_3;
     QPushButton *pushButton;
-    QSpacerItem *horizontalSpacer;
-    QSpacerItem *verticalSpacer;
+    // QSpacerItem *horizontalSpacer;
+    // QSpacerItem *verticalSpacer;
 
     // Данные
     QVector<QPair<QGroupBox*, QPair<int, int>>> groupBoxVector;

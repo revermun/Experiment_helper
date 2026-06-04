@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -1089,7 +1089,7 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>0</y>
+                <y>-3302</y>
                 <width>686</width>
                 <height>4858</height>
                </rect>
@@ -5787,7 +5787,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>929</x>
-     <y>124</y>
+     <y>268</y>
     </hint>
     <hint type="destinationlabel">
      <x>783</x>
@@ -5803,7 +5803,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>519</x>
-     <y>3037</y>
+     <y>2187</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -5819,7 +5819,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>519</x>
-     <y>3064</y>
+     <y>2214</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -5835,7 +5835,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>519</x>
-     <y>3091</y>
+     <y>2241</y>
     </hint>
     <hint type="destinationlabel">
      <x>843</x>
@@ -5851,7 +5851,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>519</x>
-     <y>3118</y>
+     <y>2268</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -5867,7 +5867,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>519</x>
-     <y>3145</y>
+     <y>2295</y>
     </hint>
     <hint type="destinationlabel">
      <x>845</x>
@@ -5883,7 +5883,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>3358</y>
+     <y>2511</y>
     </hint>
     <hint type="destinationlabel">
      <x>844</x>
@@ -5899,7 +5899,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>3514</y>
+     <y>2667</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -5915,7 +5915,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>4353</y>
+     <y>3506</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -5931,7 +5931,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>4353</y>
+     <y>3506</y>
     </hint>
     <hint type="destinationlabel">
      <x>842</x>
@@ -5947,7 +5947,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>930</x>
-     <y>5148</y>
+     <y>4298</y>
     </hint>
     <hint type="destinationlabel">
      <x>963</x>
@@ -6043,7 +6043,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>494</x>
-     <y>7225</y>
+     <y>4481</y>
     </hint>
     <hint type="destinationlabel">
      <x>224</x>
@@ -6059,7 +6059,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>494</x>
-     <y>7256</y>
+     <y>4512</y>
     </hint>
     <hint type="destinationlabel">
      <x>224</x>
@@ -6075,7 +6075,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>494</x>
-     <y>7287</y>
+     <y>4543</y>
     </hint>
     <hint type="destinationlabel">
      <x>190</x>
@@ -6091,7 +6091,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>494</x>
-     <y>7318</y>
+     <y>4574</y>
     </hint>
     <hint type="destinationlabel">
      <x>208</x>
@@ -6107,7 +6107,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>494</x>
-     <y>7349</y>
+     <y>4605</y>
     </hint>
     <hint type="destinationlabel">
      <x>213</x>
@@ -6123,11 +6123,43 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>397</x>
-     <y>7494</y>
+     <y>4753</y>
     </hint>
     <hint type="destinationlabel">
      <x>316</x>
      <y>835</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonSaveConfig</sender>
+   <signal>clicked()</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>requestConfiguration()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>847</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>981</x>
+     <y>62</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButtonLoadConfig</sender>
+   <signal>clicked()</signal>
+   <receiver>deviceConfigurationsDialog</receiver>
+   <slot>loadConfiguration()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>796</x>
+     <y>57</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>983</x>
+     <y>107</y>
     </hint>
    </hints>
   </connection>
@@ -6154,5 +6186,7 @@ shutdown</string>
   <slot>enableEphFrame(bool)</slot>
   <slot>MASKcheckClickEvent(bool)</slot>
   <slot>comboCONFIGRTKchangeEvent(QString)</slot>
+  <slot>requestConfiguration()</slot>
+  <slot>loadConfiguration()</slot>
  </slots>
 </ui>

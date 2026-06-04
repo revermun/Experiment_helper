@@ -33,6 +33,12 @@ public:
 
     void saveAll();
     void changeDir(QString dir);
+    void saveAboutExperiment(QString dir = "");
+    void saveConnections(QString dir = "");
+    void saveMounting(QString dir = "");
+    static QMap<QString, ExperimentConnectionInfo> getConnectionsFromFile(QString dir);
+    static QMap<QString, ExperimentDeviceInfo> getDevicesFromFile(QString dir);
+    static QMap<QString, ExperimentGroupBoxParametersInfo> getMountingFromFile(QString dir);
 
 public slots:
     void saveTab();
@@ -122,9 +128,6 @@ private:
     void sortListWidgetByDeviceType(QListWidget* listWidget, Qt::SortOrder order);
     QGroupBox* addParameter(QString parameter,  QGroupBox* group);
     QList<QGroupBox*> getParameters(QGroupBox* group);
-    void saveAboutExperiment();
-    void saveConnections();
-    void saveMounting();
     void loadAboutExperiment();
     void loadConnections();
     void loadMounting();

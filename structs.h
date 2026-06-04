@@ -13,6 +13,23 @@ struct Note{
     QString body;
 };
 
+struct UnicoreConfiguration{
+    QStringList MASK;
+    QStringList CONFIG;
+    QStringList UNILOGLIST;
+    QString MODE;
+};
+
+struct UbloxConfiguration{
+    QList<QByteArray> MSG;
+    QByteArray DAT;
+    QByteArray NAV5;
+    QByteArray ITFM;
+    QByteArray GNSS;
+    QByteArray DGNSS;
+    QByteArray PRT;
+};
+
 struct DeviceInfo{
     QString ID;
     QString deviceType;
@@ -220,6 +237,29 @@ struct ExperimentGroupBoxParametersInfo
     bool positionCheck;
     bool boresightCheck;
     bool leverarmCheck;
+
+    struct Parameter{
+        QString name;
+        int x;
+        int y;
+        int z;
+    };
+
+    QMap<QString,Parameter> parameters;
+};
+
+struct Preset{
+    QString title;
+    QString description;
+    QMap<QString, ExperimentConnectionInfo> connectionsMap;
+    QMap<QString, ExperimentDeviceInfo> devicesMap;
+    QMap<QString, ExperimentGroupBoxParametersInfo> mountingMap;
+};
+
+struct StartStopAction{
+    bool isStart;
+    QString deviceName;
+    QString fileDir;
 };
 
 #endif // STRUCTS_H

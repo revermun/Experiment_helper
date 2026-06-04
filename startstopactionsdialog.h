@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QMessageBox>
 
+#include "structs.h"
 #include "enums.h"
 
 namespace Ui {
@@ -20,6 +21,8 @@ public:
     explicit startStopActionsDialog(QList<QString> devices, QWidget *parent = nullptr);
     ~startStopActionsDialog();
 
+    QList<StartStopAction> getActions();
+
 public slots:
     void addToStart();
     void addToStop();
@@ -28,6 +31,7 @@ public slots:
     void exploreConfig();
 private:
     Ui::startStopActionsDialog *ui;
+    QList<StartStopAction> actions;
     QList<QString> devices;
     void addItemToStart(int row, QString ID, QString config);
     void addItemToStop(int row, QString ID, QString config);

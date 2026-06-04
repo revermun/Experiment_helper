@@ -115,7 +115,6 @@ UnicoreMessage UnicoreParser::parseAsciiMessage(QByteArray* buff)
                 asciiHeader.leapSec = static_cast<quint8>(fields.at(8).toUInt(nullptr));
                 asciiHeader.delayMs = static_cast<quint16>(fields.at(9).toUInt(nullptr));
                 res.asciiHeader = asciiHeader;
-                // qDebug() << data;
                 buff->remove(0, pos);
                 return res;
             }

@@ -8,9 +8,9 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QTreeWidgetItem>
 #include <QTableWidget>
-#include <structs.h>
 #include <cmath>
 
+#include "structs.h"
 
 namespace Ui {
 class deviceConfigurationsDialog;
@@ -21,7 +21,7 @@ class deviceConfigurationsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit deviceConfigurationsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
+    explicit deviceConfigurationsDialog(QString experimentDirectory, QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent = nullptr);
     ~deviceConfigurationsDialog();
 
 public slots:
@@ -48,8 +48,17 @@ public slots:
     void MASKcheckClickEvent(bool state);
     void comboCONFIGRTKchangeEvent(QString text);
     void getNewData(NewData data);
+    void saveUnicoreConfiguration();
+    void saveUbloxConfiguration();
+    void requestConfiguration();
+    void loadConfiguration();
+
+signals:
+    void UnicoreConfigurationRecieved();
+    void UbloxConfigurationRecieved();
 
 private:
+    QString experimentDirectory;
     void setupTableSize(QTableWidget* table);
     void setChildrenHidden(QObject* parent, bool isHidden);
     void setChildrenEnabled(QObject* parent, bool isEnabled);
@@ -65,6 +74,11 @@ private:
     QByteArray streamBuffer;
     QString protocol;
 
+    UnicoreConfiguration currentUnicoreConfig;
+    UbloxConfiguration currentUbloxConfig;
+    QString configFileName;
+
+    bool isSaving;
     bool newResponse;
     int count = 0;
     bool velCheck;

@@ -22,7 +22,7 @@ inline T getBits(T num, int indexStart, int indexEnd){
 }
 
 template<typename T>
-inline bool compareValue(QDataStream& stream, double thresh, int flags, const QString& typeName) {
+inline bool compareValue(QDataStream& stream, double thresh, int flags) {
     T value;
     stream >> value;
     // qDebug() << "data: " << value << "event value: " << thresh;
@@ -41,7 +41,7 @@ inline bool compareValue(QDataStream& stream, double thresh, int flags, const QS
 
 // Специализация для float
 template<>
-inline bool compareValue<float>(QDataStream& stream, double thresh, int flags, const QString& typeName) {
+inline bool compareValue<float>(QDataStream& stream, double thresh, int flags) {
     float value;
     stream >> value;
     // qDebug() << "data: " << value << "event value: " << thresh;
@@ -59,7 +59,7 @@ inline bool compareValue<float>(QDataStream& stream, double thresh, int flags, c
 
 // Специализация для double
 template<>
-inline bool compareValue<double>(QDataStream& stream, double thresh, int flags, const QString& typeName) {
+inline bool compareValue<double>(QDataStream& stream, double thresh, int flags) {
     double value;
     stream >> value;
     // qDebug() << "data: " << value << "event value: " << thresh;

@@ -21,17 +21,21 @@ void startStopActionsDialog::exploreConfig()
                                                     tr("Config files (*.conf)"));
     if (fileName == "") {return;}
     // qDebug() << fileName;
-    QString confName = fileName.split('/').last();
-    ui->lineEditConfName->setText(confName);
+    ui->lineEditConfName->setText(fileName);
 }
 
 void startStopActionsDialog::addItemToStart(int row, QString ID, QString config)
 {
     QListWidgetItem* item = new QListWidgetItem();
     QList<QVariant> data = {QVariant(ID), QVariant(config)};
-    item->setText(ID + " \t|\t "+ config);
+    item->setText(ID + "\t|\t"+ config);
     item->setData(Qt::UserRole,data);
     ui->listWidgetStart->insertItem(row, item);
+    StartStopAction action;
+    action.isStart = true;
+    action.fileDir = config;
+    action.deviceName = ID;
+    actions.append(action);
 }
 
 void startStopActionsDialog::addItemToStop(int row, QString ID, QString config)
@@ -41,6 +45,11 @@ void startStopActionsDialog::addItemToStop(int row, QString ID, QString config)
     item->setText(ID + " \t|\t "+ config);
     item->setData(Qt::UserRole,data);
     ui->listWidgetStop->insertItem(row, item);
+    StartStopAction action;
+    action.isStart = false;
+    action.fileDir = config;
+    action.deviceName = ID;
+    actions.append(action);
 }
 
 void startStopActionsDialog::addItemToStart(QString ID, QString config)
@@ -50,6 +59,11 @@ void startStopActionsDialog::addItemToStart(QString ID, QString config)
     item->setText(ID + " \t|\t "+ config);
     item->setData(Qt::UserRole,data);
     ui->listWidgetStart->addItem(item);
+    StartStopAction action;
+    action.isStart = true;
+    action.fileDir = config;
+    action.deviceName = ID;
+    actions.append(action);
 }
 
 void startStopActionsDialog::addItemToStop(QString ID, QString config)
@@ -59,6 +73,11 @@ void startStopActionsDialog::addItemToStop(QString ID, QString config)
     item->setText(ID + " \t|\t "+ config);
     item->setData(Qt::UserRole,data);
     ui->listWidgetStop->addItem(item);
+    StartStopAction action;
+    action.isStart = false;
+    action.fileDir = config;
+    action.deviceName = ID;
+    actions.append(action);
 }
 
 void startStopActionsDialog::addToStart()
@@ -146,14 +165,38 @@ void startStopActionsDialog::addToStop()
 void startStopActionsDialog::removeStart()
 {
     if (!ui->listWidgetStart->selectedItems().isEmpty() && ui->listWidgetStart->count()>0) {
-        delete ui->listWidgetStart->takeItem(ui->listWidgetStart->currentRow());
+        QListWidgetItem* item = ui->listWidgetStart->takeItem(ui->listWidgetStart->currentRow());
+        QString id = item->data(Qt::UserRole).toStringList().at(0);
+        int index = 0;
+        foreach (StartStopAction action, actions) {
+            if (action.deviceName == id && action.isStart) {
+                actions.removeAt(index);
+                break;
+            }
+            index++;
+        }
+        delete item;
     }
 }
 
 void startStopActionsDialog::removeStop()
 {
     if (!ui->listWidgetStop->selectedItems().isEmpty() && ui->listWidgetStop->count()>0){
-        delete ui->listWidgetStop->takeItem(ui->listWidgetStop->currentRow());
+        QListWidgetItem* item = ui->listWidgetStop->takeItem(ui->listWidgetStop->currentRow());
+        QString id = item->data(Qt::UserRole).toStringList().at(0);
+        int index = 0;
+        foreach (StartStopAction action, actions) {
+            if (action.deviceName == id && !action.isStart) {
+                actions.removeAt(index);
+                break;
+            }
+            index++;
+        }
+        delete item;
     }
+}
+
+QList<StartStopAction> startStopActionsDialog::getActions(){
+    return actions;
 }
 

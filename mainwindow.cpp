@@ -11,28 +11,43 @@
 #include "unicoreparser.h"
 #include "convertors.h"
 #include "pickdirectorydialog.h"
+#include "presetsettingsdialog.h"
 
 
 
-
-/// Мысли по поводу правок:
-///     TODO: Множественное подключение и отключение
+/// TODO: Пресеты
+/// Что это?
+/// Пресет - это совокупность файла схемы установки (mounting) вместе с файлами конфигурации устройтв
+/// Зачем это?
+/// Чтобы во время эксперимента можно было менять его условия без лишних действий
+/// Как это сделать?
+/// 1) Реализовать конфигурацию устройств по файлам
+/// 2) Реализовать сохранение пресета (сохранение текущей конфигурации устройств и файла mounting)
+///    в отдельную папку в новой папке Lap_presets
+/// 3) Реализовать функционал кнопки Инициализации при старте/остановке
 ///
+/// TODO: Файлы конфигурации устройств
+/// Что это?
+/// Это файлы, содержащие набор команд, необходимых для отправки на устройства.
+/// Команды должны соответствовать протоколу устройства и идти друг за другом через \n
+/// Примеры:
+/// UM;MODE;ROVER AUTOMOTIVE для Unicore
+/// UBX;cfg-msg;01,01,0,0,0,1,0,0 для Ublox (После названия через запятую задаются значения полей сообщения)
 ///
-///6)	СДЕЛАНО В редакторе устройств для антенны лучше разместить на разных строках описание “Путь к Antex/PCV файлу” и поле для пути.
-///7)	СДЕЛАНО Вкладка “Устройства и связи”. При создании связи необходимо проверять,
-/// что порт устройства не занят. Так как сейчас можно на один порт повесить сколько угодно устройств,
-///10)	СДЕЛАНО Для подключений. Было бы здорово, если можно было выделить несколько устройств и чтобы при удалении удалялись только устройства из этой группы.ё
-/// а должен быть только один.
-///11)	СДЕЛАНО Добавить “Сохранить как…” для эксперимента.
-///12)	СДЕЛАНО Ещё надо бы запоминать последний путь загрузки/сохранения чего-либо, а то постоянно из корня диска приходится путь выбирать
-/// 1)  СДЕЛАНО В "Заметках" после окончания редактирования смещается выделение заметки вниз.
-/// 2)  СДЕЛАНО В "Заметках" если выйти из редактора через кнопку отмены "Cancel", то область заметок остаётся заблокированной.
-/// 3)  СДЕЛАНО В "Заметках" не сохраняются данные после первого пробела при следующей последовательности действий:
-///   а) Закрыть окно с заметками.
-///   б) Открыть окно заново.
-///   в) Начать редактировать заметку.
-/// До редактирования текст заметки не меняется.
+/// TODO: Сохранение пресета
+/// Пресеты должны сохранятся в следующем виде
+/// (п) Lap_presets
+///         (п)<preset_name>
+///             (п)device_configurations
+///             -Preset_Info (устройства пресета)
+///             -Mounting
+///             -Connections
+///             -Start_and_stop_actions
+/// При выборе "Сохранить" открывается окно редактирования пресета
+/// В нем должно быть название, описание, выбор конфигурационных файлов или редактор конфигураций
+/// устройств.
+/// TODO: Множественное подключение и отключение
+
 
 
 void MainWindow::setupTableSize(QTableWidget* table) {
@@ -143,11 +158,10 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     ui->tableWidgetConnections->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->actionLoadExperiment->setProperty("root","Эксперимент");
-    ui->actionSaveExperiment->setProperty("root", "Эксперимент");
-    ui->actionSaveAsExperiment->setProperty("root", "Эксперимент");
-    ui->actionLoadPreset->setProperty("root","Пресет");
-    ui->actionSavePreset->setProperty("root","Пресет");
+
+    currentPreset.title = "Default";
+    currentPreset.description = "";
+    updatePreset();
 
     connectionsRootElement = connectionsDoc.createElement("Connections");
     connectionsDoc.appendChild(connectionsRootElement);
@@ -165,6 +179,24 @@ MainWindow::MainWindow(QWidget *parent)
     versionLabel->setText(tr("Версия ПО: ") + this->version);
     statusBar()->addWidget(versionLabel);
     statusBar()->addWidget(experimentDirectoryLabel);
+}
+
+MainWindow::~MainWindow()
+{
+    foreach (QString key, connectionsMap.keys()) {
+        QObject* connection = connectionsMap[key];
+        if (qobject_cast<QIODevice*>(connection)){
+            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+            ioCon->close();
+        }
+    }
+    delete ui;
+}
+
+void MainWindow::updatePreset()
+{
+    ui->labelPresetTitle->setText(currentPreset.title);
+    ui->labelPresetDescription->setText(currentPreset.description);
 }
 
 void MainWindow::getMessagesConfig()
@@ -248,17 +280,6 @@ void MainWindow::getMessagesConfig()
     }
 }
 
-MainWindow::~MainWindow()
-{
-    foreach (QString key, connectionsMap.keys()) {
-        QObject* connection = connectionsMap[key];
-        if (qobject_cast<QIODevice*>(connection)){
-            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
-            ioCon->close();
-        }
-    }
-    delete ui;
-}
 
 void MainWindow::addItemToConnectionsTable(DeviceInfo info)
 {
@@ -321,6 +342,48 @@ void MainWindow::fillConnectionsTable()
         DeviceInfo info = devicesMap.value(key);
         addItemToConnectionsTable(info);
     }
+}
+
+
+void MainWindow::loadPreset(QString dir){
+    if (dir == "") {return;}
+    /// Меняем текущий пресет на этот:
+    QString title = dir.split('/').last();
+    QFile infoFile(dir + "/Preset_info.txt");
+    QString description;
+    if (infoFile.open(QIODevice::ReadOnly)){
+        QTextStream stream(&infoFile);
+        stream.setCodec("UTF-8");
+        description = stream.readAll();
+    }
+    Preset preset;
+    preset.title = title;
+    preset.description = description;
+    /// заменяем файлы эксперимента на файлы пресета
+    QString experimentConfigDir = experimentDirectory + "/Configurations/Experiment_configurations";
+    QString presetConnectionsDir = dir + "/Connections.yaml";
+    QString presetMountingDir = dir + "/Mounting.yaml";
+    QFile presetConnectionsFile(presetConnectionsDir);
+    QFile presetMountingFile(presetMountingDir);
+    QString experimentConnectionsDir = experimentConfigDir + "/Experiment_connections.yaml";
+    QFile experimentConnectionsFile(experimentConnectionsDir);
+    QString experimentMountingDir = experimentConfigDir + "/Experiment_mounting.yaml";
+    QFile experimentMountingFile(experimentMountingDir);
+    if (presetConnectionsFile.open(QFile::ReadWrite)){
+        if (experimentConnectionsFile.open(QFile::ReadWrite)) experimentConnectionsFile.remove();
+        presetConnectionsFile.copy(experimentConnectionsDir);
+        presetConnectionsFile.close();
+        preset.connectionsMap = experimentConfigurationDialog::getConnectionsFromFile(presetConnectionsDir);
+        preset.devicesMap = experimentConfigurationDialog::getDevicesFromFile(presetConnectionsDir);
+    }
+    if (presetConnectionsFile.open(QFile::ReadWrite)){
+        if (experimentMountingFile.open(QFile::ReadWrite)) experimentMountingFile.remove();
+        presetMountingFile.copy(experimentMountingDir);
+        presetConnectionsFile.close();
+        preset.mountingMap = experimentConfigurationDialog::getMountingFromFile(presetMountingDir);
+    }
+    currentPreset = preset;
+    updatePreset();
 }
 
 void MainWindow::loadConnections(QString connFileDir){
@@ -393,10 +456,10 @@ void MainWindow::loadEvents(QString eventFileDir)
 {
     if (eventFileDir.isEmpty()) return;
     QFile eventFile(eventFileDir);
-    eventFile.open(QIODevice::ReadWrite) /*return*/;
+    eventFile.open(QIODevice::ReadWrite);
     QDomDocument eventDoc("document");
     eventFile.close();
-    if (!eventDoc.setContent(&eventFile)) /*return*/;
+    eventDoc.setContent(&eventFile);
 
     QDomElement docElem = eventDoc.documentElement();
     QDomNode eventXml = docElem.firstChild();
@@ -478,9 +541,9 @@ bool MainWindow::loadExperiment(QString dir)
         }
     }
     QDir experimentDir(experimentDirectory);
-    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations");
-    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Device_configurations");
-    experimentDir.mkpath(experimentDirectory + '/' + "Configurations" + '/' + "Lap_presets");
+    experimentDir.mkpath(experimentDirectory + "/Configurations/Experiment_configurations");
+    experimentDir.mkpath(experimentDirectory + "/Configurations/Device_configurations");
+    experimentDir.mkpath(experimentDirectory + "/Lap_presets");
     return true;
 }
 
@@ -491,7 +554,35 @@ void MainWindow::addConnectionFromFile()
     loadConnections(dir);
 }
 
+
+void MainWindow::savePreset(QString dir){
+    if (dir.isEmpty()) dir = experimentDirectory;
+    /// Открываем диалог
+    Preset preset = currentPreset;
+    /// После подтверждения создаем папку с названием из диалога
+    QString presetDir = QString(dir + "/Lap_presets/%1").arg(preset.title);
+    QDir experimentDir(dir);
+    experimentDir.mkpath(presetDir);
+    /// сохраняем в Preset_info поля диалога
+    QString presetInfoDir = presetDir + "/Preset_info.txt";
+    QFile file(presetInfoDir);
+    file.open(QIODevice::ReadWrite);
+
+    QTextStream stream(&file);
+    stream.setCodec("UTF-8");
+    stream << preset.description;
+    file.close();
+    /// сохраняем mounting
+    QString mountingDir = presetDir + "/Mounting.yaml";
+    QString connectionsDir = presetDir + "/Connections.yaml";
+    experimentConfigurationDialog experimentConfigDialog(experimentDirectory, this);
+    experimentConfigDialog.saveMounting(mountingDir);
+    experimentConfigDialog.saveConnections(connectionsDir);
+
+}
+
 void MainWindow::saveConnections(QString dir){
+    if (dir.isEmpty()) dir = experimentDirectory;
     connectionsDoc.clear();
     connectionsRootElement = connectionsDoc.createElement("Connections");
     connectionsDoc.appendChild(connectionsRootElement);
@@ -570,6 +661,7 @@ void MainWindow::saveConnections(QString dir){
 }
 
 void MainWindow::saveEvents(QString dir){
+    if (dir.isEmpty()) dir = experimentDirectory;
     eventDoc.clear();
     eventRootElement = eventDoc.createElement("Events");
     eventDoc.appendChild(eventRootElement);
@@ -629,12 +721,14 @@ void MainWindow::saveEvents(QString dir){
 }
 
 void MainWindow::saveNotes(QString dir){
+    if (dir.isEmpty()) dir = experimentDirectory;
     notesDialog nD(experimentDirectory,isLap,this);
     nD.changeDir(dir);
     nD.saveNotes();
 }
 
 void MainWindow::saveExperimentConfiguration(QString dir){
+    if (dir.isEmpty()) dir = experimentDirectory;
     experimentConfigurationDialog experimentDialog = experimentConfigurationDialog(experimentDirectory,this);
     experimentDialog.changeDir(dir);
     experimentDialog.saveAll();
@@ -642,6 +736,7 @@ void MainWindow::saveExperimentConfiguration(QString dir){
 
 void MainWindow::saveExperiment(QString dir)
 {
+    if (dir.isEmpty()) dir = experimentDirectory;
     QDir experimentDir(dir);
     experimentDir.mkpath(dir + '/' + "Notes");
     experimentDir.mkpath(dir + '/' + "Configurations");
@@ -656,31 +751,29 @@ void MainWindow::saveExperiment(QString dir)
 
 void MainWindow::performAction(QAction *action)
 {
-    if (action->property("root") == "Эксперимент"){
-        if (action->text() == "Загрузить"){
-            if (exploreExperiment()) loadExperiment(experimentDirectory);
-        }
-        else if (action->text() == "Сохранить"){
-            if (experimentDirectory.isEmpty()){
-                QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                                "/home",
-                                                                QFileDialog::ShowDirsOnly
-                                                                    | QFileDialog::DontResolveSymlinks);
-                this->experimentDirectory = dir;
-            }
-            saveExperiment(experimentDirectory);
-        }
-        else if (action->text() == "Сохранить как..."){
+    if (action == ui->actionLoadExperiment){
+        if (exploreExperiment()) loadExperiment(experimentDirectory);
+    }
+    else if (action == ui->actionSaveExperiment){
+        if (experimentDirectory.isEmpty()){
             QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                            experimentDirectory,
+                                                            "/home",
                                                             QFileDialog::ShowDirsOnly
                                                                 | QFileDialog::DontResolveSymlinks);
-            saveExperiment(dir);
             this->experimentDirectory = dir;
-            changeExperimentDirectoryLabel();
         }
+        saveExperiment();
     }
-    else if (action->text() == "Конфигурация эксперимента"){
+    else if (action == ui->actionSaveAsExperiment){
+        QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                        experimentDirectory,
+                                                        QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
+        saveExperiment(dir);
+        this->experimentDirectory = dir;
+        changeExperimentDirectoryLabel();
+    }
+    else if (action == ui->actionExperimentConfig){
         if (experimentDirectory.isEmpty()){
             QMessageBox::warning(this, "Ошибка", "Не выбрана директория эксперимента!");
             return;
@@ -690,9 +783,25 @@ void MainWindow::performAction(QAction *action)
             experimentDialog.saveAll();
         }
     }
-    else if (action->text() == "Конфигурация устройств"){
-        deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(devicesMap, connectionsMap, messagesMap, this);
+    else if (action == ui->actionDeviceConfig){
+        deviceConfigurationsDialog experimentDialog = deviceConfigurationsDialog(experimentDirectory, devicesMap, connectionsMap, messagesMap, this);
         experimentDialog.exec();
+    }
+    else if (action == ui->actionSavePreset){
+        presetSettingsDialog presetDialog(this);
+        if (presetDialog.exec() == QDialog::Accepted){
+            Preset preset = presetDialog.getPreset();
+            currentPreset = preset;
+            updatePreset();
+            savePreset();
+        }
+    }
+    else if (action == ui->actionLoadPreset){
+        QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                        experimentDirectory,
+                                                        QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
+        loadPreset(dir);
     }
 }
 
@@ -782,7 +891,9 @@ void MainWindow::openStartStopActions()
 {
     QList<QString> devices = devicesMap.keys();
     startStopActionsDialog SSAD = startStopActionsDialog(devices, this);
-    SSAD.exec();
+    if (SSAD.exec() == QDialog::Accepted){
+        startStopActionsList = SSAD.getActions();
+    }
 }
 
 void MainWindow::openDataAndGraphs()
@@ -884,9 +995,8 @@ void MainWindow::connectDevice()
     }
     else if (protocolName == "TCP"){
         QTcpSocket* connection = new QTcpSocket(this);
-        QString port = devicesMap[deviceName].tcpInfo.port;
+        QString port = QString::number(devicesMap[deviceName].tcpInfo.port);
         QString address = devicesMap[deviceName].tcpInfo.adress;
-
         // Подключаем сигналы
         connect(connection, &QTcpSocket::connected, this, [connection, onnOffItem, this, row, deviceName]() {
             onnOffItem->setBackground(QBrush(QColor(0,255,0)));
@@ -967,10 +1077,219 @@ void MainWindow::addItemToLogTable(QString localTime, QString GNSSTime, QString 
     if (isAtBottom) ui->tableWidgetLog->scrollToBottom();
 }
 
+QString MainWindow::tableWidgetToString(QTableWidget* table)
+{
+    if (!table) return QString();
+
+    QString result;
+    QTextStream stream(&result);
+
+    // Получаем размеры таблицы
+    int rows = table->rowCount();
+    int cols = table->columnCount();
+
+    if (rows == 0 || cols == 0) return QString();
+
+    // Определяем максимальную ширину каждого столбца
+    QVector<int> columnWidths(cols, 0);
+
+    // Учитываем заголовки столбцов
+    for (int col = 0; col < cols; ++col) {
+        QString headerText = table->horizontalHeaderItem(col) ?
+                                 table->horizontalHeaderItem(col)->text() :
+                                 QString("Column %1").arg(col + 1);
+        columnWidths[col] = qMax(columnWidths[col], headerText.length());
+    }
+
+    // Учитываем содержимое ячеек
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < cols; ++col) {
+            QTableWidgetItem* item = table->item(row, col);
+            if (item) {
+                QString cellText = item->text();
+                columnWidths[col] = qMax(columnWidths[col], cellText.length());
+            }
+        }
+    }
+
+    // Добавляем небольшой отступ (2 пробела с каждой стороны)
+    for (int col = 0; col < cols; ++col) {
+        columnWidths[col] += 4;
+    }
+
+    // Функция для создания разделительной линии
+    auto addSeparator = [&]() {
+        for (int col = 0; col < cols; ++col) {
+            stream << "+" << QString(columnWidths[col], '-');
+        }
+        stream << "+" << Qt::endl;
+    };
+
+    // Функция для добавления строки с выравниванием
+    auto addRow = [&](const QStringList& texts, bool isHeader = false) {
+        stream << "|";
+        for (int col = 0; col < cols; ++col) {
+            QString text = (col < texts.size()) ? texts[col] : "";
+            int padding = columnWidths[col] - text.length();
+            int leftPadding = padding / 2;
+            int rightPadding = padding - leftPadding;
+
+            if (isHeader) {
+                // Заголовки выделяем жирным (если нужно, можно добавить символы)
+                stream << QString(leftPadding, ' ') << text << QString(rightPadding, ' ') << "|";
+            } else {
+                stream << QString(leftPadding, ' ') << text << QString(rightPadding, ' ') << "|";
+            }
+        }
+        stream << Qt::endl;
+    };
+
+    // Верхняя граница
+    addSeparator();
+
+    // Заголовки столбцов
+    QStringList headers;
+    for (int col = 0; col < cols; ++col) {
+        headers << (table->horizontalHeaderItem(col) ?
+                        table->horizontalHeaderItem(col)->text() :
+                        QString("Col %1").arg(col + 1));
+    }
+    addRow(headers, true);
+
+    // Разделитель после заголовков
+    addSeparator();
+
+    // Данные таблицы
+    for (int row = 0; row < rows; ++row) {
+        QStringList rowData;
+        for (int col = 0; col < cols; ++col) {
+            QTableWidgetItem* item = table->item(row, col);
+            rowData << (item ? item->text() : "");
+        }
+        addRow(rowData);
+    }
+
+    // Нижняя граница
+    addSeparator();
+
+    return result;
+}
+/// TODO: Сравнение пресета и текущих настроек
+/// При нажатии "Старт" при отсутствии пресета попросить выбрать пресет
+/// При отличиях от текущего попросить сохранить
+/// Нужно как-то проверять отличия
+/// Для Mounting и Connections сравнивать мапы, отличия записывать в строку отличий и выводить
+/// Шаблон:
+/// "Замечены отличия выбранного пресета и текущих настроек
+/// Отличия:
+///     Пресет                      Текущие настройки
+/// Отсутсвует устройство _             Устройство _ присутствует
+/// Настройки _:                        Настройки _:
+/// Отсутствует подключение _ с _       подключение _ с _ присутствует
+/// Настройки подключения _ с _:        Настройки подключения _ с _:
+/// Отсутсвуют настройки установки _:   настройки установки присутствуют
+/// Настройки установки _:              Настройки установки _:"
+///
+///
+void MainWindow::checkPreset(){
+    // QString currentDirectory = experimentDirectory + '/' + "Configurations" + '/' + "Experiment_configurations";
+    // QString experimentConnectionsDirectory = currentDirectory + '/' + "Experiment_connections.yaml";
+    // QString experimentMountingDirectory = currentDirectory + '/' + "Experiment_mounting.yaml";
+    // auto currentDevicesMap = experimentConfigurationDialog::getDevicesFromFile(experimentConnectionsDirectory);
+    // auto currentConnectionsMap = experimentConfigurationDialog::getConnectionsFromFile(experimentConnectionsDirectory);
+    // auto currentMountingDirectory = experimentConfigurationDialog::getMountingFromFile(experimentMountingDirectory);
+    // auto presetDevicesMap = currentPreset.devicesMap;
+    // auto presetConnectionsMap = currentPreset.connectionsMap;
+    // auto presetMountingDirectory = currentPreset.mountingMap;
+    // QString totalDiff;
+    // /// Проверка наличия мапы
+    // /// Проверка наличия элемента в мапе (Сбор ключей с двух мап, проход по этим ключам и вывод сообщения о разнице)
+    // QStringList devicesKeys;
+    // devicesKeys.append(currentDevicesMap.keys());
+    // devicesKeys.append(presetDevicesMap.keys());
+    // QStringList devicesUniqueKeys;
+    // foreach (QString key, devicesKeys) {
+    //     if (!devicesUniqueKeys.contains(key)) devicesUniqueKeys.append(key);
+    // }
+    // foreach (QString key, devicesUniqueKeys) {
+    //     QString diffLine = (!currentDevicesMap.contains(key))? QString("Отсутствует устройство %1\t\tУстройство %1 присутствует").arg(key):
+    //         (!presetDevicesMap.contains(key))? QString("Устройство %1 присутствует\t\tОтсутствует устройство %1").arg(key): "";
+    //     if (!diffLine.isEmpty()) totalDiff.append(diffLine + "\n");
+    // }
+    // QStringList connectionsKeys;
+    // connectionsKeys.append(currentConnectionsMap.keys());
+    // connectionsKeys.append(presetConnectionsMap.keys());
+    // QStringList connectionsUniqueKeys;
+    // foreach (QString key, connectionsKeys) {
+    //     if (!connectionsUniqueKeys.contains(key)) connectionsUniqueKeys.append(key);
+    // }
+    // foreach (QString key, connectionsUniqueKeys) {
+    //     QString diffLine = (!currentConnectionsMap.contains(key))? diffLine = QString("Отсутствует подключение %1\t\tПодключение %1 присутствует").arg(key):
+    //        (!presetConnectionsMap.contains(key))? diffLine = QString("Подключение %1 присутствует\t\tОтсутствует подключение %1").arg(key):"";
+    //     if (!diffLine.isEmpty()) totalDiff.append(diffLine + "\n");
+    // }
+    // if (!totalDiff.isEmpty()){
+    //     QMessageBox::warning(this,"Выбранный пресет отличается от текущих настроек!",totalDiff);
+    // }
+}
+
+void MainWindow::processStartStopActions(bool isStart){
+    foreach (auto action, startStopActionsList) {
+        if (action.isStart != isStart) continue;
+        QString dir = action.fileDir;
+        QString deviceName = action.deviceName;
+        if (!connectionsMap[deviceName]) continue;
+        QObject* connection = connectionsMap[deviceName];
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        if (!ioCon->isOpen()) continue;
+        DeviceInfo info = devicesMap[deviceName];
+        QString protocol = info.protocol;
+        QFile file(dir);
+        if (!file.open(QFile::ReadOnly)) continue;
+        if (protocol == "Ublox"){
+            QString line;
+            QTextStream stream(&file);
+            while(!stream.atEnd()){
+                line = stream.readLine();
+                QStringList hexBytes = line.split(' ', Qt::SkipEmptyParts);
+
+                QByteArray byteArray;
+                for (const QString& hexByte : hexBytes) {
+                    bool ok;
+                    quint8 byte = hexByte.toUInt(&ok, 16);
+                    if (ok) {
+                        byteArray.append(byte);
+                    } else {
+                        qDebug() << "Ошибка преобразования:" << hexByte;
+                    }
+                }
+                UbloxParser parser(connection);
+                // qDebug() << msg.toHex(' ');
+                parser.sendMessage(byteArray);
+            }
+        }
+        else if (protocol == "Unicore"){
+            QString line;
+            QTextStream stream(&file);
+            while(!stream.atEnd()){
+                line = stream.readLine();
+                UnicoreParser parser(connection);
+                parser.sendMessage(line);
+            }
+        }
+    }
+}
+
 void MainWindow::startExperiment()
 {
+    if (!isLap){
+        checkPreset();
+    }
     isLap = !isLap;
+    processStartStopActions(isLap);
     if (isLap){
+
+        lapNumber++;
         lapTime = QTime::currentTime();
         ui->pushButtonStart->setStyleSheet("image: url(:/resources/stop.png);\n"
                                            " background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:1, stop:1 rgba(0, 0, 0, 0));\n"
@@ -979,6 +1298,7 @@ void MainWindow::startExperiment()
         QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
         QString event = "Эксперимент начат";
         addItemToLogTable(localTime, "", event);
+
         foreach (QString connDevice, connectionsMap.keys()) {
             QObject* connection = connectionsMap[connDevice];
             if (qobject_cast<QIODevice*>(connection)){
@@ -1022,6 +1342,28 @@ void MainWindow::startExperiment()
         QString localTime = QTime::currentTime().toString("hh:mm:ss.zzz");
         QString event = "Эксперимент завершен";
         addItemToLogTable(localTime, "", event);
+        QDir experimentDir(experimentDirectory);
+        QString lapDir = QString(experimentDirectory + "/Lap_%1").arg(lapNumber);
+        experimentDir.mkpath(lapDir);
+        QString eventLogDir = lapDir + "/Event_log.txt";
+        QFile eventLogFile(eventLogDir);
+        eventLogFile.open(QIODevice::ReadWrite);
+        QString tableContents = tableWidgetToString(ui->tableWidgetLog);
+        QTextStream eventLogStream(&eventLogFile);
+        eventLogStream.setCodec("UTF-8");
+        eventLogStream << tableContents;
+        eventLogFile.close();
+
+        QString infoDir = lapDir + "/Info.txt";
+        QFile infoFile(infoDir);
+        infoFile.open(QIODevice::ReadWrite);
+        QTextStream infoStream(&infoFile);
+        infoStream.setCodec("UTF-8");
+        infoStream << QString("Пресет: %1").arg(currentPreset.title);
+        if (!currentPreset.description.isEmpty()){
+            infoStream << QString("\nОписание пресета: %1").arg(currentPreset.description);
+        }
+        infoFile.close();
     }
 }
 
@@ -1051,7 +1393,7 @@ void MainWindow::readPorts()
 
             if(ioCon->waitForReadyRead(1)){
                 buff.append(ioCon->readAll());
-                tableFieldsMap[connDevice].dataTimer = 10;
+                tableFieldsMap[connDevice].dataTimer = 100;
             }
         }
         if (buff.isEmpty()) return;
@@ -1074,12 +1416,17 @@ QMap<QString,NewData> MainWindow::getNewData(){
 
 void MainWindow::parseMessage()
 {
-    if (!isLap) return;
+    if (!isLap) {
+        foreach (QString connDevice, connectionsMap.keys()) {
+            QByteArray *buff = bufferMap[connDevice];
+            if (buff) buff->clear();
+        }
+        return;
+    }
     QTime currTime = QTime::currentTime();
     int currMsec = currTime.msec() + (currTime.second() + currTime.minute()*60 + currTime.hour()*3600)*1000;
     int startMsec = lapTime.msec() + (lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600)*1000;
     int diffMsec = currMsec - startMsec;
-    qDebug() << diffMsec/1000 << diffMsec%1000;
     ui->labelElapsedTime->setText(QString("%1.%2").arg(QString::number(diffMsec/1000),QString::number(diffMsec%1000).rightJustified(3,'0')));
     // ui->labelElapsedTime->setText(QString("%1.%2").arg(diffSeconds,diffMsec)); //прикол
     foreach (QString connDevice, connectionsMap.keys()) {
@@ -1131,18 +1478,18 @@ void MainWindow::parseMessage()
                             ((int)event->intTriggers.isGreater << 1) +
                             ((int)event->intTriggers.isLesser << 2);
                 double thresh = event->intTriggers.threshhold / scale;
-                if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "uint" && size == 2) check = compareValue<quint16>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "int" && size == 4) check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "uint" && size == 4) check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "int" && size == 8) check = compareValue<qint64>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "uint" && size == 8) check = compareValue<quint64>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "float") check = compareValue<float>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "double") check = compareValue<double>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "int") check = compareValue<qint32>(stream, thresh, flags, event->fieldType);
-                else if (event->fieldType == "uint") check = compareValue<quint32>(stream, thresh, flags, event->fieldType);
+                if (event->fieldType == "int" && size == 1) check = compareValue<qint8>(stream, thresh, flags);
+                else if (event->fieldType == "uint" && size == 1) check = compareValue<quint8>(stream, thresh, flags);
+                else if (event->fieldType == "int" && size == 2) check = compareValue<qint16>(stream, thresh, flags);
+                else if (event->fieldType == "uint" && size == 2) check = compareValue<quint16>(stream, thresh, flags);
+                else if (event->fieldType == "int" && size == 4) check = compareValue<qint32>(stream, thresh, flags);
+                else if (event->fieldType == "uint" && size == 4) check = compareValue<quint32>(stream, thresh, flags);
+                else if (event->fieldType == "int" && size == 8) check = compareValue<qint64>(stream, thresh, flags);
+                else if (event->fieldType == "uint" && size == 8) check = compareValue<quint64>(stream, thresh, flags);
+                else if (event->fieldType == "float") check = compareValue<float>(stream, thresh, flags);
+                else if (event->fieldType == "double") check = compareValue<double>(stream, thresh, flags);
+                else if (event->fieldType == "int") check = compareValue<qint32>(stream, thresh, flags);
+                else if (event->fieldType == "uint") check = compareValue<quint32>(stream, thresh, flags);
                 else {
                     qWarning() << "Unsupported field type:" << event->fieldType;
                 }

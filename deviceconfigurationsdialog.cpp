@@ -111,13 +111,14 @@
 /// units - в третий столбец лэйблов
 /// description - в описание сообщения
 
-deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
+deviceConfigurationsDialog::deviceConfigurationsDialog(QString experimentDirectory, QMap<QString,DeviceInfo> devicesMap,QMap<QString, QObject*> connectionsMap, QMap<QString,Mess> messagesMap, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::deviceConfigurationsDialog)
 {
     ui->setupUi(this);
     MainWindow* mainWindow = qobject_cast<MainWindow*>(parent);
     connect(mainWindow, SIGNAL(newData(NewData)), this, SLOT(getNewData(NewData)));
+    this->experimentDirectory = experimentDirectory;
     this->devicesMap = devicesMap;
     this->connectionsMap = connectionsMap;
     this->messagesMap = messagesMap;
@@ -133,6 +134,10 @@ deviceConfigurationsDialog::deviceConfigurationsDialog(QMap<QString,DeviceInfo> 
 
     QObject::connect(ui->comboBoxDevice1, SIGNAL(currentTextChanged(QString)), this, SLOT(deviceChangeEvent()));
     QObject::connect(ui->comboBoxDevice2, SIGNAL(currentTextChanged(QString)), this, SLOT(deviceChangeEvent()));
+
+    isSaving = false;
+    QObject::connect(this, SIGNAL(UnicoreConfigurationRecieved()), this, SLOT(saveUnicoreConfiguration()));
+    QObject::connect(this, SIGNAL(UbloxConfigurationRecieved()), this, SLOT(saveUbloxConfiguration()));
 
     foreach (auto object, ui->scrollAreaMessageSettingsContents->children()) {
         if(!qobject_cast<QVBoxLayout*>(object)){
@@ -810,6 +815,13 @@ void deviceConfigurationsDialog::parseMessage()
             setupTableSize(ui->tableSTATUS);
         }
         else if (messClass == CFG::DGNSS::classID && messId == CFG::DGNSS::messageID){
+            if (isSaving){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.DGNSS.append(fullMess);
+            }
             CFG::DGNSS *info = dynamic_cast<CFG::DGNSS*>(decodedMessage);
             U1 dgnssMode = info->dgnssMode;
             int index;
@@ -821,6 +833,13 @@ void deviceConfigurationsDialog::parseMessage()
             ui->checkRecieverRTKSolution->setChecked(index);
         }
         else if (messClass == CFG::GNSS::classID && messId == CFG::GNSS::messageID){
+            if (isSaving){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.GNSS.append(fullMess);
+            }
             CFG::GNSS *info = dynamic_cast<CFG::GNSS*>(decodedMessage);
             // U1 msgVer = info->msgVer;
             U1 numTrkChHw = info->numTrkChHw;
@@ -926,6 +945,13 @@ void deviceConfigurationsDialog::parseMessage()
             U1 rate3 = info->rate3;
             U1 rate4 = info->rate4;
             U1 rate5 = info->rate5;
+            if (isSaving && (rate1 || rate2 || rate3 || rate4 || rate5)){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.MSG.append(fullMess);
+            }
             // U1 rate6 = info->rate6;
             QMap<QByteArray,QString> map = messagesNamesMap;
             QByteArray key;
@@ -989,8 +1015,49 @@ void deviceConfigurationsDialog::parseMessage()
                 }
                 ui->checkRecieverVel->setChecked(velCheck);
             }
+            if (messName == "POSECEF" || messName == "POSLLH"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0) posCheck = true;
+            }
+            if (messName == "POSECEF"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
+                    ui->checkRecieverPosECEF->setChecked(true);
+                    ui->spinRecieverPos1->setValue(rate1);
+                    ui->spinRecieverPos2->setValue(rate2);
+                    ui->spinRecieverPos3->setValue(rate3);
+                    ui->spinRecieverPos4->setValue(rate4);
+                    ui->spinRecieverPos5->setValue(rate5);
+                }
+                else {ui->checkRecieverPosECEF->setChecked(false); posCheck = false;}
+            }
+            if (messName == "POSLLH"){
+                if ((rate1 + rate2 + rate3 + rate4 + rate5) > 0){
+                    ui->checkRecieverPosLLH->setChecked(true);
+                    ui->spinRecieverPos1->setValue(rate1);
+                    ui->spinRecieverPos2->setValue(rate2);
+                    ui->spinRecieverPos3->setValue(rate3);
+                    ui->spinRecieverPos4->setValue(rate4);
+                    ui->spinRecieverPos5->setValue(rate5);
+                }
+                else {ui->checkRecieverPosLLH->setChecked(false);
+                    if (!posCheck){
+                        ui->spinRecieverPos1->setValue(rate1);
+                        ui->spinRecieverPos2->setValue(rate2);
+                        ui->spinRecieverPos3->setValue(rate3);
+                        ui->spinRecieverPos4->setValue(rate4);
+                        ui->spinRecieverPos5->setValue(rate5);
+                    }
+                }
+                ui->checkRecieverPos->setChecked(posCheck);
+            }
         }
         else if (messClass == CFG::DAT::classID && messId == CFG::DAT::messageID){
+            if (isSaving){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.DAT.append(fullMess);
+            }
             CFG::DAT::GET *info = dynamic_cast<CFG::DAT::GET*>(decodedMessage);
             U2 datumNum = info->datumNum;
             U4 datumName1 = info->datumName1;
@@ -1023,6 +1090,13 @@ void deviceConfigurationsDialog::parseMessage()
             ui->lineRecieverDatumId->setText(name);
         }
         else if (messClass == CFG::NAV5::classID && messId == CFG::NAV5::messageID){
+            if (isSaving){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.NAV5.append(fullMess);
+            }
             CFG::NAV5 *info = dynamic_cast<CFG::NAV5*>(decodedMessage);
             // X2 mask = info->mask;
             U1 dynModel = info->dynModel;
@@ -1092,6 +1166,13 @@ void deviceConfigurationsDialog::parseMessage()
         }
         else if (messClass == CFG::PRT::classID && messId == CFG::PRT::messageID){
             if (dynamic_cast<CFG::PRT::USB*>(decodedMessage)){
+                if (isSaving){
+                    QByteArray fullMess;
+                    fullMess.append(mess.header);
+                    fullMess.append(mess.data);
+                    fullMess.append(mess.crc);
+                    currentUbloxConfig.PRT.append(fullMess);
+                }
                 CFG::PRT::USB *info = dynamic_cast<CFG::PRT::USB*>(decodedMessage);
                 // U1 reserved1 = info->reserved1;
                 X2 txReady = info->txReady;
@@ -1167,6 +1248,13 @@ void deviceConfigurationsDialog::parseMessage()
             }
         }
         else if (messClass == CFG::RATE::classID && messId == CFG::RATE::messageID){
+            // if (isSaving){
+            //     QByteArray fullMess;
+            //     fullMess.append(mess.header);
+            //     fullMess.append(mess.data);
+            //     fullMess.append(mess.crc);
+            //     currentUbloxConfig.RATE.append(fullMess);
+            // }
             CFG::RATE *info = dynamic_cast<CFG::RATE*>(decodedMessage);
             U2 measRate = info->measRate;
             U2 navRate = info->navRate;
@@ -1176,6 +1264,14 @@ void deviceConfigurationsDialog::parseMessage()
             ui->comboRATE->setCurrentIndex(timeRef);
         }
         else if (messClass == CFG::ITFM::classID && messId == CFG::ITFM::messageID){
+            if (isSaving){
+                QByteArray fullMess;
+                fullMess.append(mess.header);
+                fullMess.append(mess.data);
+                fullMess.append(mess.crc);
+                currentUbloxConfig.ITFM.append(fullMess);
+                emit UbloxConfigurationRecieved();
+            }
             CFG::ITFM *info = dynamic_cast<CFG::ITFM*>(decodedMessage);
             X4 config = info->config;
             X4 config2 = info->config2;
@@ -1266,7 +1362,7 @@ void deviceConfigurationsDialog::parseMessage()
         UnicoreMessage mess = parser.parseAsciiMessage(&streamBuffer);
         if (mess.data.isEmpty()) return;
         if (!mess.isAscii) return;
-        if (mess.data.split(',').count() <= 1) return;
+        if (mess.asciiHeader.messageName != "UNILOGLIST" && mess.data.split(',').count() <= 1) return;
         if (mess.isCommand && mess.data.contains("command") && mess.data.contains("OK")){
             // qDebug() << "OK";
             ui->labelResponse->setText("Принято ответное сообщение!");
@@ -1282,7 +1378,11 @@ void deviceConfigurationsDialog::parseMessage()
             return;
         }
         else if (mess.isCommand && mess.data.split(',').at(1) == "MASK"){
-            QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
+            QByteArray payload = mess.data.split(',').at(2);
+            if (isSaving){
+                currentUnicoreConfig.MASK.append(QString::fromLatin1(payload));
+            }
+            QList<QByteArray> fields = payload.split(' ');
             QList<QString> data;
             foreach (QByteArray field, fields) {
                 data.append(QString::fromLatin1(field));
@@ -1347,6 +1447,11 @@ void deviceConfigurationsDialog::parseMessage()
         }
         else if (mess.asciiHeader.messageName == "MODE"){
             // qDebug() << mess.data;
+            QString payload = mess.data.split(',').at(0);
+            if (isSaving){
+                currentUnicoreConfig.MODE = payload;
+                emit UnicoreConfigurationRecieved();
+            }
             QList<QByteArray> fields = mess.data.split(',').at(0).split(' ');
             // qDebug() << fields;
             QList<QString> fieldsStr;
@@ -1370,49 +1475,51 @@ void deviceConfigurationsDialog::parseMessage()
             modeMap[""] = "Other";
             ui->comboRecieverMode->setCurrentText(modeMap[currMode]);
         }
-        else if (mess.isCommand && mess.data.split(',').at(0) == "CONFIG" && mess.data.split(',').at(1) == "RTK"){
-            QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
+        else if (mess.isCommand && mess.data.split(',').at(0) == "CONFIG"){
+            QByteArray payload = mess.data.split(',').at(2);
+            if (isSaving){
+                currentUnicoreConfig.CONFIG.append(QString::fromLatin1(payload));
+            }
+            QList<QByteArray> fields = payload.split(' ');
             QList<QString> data;
             foreach (QByteArray field, fields) {
                 data.append(QString::fromLatin1(field));
             }
-            if (data.at(2) == "USER_DEFAULTS" || data.at(2) == "DISABLE" || data.at(2) == "RESET"){
-                ui->comboCONFIGRTK->setCurrentText(data.at(2));
-                bool check = data.at(2) == "USER_DEFAULTS" || data.at(2) == "RESET";
-                ui->checkRecieverRTKSolution->setChecked(check);
+            if (mess.data.split(',').at(1) == "RTK"){
+                if (data.at(2) == "USER_DEFAULTS" || data.at(2) == "DISABLE" || data.at(2) == "RESET"){
+                    ui->comboCONFIGRTK->setCurrentText(data.at(2));
+                    bool check = data.at(2) == "USER_DEFAULTS" || data.at(2) == "RESET";
+                    ui->checkRecieverRTKSolution->setChecked(check);
+                }
+                if (data.at(2) == "TIMEOUT"){
+                    ui->spinCONFIGRTK->setValue(data.at(3).toInt());
+                }
+                if (data.at(2) == "RELIABILITY"){
+                    ui->comboCONFIGRTKrel->setCurrentIndex(data.at(3).toInt() - 1);
+                }
             }
-            if (data.at(2) == "TIMEOUT"){
-                ui->spinCONFIGRTK->setValue(data.at(3).toInt());
+            else if (mess.data.split(',').at(1) == "DGPS"){
+                if (data.at(2) == "TIMEOUT"){
+                    ui->spinDGPS->setValue(data.at(3).toInt());
+                }
             }
-            if (data.at(2) == "RELIABILITY"){
-                ui->comboCONFIGRTKrel->setCurrentIndex(data.at(3).toInt() - 1);
+            else if (mess.data.split(',').at(1) == "ANTIJAM"){
+                ui->comboCONFIGANTIJAM->setCurrentText(data.at(2));
+                bool check = data.at(2) == "AUTO" || data.at(2) == "FORCE";
+                ui->checkRecieverJamming->setChecked(check);
             }
-        }
-        else if (mess.isCommand && mess.data.split(',').at(0) == "CONFIG" && mess.data.split(',').at(1) == "DGPS"){
-            QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
-            QList<QString> data;
-            foreach (QByteArray field, fields) {
-                data.append(QString::fromLatin1(field));
-            }
-            if (data.at(2) == "TIMEOUT"){
-                ui->spinDGPS->setValue(data.at(3).toInt());
-            }
-        }
-        else if (mess.isCommand && mess.data.split(',').at(0) == "CONFIG" && mess.data.split(',').at(1) == "ANTIJAM"){
-            QList<QByteArray> fields = mess.data.split(',').at(2).split(' ');
-            QList<QString> data;
-            foreach (QByteArray field, fields) {
-                data.append(QString::fromLatin1(field));
-            }
-            ui->comboCONFIGANTIJAM->setCurrentText(data.at(2));
-            bool check = data.at(2) == "AUTO" || data.at(2) == "FORCE";
-            ui->checkRecieverJamming->setChecked(check);
         }
         else if (mess.asciiHeader.messageName == "UNILOGLIST"){
             QList<QByteArray> fields = mess.data.split('<');
             QList<QString> fieldsStr;
+            int index = 0;
             foreach (QByteArray field, fields) {
-                fieldsStr.append(QString::fromLatin1(field).remove('\t').remove('\r').remove('\n'));
+                if (index > 1) fieldsStr.append(QString::fromLatin1(field).remove('\t').remove('\r').remove('\n'));
+                index++;
+            }
+            qDebug() << fieldsStr;
+            if (isSaving){
+                currentUnicoreConfig.UNILOGLIST = fieldsStr;
             }
             fieldsStr.removeFirst();
             fieldsStr.removeFirst();
@@ -1426,41 +1533,41 @@ void deviceConfigurationsDialog::parseMessage()
             foreach (QString info, fieldsStr) {
                 if (info.split(' ').at(0) == "BESTNAVA"){
                     bestnavCheck = true;
-                    ui->spinRecieverPos3->setValue(info.split(' ').at(2).toInt());
-                    ui->spinRecieverVel3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverPos4->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverVel4->setValue(info.split(' ').at(2).toInt());
                     ui->checkRecieverPosLLH->setChecked(true);
                     ui->checkRecieverVelNED->setChecked(true);
                 }
                 if (info.split(' ').at(0) == "BESTNAVXYZA"){
                     bestnavCheck = true;
-                    ui->spinRecieverPos3->setValue(info.split(' ').at(2).toInt());
-                    ui->spinRecieverVel3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverPos4->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverVel4->setValue(info.split(' ').at(2).toInt());
                     ui->checkRecieverPosECEF->setChecked(true);
                     ui->checkRecieverVelECEF->setChecked(true);
                 }
                 if (info.split(' ').at(0) == "OBSVMA"){
                     obsvmCheck = true;
-                    ui->spinRecieverRaw3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverRaw4->setValue(info.split(' ').at(2).toInt());
                 }
                 if (info.split(' ').at(0) == "UNIHEADINGA"){
                     uniheadingCheck = true;
-                    ui->spinRecieverRelPos3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverRelPos4->setValue(info.split(' ').at(2).toInt());
                 }
                 if (info.split(' ').at(0) == "GPSEPHA"){
                     gpsephCheck = true;
-                    ui->spinRecieverEph3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverEph4->setValue(info.split(' ').at(2).toInt());
                 }
                 if (info.split(' ').at(0) == "BD3EPHA"){
                     bd3ephCheck = true;
-                    ui->spinRecieverEph3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverEph4->setValue(info.split(' ').at(2).toInt());
                 }
                 if (info.split(' ').at(0) == "GLOEPHA"){
                     gloephCheck = true;
-                    ui->spinRecieverEph3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverEph4->setValue(info.split(' ').at(2).toInt());
                 }
                 if (info.split(' ').at(0) == "GALEPHA"){
                     galephCheck = true;
-                    ui->spinRecieverEph3->setValue(info.split(' ').at(2).toInt());
+                    ui->spinRecieverEph4->setValue(info.split(' ').at(2).toInt());
                 }
             }
             bool ephCheck = gpsephCheck & bd3ephCheck & gloephCheck & galephCheck;
@@ -1469,7 +1576,7 @@ void deviceConfigurationsDialog::parseMessage()
             ui->checkRecieverRaw->setChecked(obsvmCheck);
             ui->checkRecieverRelpos->setChecked(uniheadingCheck);
             ui->checkRecieverEph->setChecked(ephCheck);
-            if (!ephCheck) ui->spinRecieverEph3->setValue(0);
+            if (!ephCheck) ui->spinRecieverEph4->setValue(0);
         }
         else{
             Mess message = messagesMap[currentItemText];
@@ -2168,6 +2275,18 @@ void deviceConfigurationsDialog::updateSettings()
     if (combo->currentIndex() == -1){
         return;
     }
+
+    ui->comboRecieverSystems->uncheckAll();
+    ui->checkRecieverEph->setChecked(false);
+    ui->checkRecieverJamming->setChecked(false);
+    ui->checkRecieverPos->setChecked(false);
+    ui->checkRecieverRaw->setChecked(false);
+    ui->checkRecieverRelpos->setChecked(false);
+    ui->lineRecieverDatumId->setText("");
+    ui->comboRecieverMode->setCurrentIndex(0);
+    ui->spinRecieverCNOThresh->setValue(0);
+    ui->spinRecieverMinElev->setValue(0);
+
     DeviceInfo deviceInfo = devicesMap[combo->currentText()];
     QString protocol = deviceInfo.protocol;
     if (protocol == "Ublox"){
@@ -2181,8 +2300,8 @@ void deviceConfigurationsDialog::updateSettings()
         sendMSGPoll(RXM::RAWX::classID, RXM::RAWX::messageID);
         sendMSGPoll(NAV::VELNED::classID, NAV::VELNED::messageID);
         sendMSGPoll(NAV::VELECEF::classID, NAV::VELECEF::messageID);
-        sendMSGPoll(NAV::POSLLH::classID, NAV::POSLLH::messageID);
         sendMSGPoll(NAV::POSECEF::classID, NAV::POSECEF::messageID);
+        sendMSGPoll(NAV::POSLLH::classID, NAV::POSLLH::messageID);
         sendMSGPoll(NAV::RELPOSNED::classID, NAV::RELPOSNED::messageID);
     }
     else if (protocol == "Unicore"){
@@ -2195,6 +2314,202 @@ void deviceConfigurationsDialog::updateSettings()
     }
     ui->pushButtonSend->setEnabled(true);
 }
+
+void deviceConfigurationsDialog::requestConfiguration()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle("Сохраение конфигурации устройств");
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    QHBoxLayout *layoutName = new QHBoxLayout();
+    QLabel* labelName = new QLabel("Название файла");
+    QLineEdit* lineName = new QLineEdit();
+    QLineEdit* lineDirectory = new QLineEdit();
+    QString configurationsDirectory = experimentDirectory + "/Configurations/Device_configurations";
+    lineDirectory->setText(configurationsDirectory);
+    lineDirectory->setEnabled(false);
+    QLabel* labelDirectory = new QLabel("Директория");
+    QPushButton* buttonExplore = new QPushButton();
+    buttonExplore->setStyleSheet("image: url(:/resources/open_explorer.png);");
+    QHBoxLayout* layoutDirectory = new QHBoxLayout();
+
+    layoutName->addWidget(labelName);
+    layoutName->addWidget(lineName);
+
+    layoutDirectory->addWidget(labelDirectory);
+    layoutDirectory->addWidget(lineDirectory);
+    layoutDirectory->addWidget(buttonExplore);
+
+    QHBoxLayout *hLayout = new QHBoxLayout();
+    QPushButton *okButton = new QPushButton("Готово");
+    QPushButton *cancelButton = new QPushButton("Отмена");
+
+
+    hLayout->addWidget(okButton);
+    hLayout->addWidget(cancelButton);
+    hLayout->addStretch(100);
+
+    layout->addLayout(layoutName);
+    layout->addLayout(layoutDirectory);
+    layout->addLayout(hLayout);
+
+    QObject::connect(buttonExplore, &QPushButton::clicked, this, [this,lineDirectory](){
+        QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                        lineDirectory->text(),
+                                                        QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
+        if (dir.isEmpty()) return;
+        lineDirectory->setText(dir);
+    });
+    QObject::connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+    QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        configFileName = QString("%1/%2.conf").arg(lineDirectory->text(),lineName->text());
+        QComboBox* combo = ui->comboBoxDevice1;
+        if (combo->currentIndex() == -1){
+            return;
+        }
+        DeviceInfo deviceInfo = devicesMap[combo->currentText()];
+        QString protocol = deviceInfo.protocol;
+        if (protocol == "Ublox"){
+            UbloxParser parser(currentConnection);
+            isSaving = true;
+            U1 hdrdata[] = {0xb5, 0x62};
+            QByteArray hdr(reinterpret_cast<char*>(hdrdata), sizeof(hdrdata));
+            U1 endata[] = {CFG::PRT::classID, CFG::PRT::messageID, 0x01, 0x00};
+            QByteArray en(reinterpret_cast<char*>(endata), sizeof(endata));
+            U1 payloadata = 0x03;
+            QByteArray payload;payload.resize(1); payload[0] = payloadata;
+            QByteArray prtPoll = hdr + en + payload;
+            QByteArray checkSum = UbloxParser::calcCheckSum(en + payload);
+            prtPoll.append(checkSum);
+            qDebug() << prtPoll.toHex(' ');
+            parser.sendMessage(prtPoll);
+            sendMSGPoll(NAV::CLOCK::classID, NAV::CLOCK::messageID);
+            sendMSGPoll(NAV::DGPS::classID, NAV::DGPS::messageID);
+            sendMSGPoll(NAV::DOP::classID, NAV::DOP::messageID);
+            sendMSGPoll(NAV::ORB::classID, NAV::ORB::messageID);
+            sendMSGPoll(NAV::POSECEF::classID, NAV::POSECEF::messageID);
+            sendMSGPoll(NAV::POSLLH::classID, NAV::POSLLH::messageID);
+            sendMSGPoll(NAV::RELPOSNED::classID, NAV::RELPOSNED::messageID);
+            sendMSGPoll(NAV::SAT::classID, NAV::SAT::messageID);
+            sendMSGPoll(NAV::SOL::classID, NAV::SOL::messageID);
+            sendMSGPoll(NAV::STATUS::classID, NAV::STATUS::messageID);
+            sendMSGPoll(NAV::VELECEF::classID, NAV::VELECEF::messageID);
+            sendMSGPoll(NAV::VELNED::classID, NAV::VELNED::messageID);
+            sendMSGPoll(RXM::RAWX::classID, RXM::RAWX::messageID);
+            sendMSGPoll(RXM::SFRBX::classID, RXM::SFRBX::messageID);
+            parser.sendMessage(UbloxParser::createPollMessage(CFG::DAT::classID, CFG::DAT::messageID));
+            parser.sendMessage(UbloxParser::createPollMessage(CFG::NAV5::classID, CFG::NAV5::messageID));
+            parser.sendMessage(UbloxParser::createPollMessage(CFG::GNSS::classID, CFG::GNSS::messageID));
+            parser.sendMessage(UbloxParser::createPollMessage(CFG::DGNSS::classID, CFG::DGNSS::messageID));
+            parser.sendMessage(UbloxParser::createPollMessage(CFG::ITFM::classID, CFG::ITFM::messageID));
+        }
+        else if (protocol == "Unicore"){
+            isSaving = true;
+            UnicoreParser parser(currentConnection);
+            parser.sendMessage("MASK");
+            parser.sendMessage("CONFIG");
+            parser.sendMessage("UNILOGLIST");
+            parser.sendMessage("MODE");
+        }
+    }
+}
+
+void deviceConfigurationsDialog::saveUbloxConfiguration(){
+    QFile confFile(configFileName);
+    confFile.open(QFile::WriteOnly | QFile::Truncate);
+    QTextStream stream(&confFile);
+    QString config;
+    if (!currentUbloxConfig.DAT.isEmpty())config.append(currentUbloxConfig.DAT.toHex(' ') + '\n');
+    if (!currentUbloxConfig.DGNSS.isEmpty())config.append(currentUbloxConfig.DGNSS.toHex(' ') + '\n'); // не пришел и не должен
+    if (!currentUbloxConfig.GNSS.isEmpty())config.append(currentUbloxConfig.GNSS.toHex(' ') + '\n');
+    if (!currentUbloxConfig.NAV5.isEmpty())config.append(currentUbloxConfig.NAV5.toHex(' ') + '\n');
+    if (!currentUbloxConfig.ITFM.isEmpty())config.append(currentUbloxConfig.ITFM.toHex(' ') + '\n');
+    if (!currentUbloxConfig.PRT.isEmpty())config.append(currentUbloxConfig.PRT.toHex(' ') + '\n');
+    if (!currentUbloxConfig.MSG.isEmpty()){
+        foreach (QByteArray message, currentUbloxConfig.MSG) {
+        config.append(message.toHex(' ') + '\n');
+        }
+    }
+    stream << config;
+    confFile.close();
+    currentUbloxConfig.DAT.clear();
+    currentUbloxConfig.DGNSS.clear();
+    currentUbloxConfig.GNSS.clear();
+    currentUbloxConfig.NAV5.clear();
+    currentUbloxConfig.ITFM.clear();
+    currentUbloxConfig.MSG.clear();
+    currentUbloxConfig.PRT.clear();
+    isSaving = false;
+}
+
+void deviceConfigurationsDialog::saveUnicoreConfiguration(){
+    QFile confFile(configFileName);
+    confFile.open(QFile::WriteOnly | QFile::Truncate);
+    QTextStream stream(&confFile);
+    QString config;
+    foreach (QString string, currentUnicoreConfig.CONFIG) {
+        config += string + "\r\n";
+    }
+    foreach (QString string, currentUnicoreConfig.MASK) {
+        config += string + "\r\n";
+    }
+    foreach (QString string, currentUnicoreConfig.UNILOGLIST) {
+        config += string + "\r\n";
+    }
+    config += currentUnicoreConfig.MODE + "\r\n";
+    stream << config;
+    confFile.close();
+    currentUnicoreConfig.CONFIG.clear();
+    currentUnicoreConfig.MASK.clear();
+    currentUnicoreConfig.MODE.clear();
+    currentUnicoreConfig.UNILOGLIST.clear();
+    isSaving = false;
+}
+
+void deviceConfigurationsDialog::loadConfiguration(){
+    QString dir = QFileDialog::getOpenFileName(this,
+                                               tr(""), experimentDirectory, tr("Configuration file (*.conf)"));
+    if (dir.isEmpty()) return;
+    DeviceInfo deviceInfo = devicesMap[ui->comboBoxDevice1->currentText()];
+    QString protocol = deviceInfo.protocol;
+    QFile file(dir);
+    if (!file.open(QFile::ReadOnly)) return;
+    if (protocol == "Ublox"){
+        UbloxParser parser(currentConnection);
+        QString line;
+        QTextStream stream(&file);
+        while(!stream.atEnd()){
+            line = stream.readLine();
+            QStringList hexBytes = line.split(' ', Qt::SkipEmptyParts);
+
+            QByteArray byteArray;
+            for (const QString& hexByte : hexBytes) {
+                bool ok;
+                quint8 byte = hexByte.toUInt(&ok, 16);
+                if (ok) {
+                    byteArray.append(byte);
+                } else {
+                    qDebug() << "Ошибка преобразования:" << hexByte;
+                }
+            }
+            // qDebug() << msg.toHex(' ');
+            parser.sendMessage(byteArray);
+        }
+    }
+    else if (protocol == "Unicore"){
+        UnicoreParser parser(currentConnection);
+        parser.sendMessage("UNLOG");
+        QString line;
+        QTextStream stream(&file);
+        while(!stream.atEnd()){
+            line = stream.readLine();
+            parser.sendMessage(line);
+        }
+    }
+}
+
 
 void deviceConfigurationsDialog::sendSettings()
 {
@@ -2711,10 +3026,10 @@ void deviceConfigurationsDialog::sendSettings()
 
         /// eph
         if (ui->checkRecieverEph->isChecked()){
-            parser.sendMessage("GPSEPHA " + QString::number(ui->spinRecieverEph3->value()));
-            parser.sendMessage("BD3EPHA " + QString::number(ui->spinRecieverEph3->value()));
-            parser.sendMessage("GLOEPHA " + QString::number(ui->spinRecieverEph3->value()));
-            parser.sendMessage("GALEPHA " + QString::number(ui->spinRecieverEph3->value()));
+            parser.sendMessage("GPSEPHA " + QString::number(ui->spinRecieverEph4->value()));
+            parser.sendMessage("BD3EPHA " + QString::number(ui->spinRecieverEph4->value()));
+            parser.sendMessage("GLOEPHA " + QString::number(ui->spinRecieverEph4->value()));
+            parser.sendMessage("GALEPHA " + QString::number(ui->spinRecieverEph4->value()));
         }
         else{
             parser.sendMessage("UNLOG GPSEPHA");
@@ -2724,18 +3039,18 @@ void deviceConfigurationsDialog::sendSettings()
         }
 
         /// RAW
-        if (ui->checkRecieverRaw->isChecked()) parser.sendMessage("OBSVMA " + QString::number(ui->spinRecieverRaw3->value()));
+        if (ui->checkRecieverRaw->isChecked()) parser.sendMessage("OBSVMA " + QString::number(ui->spinRecieverRaw4->value()));
         else parser.sendMessage("UNLOG OBSVMA");
 
         /// vel pos
         if (ui->checkRecieverPos->isChecked() || ui->checkRecieverVel->isChecked()){
             if (ui->checkRecieverPos->isChecked()) {
-                if (ui->checkRecieverPosLLH->isChecked()) parser.sendMessage("BESTNAVA " + QString::number(ui->spinRecieverPos3->value()));
-                if (ui->checkRecieverPosECEF->isChecked()) parser.sendMessage("BESTNAVXYZA " + QString::number(ui->spinRecieverPos3->value()));
+                if (ui->checkRecieverPosLLH->isChecked()) parser.sendMessage("BESTNAVA " + QString::number(ui->spinRecieverPos4->value()));
+                if (ui->checkRecieverPosECEF->isChecked()) parser.sendMessage("BESTNAVXYZA " + QString::number(ui->spinRecieverPos4->value()));
             }
             if (ui->checkRecieverVel->isChecked()){
-                if (ui->checkRecieverVelNED->isChecked()) parser.sendMessage("BESTNAVA " + QString::number(ui->spinRecieverVel3->value()));
-                if (ui->checkRecieverVelECEF->isChecked()) parser.sendMessage("BESTNAVXYZA " + QString::number(ui->spinRecieverVel3->value()));
+                if (ui->checkRecieverVelNED->isChecked()) parser.sendMessage("BESTNAVA " + QString::number(ui->spinRecieverVel4->value()));
+                if (ui->checkRecieverVelECEF->isChecked()) parser.sendMessage("BESTNAVXYZA " + QString::number(ui->spinRecieverVel4->value()));
             }
         }
         else {
@@ -2758,7 +3073,7 @@ void deviceConfigurationsDialog::sendSettings()
         parser.sendMessage("MODE " + modeMap[ui->comboRecieverMode->currentText()]);
 
         /// rel pos
-        if (ui->checkRecieverRelpos->isChecked()) parser.sendMessage("UNIHEADINGA " + QString::number(ui->spinRecieverRelPos3->value()));
+        if (ui->checkRecieverRelpos->isChecked()) parser.sendMessage("UNIHEADINGA " + QString::number(ui->spinRecieverRelPos4->value()));
         else parser.sendMessage("UNLOG UNIHEADINGA");
     }
     updateSettings();

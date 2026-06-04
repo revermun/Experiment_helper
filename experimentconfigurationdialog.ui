@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>790</width>
-    <height>460</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -289,8 +289,8 @@
                <minute>0</minute>
                <second>0</second>
                <year>2026</year>
-               <month>2</month>
-               <day>1</day>
+               <month>1</month>
+               <day>31</day>
               </datetime>
              </property>
              <property name="currentSection">
@@ -312,7 +312,7 @@
      </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
-       <string>Ус-ва и связи</string>
+       <string>Устройства и связи</string>
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_5">
        <item>
@@ -545,7 +545,7 @@
      </widget>
      <widget class="QWidget" name="tab_3">
       <attribute name="title">
-       <string>Пар-ры установки</string>
+       <string>Параметры установки</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>

@@ -34,8 +34,9 @@ void experimentConfigurationDialog::saveAll()
     saveMounting();
 }
 
-void experimentConfigurationDialog::saveAboutExperiment(){
-    QFile file(aboutExperimentDirectory);
+void experimentConfigurationDialog::saveAboutExperiment(QString dir){
+    if (dir.isEmpty()) dir = experimentConnectionsDirectory;
+    QFile file(dir);
     file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     file.close();
     YAML::Node config = YAML::LoadFile(aboutExperimentDirectory.toStdString());
@@ -66,15 +67,16 @@ void experimentConfigurationDialog::saveAboutExperiment(){
         member["Role"] = role;
         team.push_back(member);
     }
-    std::ofstream fout(aboutExperimentDirectory.toStdString());
+    std::ofstream fout(dir.toStdString());
     fout << config;
 }
 
-void experimentConfigurationDialog::saveConnections(){
-    QFile file(experimentConnectionsDirectory);
+void experimentConfigurationDialog::saveConnections(QString dir){
+    if (dir.isEmpty()) dir = experimentConnectionsDirectory;
+    QFile file(dir);
     file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     file.close();
-    YAML::Node config = YAML::LoadFile(experimentConnectionsDirectory.toStdString());
+    YAML::Node config = YAML::LoadFile(dir.toStdString());
     YAML::Node Devices = config["Devices"];
     YAML::Node Connections = config["Connections"];
     foreach (auto device, this->devicesMap) {
@@ -135,20 +137,20 @@ void experimentConfigurationDialog::saveConnections(){
         ConnectionNode["Parameters"] = Parameters;
         Connections.push_back(ConnectionNode);
     }
-    std::ofstream fout(experimentConnectionsDirectory.toStdString());
+    std::ofstream fout(dir.toStdString());
     fout << config;
 }
 
-void experimentConfigurationDialog::saveMounting(){
-    int count = ui->areaDeviceParameters->count();
-    QFile file(experimentMountingDirectory);
+void experimentConfigurationDialog::saveMounting(QString dir){
+    if (dir.isEmpty()) dir = experimentMountingDirectory;
+    QFile file(dir);
     file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     file.close();
-    YAML::Node config = YAML::LoadFile(experimentMountingDirectory.toStdString());
+    YAML::Node config = YAML::LoadFile(dir.toStdString());
     YAML::Node Mounting = config["Mounting"];
-    for (int i = 0; i < count; ++i) {
-        QGroupBox* group = ui->areaDeviceParameters->groupAtPosition(i);
-        QString device = group->title();
+    foreach (QString device, groupBoxParametersMap.keys()) {
+        ExperimentGroupBoxParametersInfo info = groupBoxParametersMap[device];
+        QGroupBox* group = info.group;
         YAML::Node DeviceNode;
         DeviceNode["Name"] = device;
         QList<QGroupBox*> parameterGroups = getParameters(group);
@@ -156,6 +158,7 @@ void experimentConfigurationDialog::saveMounting(){
         foreach (QGroupBox* parameterGroup, parameterGroups) {
             QString name = parameterGroup->title();
             YAML::Node ParameterNode;
+
             QGridLayout* layout = qobject_cast<QGridLayout*>(parameterGroup->layout());
             for (int j = 0; j < layout->rowCount(); ++j) {
                 QLabel* label = qobject_cast<QLabel*>(layout->itemAtPosition(j,0)->widget());
@@ -169,7 +172,7 @@ void experimentConfigurationDialog::saveMounting(){
         DeviceNode["Parameters"] = ParametersNode;
         Mounting.push_back(DeviceNode);
     }
-    std::ofstream fout(experimentMountingDirectory.toStdString());
+    std::ofstream fout(dir.toStdString());
     fout << config;
 }
 
@@ -186,6 +189,8 @@ void experimentConfigurationDialog::saveTab()
         saveMounting();
     }
 }
+
+
 
 void experimentConfigurationDialog::loadAboutExperiment(){
     QFile aboutFile(aboutExperimentDirectory);
@@ -224,6 +229,162 @@ void experimentConfigurationDialog::loadAboutExperiment(){
             combo->setCurrentText(role);
         }
     }
+}
+
+QMap<QString, ExperimentDeviceInfo> experimentConfigurationDialog::getDevicesFromFile(QString dir){
+    QMap<QString, ExperimentDeviceInfo> devicesMap;
+    QFile connectionsFile(dir);
+    if (!connectionsFile.open(QIODevice::ReadOnly)) return devicesMap;
+    connectionsFile.close();
+    YAML::Node config = YAML::LoadFile(dir.toStdString());
+    if (config["Devices"]) {
+        YAML::Node Devices = config["Devices"];
+        for (const YAML::Node& deviceNode : Devices) {
+            ExperimentDeviceInfo info;
+            QString id = deviceNode["Name"]? deviceNode["Name"].as<QString>() : "";
+            if (id.isEmpty()) continue;
+            info.id = id;
+            info.model = deviceNode["Model"]? deviceNode["Model"].as<QString>(): "";
+            QString type = deviceNode["Type"]? deviceNode["Type"].as<QString>(): "Приемник";
+            info.type = type;
+            QStringList ports;
+            YAML::Node Ports = deviceNode["Ports"];
+            if (Ports){
+                for (const YAML::Node& portNode : Ports) {
+                    ports.append(portNode.as<QString>());
+                }
+                info.outputs = ports;
+            }
+            YAML::Node Parameters = deviceNode["Parameters"];
+            if (Parameters){
+                if (type == "IMU"){
+                    if (Parameters["Instability bias"]) info.imuInfo.instabBias = Parameters["Instability bias"].as<double>();
+                    if (Parameters["Random walk"]) info.imuInfo.randomWalk = Parameters["Random walk"].as<double>();
+                    if (Parameters["Initial error"]) info.imuInfo.initialError = Parameters["Initial error"].as<double>();
+                }
+                else if (type == "Антенна"){
+                    if (Parameters["Antex/PCV file path"]) info.antennaInfo.confFileDirectory = Parameters["Antex/PCV file path"].as<QString>();
+                }
+                else if (type == "Камера"){
+                    if (Parameters["fps"]) info.cameraInfo.fps = Parameters["fps"].as<int>();
+                    if (Parameters["Height"]) info.cameraInfo.height = Parameters["Height"].as<int>();
+                    if (Parameters["Width"]) info.cameraInfo.width = Parameters["Width"].as<int>();
+                }
+            }
+            devicesMap[id] = info;
+        }
+    }
+    return devicesMap;
+}
+
+QMap<QString, ExperimentConnectionInfo> experimentConfigurationDialog::getConnectionsFromFile(QString dir){
+    QMap<QString, ExperimentConnectionInfo> connectionsMap;
+    QFile connectionsFile(dir);
+    if (!connectionsFile.open(QIODevice::ReadOnly)) return connectionsMap;
+    connectionsFile.close();
+    YAML::Node config = YAML::LoadFile(dir.toStdString());
+    if (config["Connections"]){
+        YAML::Node Connections = config["Connections"];
+        for (const YAML::Node& connectionNode : Connections) {
+            ExperimentConnectionInfo info;
+            QString device1 = connectionNode["Device1"]? connectionNode["Device1"].as<QString>() : "";
+            QString device2 = connectionNode["Device2"]? connectionNode["Device2"].as<QString>() : "";
+            QString port1 = connectionNode["Port1"]? connectionNode["Port1"].as<QString>() : "";
+            QString port2 = connectionNode["Port2"]? connectionNode["Port2"].as<QString>() : "";
+            info.device1 = device1;
+            info.device2 = device2;
+            info.port1 = port1;
+            info.port2 = port2;
+            QString connType = connectionNode["Connection type"]? connectionNode["Connection type"].as<QString>() : "";
+            info.connectionType = connType;
+            YAML::Node Parameters = connectionNode["Parameters"];
+            if (Parameters){
+                if (connType == "Serial"){
+                    if (Parameters["Baudrate"])  info.serialInfo.baudrate = Parameters["Baudrate"].as<int>();
+                    if (Parameters["Parity"])    info.serialInfo.parity = Parameters["Parity"].as<QString>();
+                    if (Parameters["Data bits"]) info.serialInfo.dataBits = Parameters["Data bits"].as<int>();
+                    if (Parameters["Stop bits"]) info.serialInfo.stopBits = Parameters["Stop bits"].as<int>();
+                }
+                else if (connType == "CAN"){
+                    if (Parameters["Baudrate"]) info.canInfo.baudrate = Parameters["Baudrate"].as<int>();
+                }
+                else if (connType == "Коакс. кабель"){
+                    if (Parameters["Length"]) info.coaxCableInfo.length = Parameters["Length"].as<QString>();
+                    if (Parameters["Material"]) info.coaxCableInfo.material = Parameters["Material"].as<QString>();
+                    if (Parameters["Data loss"]) info.coaxCableInfo.dataLoss = Parameters["Data loss"].as<int>();
+                }
+                else if (connType == "TCP"){
+                    if (Parameters["Adress"]) info.tcpInfo.adress = Parameters["Adress"].as<QString>();
+                    if (Parameters["Port"]) info.tcpInfo.port = Parameters["Port"].as<QString>();
+                }
+            }
+            connectionsMap[device1 + '&' + device2] = info;
+        }
+    }
+    return connectionsMap;
+}
+
+QMap<QString, ExperimentGroupBoxParametersInfo> experimentConfigurationDialog::getMountingFromFile(QString dir){
+    QMap<QString, ExperimentGroupBoxParametersInfo> mountingMap;
+    QFile mountingFile(dir);
+    if (!mountingFile.open(QIODevice::ReadOnly)) return mountingMap;
+    mountingFile.close();
+    YAML::Node config = YAML::LoadFile(dir.toStdString());
+    if (config["Mounting"]) {
+        YAML::Node Mounting = config["Mounting"];
+        for (const auto& Mount : Mounting) {
+            QString device = Mount["Name"]? Mount["Name"].as<QString>() : "";
+            if (device.isEmpty()) continue;
+            // QGroupBox* parametersGroup = tcreateParametersGroup(device,false);
+            ExperimentGroupBoxParametersInfo* info = new ExperimentGroupBoxParametersInfo;
+            info->boresightCheck = false;
+            info->leverarmCheck = false;
+            info->positionCheck = false;
+            info->deviceName = device;
+            // info->group = parametersGroup;
+            QMap<QString,ExperimentGroupBoxParametersInfo::Parameter> parametersMap;
+            if (Mount["Parameters"]){
+                YAML::Node Parameters = Mount["Parameters"];
+                for (const auto& Parameter : Parameters) {
+                    ExperimentGroupBoxParametersInfo::Parameter parameter;
+                    QString parameterName = Parameter.first.as<QString>();
+                    parameter.name = parameterName;
+                    int index = 0;
+                    QList<QPair<bool*, QString>> parametersKeysList = {
+                        qMakePair(&info->positionCheck, QString("Позиция")),
+                        qMakePair(&info->boresightCheck, QString("Ошибка угла наведения")),
+                        qMakePair(&info->leverarmCheck, QString("Lever arm"))
+                    };
+                    foreach (auto pair, parametersKeysList) {
+                        if (pair.second == parameterName) {
+                            *pair.first = true;
+                        }
+                    }
+                    for (const auto& Field : Parameter.second) {
+                        int value = Field.second.as<int>();
+                        switch (index) {
+                        case 0:
+                            parameter.x = value;
+                            break;
+                        case 1:
+                            parameter.y = value;
+                            break;
+                        case 2:
+                            parameter.z = value;
+                            break;
+                        default:
+                            break;
+                        }
+                        index++;
+                    }
+                    parametersMap[parameterName] = parameter;
+                }
+            }
+            info->parameters = parametersMap;
+            mountingMap[device] = *info;
+        }
+    }
+    return mountingMap;
 }
 
 void experimentConfigurationDialog::loadConnections(){
@@ -324,6 +485,7 @@ void experimentConfigurationDialog::loadConnections(){
         }
     }
 }
+
 void experimentConfigurationDialog::loadMounting(){
     QFile mountingFile(experimentMountingDirectory);
     if (mountingFile.open(QIODevice::ReadOnly)){
@@ -466,6 +628,7 @@ void experimentConfigurationDialog::setupWidgets(){
     layoutIMU->addWidget(labelInitialError, 2, 0);
     layoutIMU->addWidget(spinInitialError, 2, 1);
     frameIMU->setLayout(layoutIMU);
+    frameIMU->setHidden(true);
 
     QGridLayout* layoutCamera = new QGridLayout(frameCamera);
     layoutCamera->addWidget(labelFPS, 0, 0);
@@ -475,11 +638,13 @@ void experimentConfigurationDialog::setupWidgets(){
     layoutCamera->addWidget(labelWidth, 2, 0);
     layoutCamera->addWidget(spinWidth, 2, 1);
     frameCamera->setLayout(layoutCamera);
+    frameCamera->setHidden(true);
 
     QVBoxLayout* layoutAntenna = new QVBoxLayout(frameAntenna);
     layoutAntenna->addWidget(labelDirectory);
     layoutAntenna->addWidget(lineDirectory);
     frameAntenna->setLayout(layoutAntenna);
+    frameAntenna->setHidden(true);
 
     deviceDialog = new QDialog(this);
     deviceDialog->setWindowTitle("Редактор устройств");
@@ -494,7 +659,7 @@ void experimentConfigurationDialog::setupWidgets(){
     deviceLabelType = new QLabel("Тип: ");
     deviceComboType = new QComboBox();
     deviceComboType->addItems({"Приёмник", "IMU", "Камера", "Одометр", "Антенна", "Сплиттер", "Другое"});
-    deviceComboType->setCurrentIndex(-1);
+    deviceComboType->setCurrentIndex(0);
     deviceGroupOutputs = new QGroupBox("Выводы");
     deviceGroupOutputs->setAlignment(Qt::AlignHCenter);
     deviceGroupInfo = new QGroupBox("Дополнительная информация");
@@ -677,7 +842,7 @@ void experimentConfigurationDialog::addDevice()
     lineDirectory->clear();
     deviceLineID->clear();
     deviceLineModel->clear();
-    deviceComboType->clear();
+    deviceComboType->setCurrentIndex(0);
     deviceListOutputs->clear();
 
     if (deviceDialog->exec() == QDialog::Accepted) {
@@ -1603,9 +1768,24 @@ void experimentConfigurationDialog::addParameter(){
 void experimentConfigurationDialog::removePrametersGroup(){
     QGroupBox* group = qobject_cast<QGroupBox*>(sender()->parent());
     QString id = group->title();
+    qDebug() << id;
     ExperimentGroupBoxParametersInfo info = groupBoxParametersMap[id];
-    ui->areaDeviceParameters->removeGroup(info.row, info.column);
+    int row = info.row;
+    int column = info.column;
+    int index = row*2 + column;
+    ui->areaDeviceParameters->removeGroup(row, column);
     groupBoxParametersMap.remove(id);
+    foreach (QString key, groupBoxParametersMap.keys()) {
+        ExperimentGroupBoxParametersInfo* info = &groupBoxParametersMap[key];
+        int infoIndex = info->row*2 + info->column;
+        if (infoIndex > index){
+            infoIndex--;
+            int newRow =  infoIndex/2;
+            int newColumn = infoIndex%2;
+            info->row = newRow;
+            info->column = newColumn;
+        }
+    }
 
 }
 
