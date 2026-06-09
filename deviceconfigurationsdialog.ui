@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -1089,7 +1089,7 @@
               <property name="geometry">
                <rect>
                 <x>0</x>
-                <y>-3302</y>
+                <y>0</y>
                 <width>686</width>
                 <height>4858</height>
                </rect>
@@ -5674,8 +5674,8 @@ shutdown</string>
    <slot>sendSettings()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>57</x>
-     <y>111</y>
+     <x>70</x>
+     <y>126</y>
     </hint>
     <hint type="destinationlabel">
      <x>107</x>
@@ -5691,7 +5691,7 @@ shutdown</string>
    <hints>
     <hint type="sourcelabel">
      <x>187</x>
-     <y>125</y>
+     <y>126</y>
     </hint>
     <hint type="destinationlabel">
      <x>436</x>
@@ -6010,8 +6010,8 @@ shutdown</string>
    <slot>enableRawFrame(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>508</x>
-     <y>393</y>
+     <x>534</x>
+     <y>403</y>
     </hint>
     <hint type="destinationlabel">
      <x>965</x>
@@ -6026,8 +6026,8 @@ shutdown</string>
    <slot>enableEphFrame(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>503</x>
-     <y>343</y>
+     <x>514</x>
+     <y>350</y>
     </hint>
     <hint type="destinationlabel">
      <x>966</x>

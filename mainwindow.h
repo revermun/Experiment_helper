@@ -33,6 +33,9 @@ public:
 
     QMap<QString,NewData> getNewData();
 
+public slots:
+    void readDevice(QString deviceName);
+
 private slots:
     void openConnectionSettings();
     void performAction(QAction* action);
@@ -45,14 +48,14 @@ private slots:
     void connectDevice();
     void disconnectDevice();
     void startExperiment();
-    void parseMessage();
+    void parseMessage(NewData data);
     void sendUserEvent();
     void addConnectionFromFile();
     void clearLogTable();
-    void readPorts();
     void indicateData();
     void onNewBridgeConnection();
     bool exploreExperiment();
+    void changeLapTimer();
 
 
 signals:
@@ -110,7 +113,7 @@ private:
 
     Preset currentPreset;
     QTime lapTime;
-    QString version = "0.2.4";
+    QString version = "0.2.5";
 
     QLabel* versionLabel;
     QLabel* experimentDirectoryLabel;

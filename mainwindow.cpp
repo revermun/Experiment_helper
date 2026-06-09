@@ -172,9 +172,8 @@ MainWindow::MainWindow(QWidget *parent)
     getMessagesConfig();
 
     QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(readPorts()));
     connect(timer, SIGNAL(timeout()), this, SLOT(indicateData()));
-    connect(timer, SIGNAL(timeout()), this, SLOT(parseMessage()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(changeLapTimer()));
     timer->start(1);
     versionLabel->setText(tr("Версия ПО: ") + this->version);
     statusBar()->addWidget(versionLabel);
@@ -981,6 +980,7 @@ void MainWindow::connectDevice()
             QMessageBox::warning(this, "Ошибка", "Не удалось подключится к порту");
             return;
         }
+        connect(connection, &QSerialPort::readyRead, this, [this,deviceName]() {this->readDevice(deviceName);});
         onnOffItem->setBackground(QBrush(QColor(0,255,0)));
         connectionsMap.insert(deviceName, connection);
         DeviceInfo info = devicesMap[deviceName];
@@ -1003,6 +1003,7 @@ void MainWindow::connectDevice()
             this->connectionsMap.insert(deviceName, connection);
             QByteArray* buffer = new QByteArray();
             this->bufferMap.insert(deviceName, buffer);
+            connect(connection, &QTcpSocket::readyRead, this, [this, deviceName]() {this->readDevice(deviceName);});
         });
 
         connect(connection, &QTcpSocket::disconnected, this, [connection, onnOffItem, this, row]() {
@@ -1381,60 +1382,59 @@ void MainWindow::indicateData()
     }
 }
 
-void MainWindow::readPorts()
+void MainWindow::readDevice(QString deviceName)
 {
-    foreach (QString connDevice, connectionsMap.keys()) {
-        QObject* connection = connectionsMap[connDevice];
-        QByteArray buff;
-        if (connection == nullptr) continue;
-        if (qobject_cast<QIODevice*>(connection)){
-            QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
-            if (!ioCon->isOpen()) continue;
+    QObject* connection = connectionsMap[deviceName];
+    QByteArray buff;
+    if (connection == nullptr) return;
+    if (qobject_cast<QIODevice*>(connection)){
+        QIODevice* ioCon = qobject_cast<QIODevice*>(connection);
+        if (!ioCon->isOpen()) return;
 
-            if(ioCon->waitForReadyRead(1)){
-                buff.append(ioCon->readAll());
-                tableFieldsMap[connDevice].dataTimer = 100;
-            }
-        }
-        if (buff.isEmpty()) return;
-        NewData data;
-        data.deviceInfo = devicesMap[connDevice];
-        data.buff = buff;
-        newDataMap[connDevice] = data;
-        if (data.deviceInfo.connType == "Serial" && data.deviceInfo.serialInfo.isTranslating){
-            SerialToTcpBridge* bridge = bridgeMap[connDevice];
-            bridge->write(buff);
-        }
-        bufferMap[connDevice]->append(buff);
-        emit newData(data);
+        buff.append(ioCon->readAll());
+        tableFieldsMap[deviceName].dataTimer = 100;
     }
+    if (buff.isEmpty()) return;
+    NewData data;
+    data.deviceInfo = devicesMap[deviceName];
+    data.buff = buff;
+    newDataMap[deviceName] = data;
+    if (data.deviceInfo.connType == "Serial" && data.deviceInfo.serialInfo.isTranslating){
+        SerialToTcpBridge* bridge = bridgeMap[deviceName];
+        bridge->write(buff);
+    }
+    bufferMap[deviceName]->append(buff);
+    parseMessage(data);
+    emit newData(data);
 }
 
 QMap<QString,NewData> MainWindow::getNewData(){
     return newDataMap;
 }
 
-void MainWindow::parseMessage()
-{
-    if (!isLap) {
-        foreach (QString connDevice, connectionsMap.keys()) {
-            QByteArray *buff = bufferMap[connDevice];
-            if (buff) buff->clear();
-        }
-        return;
-    }
+void MainWindow::changeLapTimer(){
+    if (!isLap) return;
     QTime currTime = QTime::currentTime();
     int currMsec = currTime.msec() + (currTime.second() + currTime.minute()*60 + currTime.hour()*3600)*1000;
     int startMsec = lapTime.msec() + (lapTime.second() + lapTime.minute()*60 + lapTime.hour()*3600)*1000;
     int diffMsec = currMsec - startMsec;
     ui->labelElapsedTime->setText(QString("%1.%2").arg(QString::number(diffMsec/1000),QString::number(diffMsec%1000).rightJustified(3,'0')));
-    // ui->labelElapsedTime->setText(QString("%1.%2").arg(diffSeconds,diffMsec)); //прикол
-    foreach (QString connDevice, connectionsMap.keys()) {
-        QObject* connection = connectionsMap[connDevice];
+}
+
+void MainWindow::parseMessage(NewData data)
+{
+    QString connDevice = data.deviceInfo.ID;
+    if (!isLap) {
         QByteArray *buff = bufferMap[connDevice];
-        if (connection == nullptr) continue;
-        if (!isLap) continue;
-        if (buff->isEmpty()) continue;
+        if (buff) buff->clear();
+        return;
+    }
+    // ui->labelElapsedTime->setText(QString("%1.%2").arg(diffSeconds,diffMsec)); //прикол
+    QObject* connection = connectionsMap[connDevice];
+    QByteArray *buff = bufferMap[connDevice];
+    if (connection == nullptr) return;
+    if (buff->isEmpty()) return;
+    while(!buff->isEmpty()){
         QByteArray messData;
         QString messId;
         QString GNSSTime;
@@ -1444,7 +1444,7 @@ void MainWindow::parseMessage()
         if (protocol == "Ublox"){
             UbloxParser parser(connection);
             UbloxMessage mess = parser.parseMessage(buff);
-            if (mess.data.isEmpty()) continue;
+            if (mess.data.isEmpty()) return;
             messData = mess.data;
             messId = QString::number(mess.messClass, 16).rightJustified(2,'0') + QString::number(mess.messId, 16).rightJustified(2,'0');
             order = QDataStream::LittleEndian;
@@ -1452,15 +1452,17 @@ void MainWindow::parseMessage()
         else if (protocol == "Unicore"){
             UnicoreParser parser(connection);
             UnicoreMessage mess = parser.parseBinaryMessage(buff);
-            if (mess.data.isEmpty()) continue;
+            if (mess.data.isEmpty()) return;
             messData = mess.data;
             messId = QString::number(mess.binaryHeader.messageId);
             GNSSTime = QString::number(mess.binaryHeader.ms);
             order = QDataStream::BigEndian;
         }
-        else continue;
+        else return;
+        qDebug() << "------------------\n";
         foreach (QString eventName, eventMap.keys()) {
             EventData *event = &eventMap[eventName];
+            qDebug() << eventName;
             if (event->device != connDevice) continue;
             if (event->messageId != messId) continue;
             Mess::Field field = messagesMap[event->message].fields[event->fieldName];
